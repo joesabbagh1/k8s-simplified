@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react"
 import { CATEGORIES, CATEGORY_NAME } from "../data/layers"
 import { LESSONS } from "../data/lessons"
 import type { Category } from "../data/types"
-import { LIBRARY_PATH, lessonPath } from "../route"
+import { LIBRARY_PATH, lessonPath, REPO_URL } from "../route"
 import { useApp } from "../store"
 import { HeroScene } from "./HeroScene"
 import { Icon } from "./Icon"
@@ -29,7 +29,7 @@ const CLUSTER_FACTS: [string, string][] = [
   ["node-1", "10.0.1.11 · Pods 10.244.1.0/24"],
   ["node-2", "10.0.1.12 · Pods 10.244.2.0/24"],
   ["Load balancer", "203.0.113.50"],
-  ["App", "web · 3 replicas · Service 10.96.120.15:80"],
+  ["App · web", "3 replicas · 10.96.120.15:80"],
 ]
 
 export function Home() {
@@ -50,13 +50,14 @@ export function Home() {
     <main className="home" aria-labelledby="home-title">
       <section className="hero">
         <div className="hero-copy">
-          <p className="kicker">Every layer, from packet to Pod</p>
+          <p className="hero-kicker">Every layer, from packet to Pod</p>
           <h1 id="home-title" ref={headingRef} tabIndex={-1} className="hero-title">
-            Watch a Kubernetes cluster work, one event at a time.
+            Watch a Kubernetes cluster work, one event at a time
           </h1>
           <p className="hero-lead">
             Interactive lessons that play out what happens when you run <code>kubectl apply</code>, call a Service or lose a node: API calls, etcd
-            writes, watch events, container runtime calls and real packets, each one decoded field by field.
+            writes, watch events, container runtime calls and real packets, each one decoded field by field. It all runs in your browser, no
+            cluster needed.
           </p>
           <div className="hero-actions">
             <Link className="btn primary lg" to={lessonPath(first.id)}>
@@ -67,7 +68,6 @@ export function Home() {
               Browse all {LESSONS.length} lessons
             </Link>
           </div>
-          <p className="hero-note">{first.title} · {first.steps.length} steps · runs in your browser, no cluster needed</p>
         </div>
         <HeroScene />
       </section>
@@ -78,7 +78,7 @@ export function Home() {
           <ol className="how">
             {HOW.map(([title, body], i) => (
               <li key={title}>
-                <span className="how-n">{String(i + 1).padStart(2, "0")}</span>
+                <span className="how-n">{i + 1}</span>
                 <h3>{title}</h3>
                 <p>{body}</p>
               </li>
@@ -130,6 +130,20 @@ export function Home() {
               </div>
             ))}
           </dl>
+        </section>
+
+        <section className="home-section contribute" aria-labelledby="contribute-title">
+          <div>
+            <h2 id="contribute-title" className="home-h2">Open source</h2>
+            <p className="sub">
+              Each lesson is a TypeScript file of steps and events. Spotted a wrong field, or want a lesson that isn't here yet? Open an issue or a
+              pull request.
+            </p>
+          </div>
+          <a className="btn lg" href={REPO_URL} target="_blank" rel="noopener noreferrer">
+            <Icon name="github" size={16} />
+            Contribute on GitHub
+          </a>
         </section>
       </div>
     </main>

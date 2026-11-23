@@ -1,7 +1,7 @@
 import { Button } from "@ui-sdk/react/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip"
 import { logo } from "../iso/iso"
-import { HOME_PATH, LIBRARY_PATH } from "../route"
+import { HOME_PATH, LIBRARY_PATH, REPO_URL } from "../route"
 import { useApp, useLesson } from "../store"
 import { Icon } from "./Icon"
 import { IsoArt } from "./IsoArt"
@@ -38,6 +38,12 @@ export function Header() {
       </nav>
 
       <div className="tools">
+        <Tooltip>
+          <TooltipTrigger render={<a href={REPO_URL} target="_blank" rel="noopener noreferrer" />} className="ibtn ghost" aria-label="Source on GitHub">
+            <Icon name="github" />
+          </TooltipTrigger>
+          <TooltipContent className="tip">Source on GitHub</TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger render={<Button onClick={() => setTheme(other)} />} className="ibtn ghost" aria-label={`Switch to ${other} mode`}>
             <Icon name={theme === "dark" ? "sun" : "moon"} />

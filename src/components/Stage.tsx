@@ -306,6 +306,12 @@ function Floor({ level, floor }: { level: Level; floor: FloorShape }) {
 /** How wide a box the camera closes in to when it dives into a node or Pod, or pulls back out of one. */
 const DIVE_W = 520
 
+/** Inside a node or Pod, the camera sits this much further back than a tight fit, so the scene has room to breathe. */
+const INSIDE_PULLBACK = 1.2
+
+/** The same box, grown by `f` around its centre. */
+const widen = ([x, y, w, h]: Box, f: number): Box => [x - (w * (f - 1)) / 2, y - (h * (f - 1)) / 2, w * f, h * f]
+
 function ClusterScene() {
   const lesson = useLesson()
   const step = useApp((s) => s.step)
@@ -353,9 +359,12 @@ function ClusterScene() {
   const diveH = (DIVE_W * WORLD.height) / WORLD.width
   const autoBox: Box = target
     ? [target.pos[0] - DIVE_W / 2, target.pos[1] - 16 - diveH / 2, DIVE_W, diveH]
-    : scene.dim
-      ? frame(scene.frameIds, scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor))
-      : frame([...scene.frameIds, ...resIds], scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor), finished || revealed > 0)
+    : widen(
+        scene.dim
+          ? frame(scene.frameIds, scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor))
+          : frame([...scene.frameIds, ...resIds], scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor), finished || revealed > 0),
+        scene.level === "cluster" ? 1 : INSIDE_PULLBACK,
+      )
 
   // ownership edges: card-to-card from the catalog, card-to-node from the Pod-slot layout
   const onScreen = (id: ActorId) => ids.has(id) || resIds.has(id)

@@ -35,23 +35,21 @@ export function travelTime(e: ClusterEvent) {
   return e.path[0] === e.path[1] ? 750 : 1150
 }
 
-const clamp = (ms: number, min: number, max: number) => Math.min(max, Math.max(min, ms))
-
-/** Comfortable reading speed for short technical sentences, in words per minute. */
-const WPM = 220
 const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length
-const readingTime = (text: string) => (words(text) / WPM) * 60_000
 
 /** How long each word of a caption holds playback. */
 const CAPTION_PER_WORD_MS = 400
 /** No caption rests less than this, however short it is. */
 const CAPTION_MIN_MS = 1500
 
-/** How long playback rests after an event lands, so its caption can be read, at 1× speed: 0.4 s a word, at least 1.5 s. */
-export const eventReadTime = (e: ClusterEvent) => Math.max(CAPTION_MIN_MS, words(e.says ?? e.title) * CAPTION_PER_WORD_MS)
+/** How long a caption of this text holds playback, at 1× speed: 0.4 s a word, at least 1.5 s. */
+const captionTime = (text: string) => Math.max(CAPTION_MIN_MS, words(text) * CAPTION_PER_WORD_MS)
 
-/** How long playback rests at the start of a step, for a quick read of its text, at 1× speed. */
-export const stepReadTime = (step: Step) => clamp(readingTime(`${step.title} ${step.subtitle} ${step.body}`) * 0.4, 2000, 6000)
+/** How long playback rests after an event lands, so its caption can be read, at 1× speed. */
+export const eventReadTime = (e: ClusterEvent) => captionTime(e.says ?? e.title)
+
+/** How long playback rests at the start of a step, so its caption (the step title) can be read, at 1× speed. */
+export const stepReadTime = (step: Step) => captionTime(step.title)
 
 /** The pause between steps, while the camera moves. */
 export const STEP_GAP = 1000
