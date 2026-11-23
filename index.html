@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Watch a Kubernetes cluster work, layer by layer: from the packet on the wire to the Pod running your app." />
+    <meta name="theme-color" content="#080d1b" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="K8s Simplified" />
+    <meta property="og:title" content="K8s Simplified · Every layer, from packet to pod" />
+    <meta property="og:description" content="Watch a Kubernetes cluster work, layer by layer: from the packet on the wire to the Pod running your app." />
+    <meta property="og:url" content="https://kubelearn.joesabbagh.com/" />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="K8s Simplified · Every layer, from packet to pod" />
+    <meta name="twitter:description" content="Watch a Kubernetes cluster work, layer by layer: from the packet on the wire to the Pod running your app." />
+    <title>K8s Simplified · Every layer, from packet to pod</title>
+    <script>
+      try {
+        const saved = localStorage.getItem('k8s-theme')
+        if (saved === 'light' || saved === 'dark') document.documentElement.dataset.theme = saved
+      } catch {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

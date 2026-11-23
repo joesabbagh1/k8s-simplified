@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kubelearn",
+  "compatibility_date": "2026-11-22",
+  "assets": {
+    "directory": "./dist",
+    // SPA: unknown paths fall back to index.html
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "kubelearn.joesabbagh.com", "custom_domain": true }]
+}

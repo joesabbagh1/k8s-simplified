@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-font="jetbrains">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>K8s Simplified · Style Tile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Martian+Mono:wdth,wght@75..112.5,300..800&display=swap" rel="stylesheet">
+<style>
+:root { --font: "JetBrains Mono", ui-monospace, monospace; --stretch: 100%; }
+:root[data-font="martian"] { --font: "Martian Mono", ui-monospace, monospace; --stretch: 80%; }
+:root[data-font="plex"] { --font: "IBM Plex Mono", ui-monospace, monospace; }
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #080d1b; --panel: #0c1326; --raised: #121b35; --line: #1f2d55; --line-strong: #2f4378; --grid: rgba(120,150,230,.07);
+  --text: #d6e0f7; --dim: #8f9dc0; --faint: #5f6d92;
+  --accent: #326ce5; --accent-text: #7ea6ff; --accent-soft: rgba(50,108,229,.18); --on-accent: #ffffff;
+  --l-api: #6ea8ff; --l-state: #2dd4bf; --l-control: #f5b83d; --l-node: #a78bfa; --l-net: #4ade80; --l-drop: #f87171;
+  --ok: #3ccf8e;
+  --iso-top: #1b2b52; --iso-left: #142245; --iso-right: #0f1a38; --iso-line: #79a0ff; --iso-detail: #a9c2ff; --display: #0a1633;
+  --iso-hot-top: #26478f; --iso-hot-left: #1c3878; --iso-hot-right: #152d63;
+  --link: #34508f; --diff-bg: rgba(245,184,61,.13);
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f3f6fc; --panel: #ffffff; --raised: #eef2fa; --line: #d3dcee; --line-strong: #b3c2e1; --grid: rgba(50,90,170,.08);
+  --text: #14203c; --dim: #4f5d7d; --faint: #8391ad;
+  --accent: #326ce5; --accent-text: #2556c4; --accent-soft: rgba(50,108,229,.11); --on-accent: #ffffff;
+  --l-api: #2563d9; --l-state: #0b7d71; --l-control: #a15c00; --l-node: #6a45d6; --l-net: #15803d; --l-drop: #c62f2f;
+  --ok: #15803d;
+  --iso-top: #ffffff; --iso-left: #e8eefb; --iso-right: #d9e3f7; --iso-line: #2f5fd0; --iso-detail: #2f5fd0; --display: #e3ebfb;
+  --iso-hot-top: #e1eaff; --iso-hot-left: #cfdcfc; --iso-hot-right: #bccff8;
+  --link: #9db2de; --diff-bg: rgba(161,92,0,.10);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); }
+body { font-family: var(--font); font-stretch: var(--stretch); font-size: 13px; line-height: 1.55; -webkit-font-smoothing: antialiased; padding: 16px 16px 56px; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+ul, ol { list-style: none; }
+code { font-family: inherit; color: var(--accent-text); }
+.wrap { max-width: 1320px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.dim { color: var(--dim); }
+.ico { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+
+/* review strip */
+.review { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; padding: 10px 12px; border: 1px dashed var(--line-strong); border-radius: 4px; color: var(--dim); font-size: 12px; }
+.review .tag { color: var(--on-accent); background: var(--accent); padding: 2px 7px; border-radius: 2px; font-weight: 700; letter-spacing: .06em; margin-right: 6px; }
+.review-r { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lbl { font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--dim); }
+
+/* controls */
+.seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 4px; padding: 2px; gap: 2px; background: var(--panel); }
+.seg button { height: 28px; padding: 0 10px; border-radius: 2px; font-size: 12px; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; color: var(--dim); display: inline-flex; align-items: center; gap: 6px; }
+.seg button:hover { color: var(--text); }
+.seg button.on { background: var(--accent); color: var(--on-accent); }
+.seg.icon button { width: 32px; padding: 0; justify-content: center; }
+.btn { height: 32px; padding: 0 14px; border: 1px solid var(--line-strong); background: var(--raised); border-radius: 3px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 8px; }
+.btn:hover { border-color: var(--accent-text); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.sm { height: 26px; padding: 0 9px; font-size: 11px; }
+.ibtn { width: 34px; height: 34px; border: 1px solid var(--line-strong); border-radius: 3px; display: inline-flex; align-items: center; justify-content: center; color: var(--dim); background: var(--panel); }
+.ibtn:hover { color: var(--text); border-color: var(--accent-text); }
+kbd { font-family: inherit; font-size: 11px; font-weight: 600; padding: 1px 6px; border: 1px solid var(--line-strong); border-bottom-width: 2px; border-radius: 3px; color: var(--dim); background: var(--raised); }
+
+/* header */
+.topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 4px 2px 6px; }
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: 46px; height: 46px; }
+.wordmark { font-size: 21px; font-weight: 600; letter-spacing: .07em; line-height: 1.1; }
+.wordmark .k { font-weight: 800; color: var(--accent-text); }
+.tagline { font-size: 11px; letter-spacing: .12em; color: var(--dim); margin-top: 3px; }
+.tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.search { height: 34px; min-width: 230px; padding: 0 8px 0 12px; border: 1px solid var(--line-strong); border-radius: 3px; background: var(--panel); display: inline-flex; align-items: center; gap: 10px; color: var(--dim); }
+.search span { flex: 1; text-align: left; }
+.vsep { width: 1px; height: 26px; background: var(--line); margin: 0 4px; }
+
+/* app sample */
+.app { display: grid; grid-template-columns: 296px minmax(0,1fr) 296px; grid-template-areas: "list stage details" "list flow flow"; gap: 12px; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; min-width: 0; }
+.ph { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--line); }
+.ph h2 { font-size: 14px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+
+.list { grid-area: list; }
+.tabs { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); padding: 8px 10px 0; border-bottom: 1px solid var(--line); }
+.tabs button { font-size: 10.5px; font-weight: 700; letter-spacing: .04em; color: var(--dim); padding: 4px 2px 7px; border-bottom: 2px solid transparent; display: flex; flex-direction: column; align-items: center; gap: 1px; white-space: nowrap; }
+.tabs button:hover { color: var(--text); }
+.tabs button i { font-style: normal; font-size: 11px; font-weight: 600; color: var(--faint); }
+.tabs button.on { color: var(--text); border-color: var(--accent); }
+.tabs button.on i { color: var(--accent-text); }
+.lessons { padding: 8px; display: flex; flex-direction: column; gap: 2px; }
+.lrow { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid transparent; border-radius: 3px; cursor: pointer; }
+.lrow:hover { background: var(--raised); }
+.lrow b { display: block; font-size: 13px; font-weight: 700; }
+.lrow small { display: block; font-size: 12px; color: var(--dim); }
+.lrow > div { flex: 1; min-width: 0; }
+.lrow .ico { color: var(--dim); }
+.lesson.open > .lrow { border-color: var(--accent); background: var(--accent-soft); }
+.ring { width: 11px; height: 11px; border-radius: 50%; border: 1.5px solid var(--faint); flex: none; }
+.ring.run { border-color: var(--accent-text); background: var(--accent-text); }
+.steps { padding: 8px 6px 8px 22px; display: flex; flex-direction: column; }
+.steps li { display: flex; gap: 10px; position: relative; padding-bottom: 10px; }
+.steps li:not(:last-child)::after { content: ""; position: absolute; left: 9px; top: 21px; bottom: 1px; width: 1.5px; background: var(--line-strong); }
+.steps li.done:not(:last-child)::after { background: var(--ok); }
+.num { width: 19px; height: 19px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; background: var(--raised); color: var(--dim); border: 1px solid var(--line-strong); flex: none; }
+.done .num { background: var(--ok); border-color: var(--ok); color: var(--panel); }
+.active .num { background: var(--accent); border-color: var(--accent-text); color: var(--on-accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.steps b { display: block; font-size: 11.5px; letter-spacing: .05em; font-weight: 700; line-height: 1.35; }
+.steps small { display: block; font-size: 11.5px; color: var(--dim); }
+.steps .active b { color: var(--accent-text); }
+
+.stage { grid-area: stage; display: flex; flex-direction: column; overflow: hidden; }
+.stage-top { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; flex-wrap: wrap; }
+.crumbs { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--dim); display: flex; gap: 8px; align-items: center; }
+.crumbs b { color: var(--accent-text); }
+.crumbs span { color: var(--faint); }
+.canvas { flex: 1; min-height: 340px; position: relative;
+  background-image: repeating-linear-gradient(30deg, var(--grid) 0 1px, transparent 1px 26px), repeating-linear-gradient(-30deg, var(--grid) 0 1px, transparent 1px 26px); }
+.canvas svg { width: 100%; height: 100%; display: block; position: absolute; inset: 0; }
+
+.details { grid-area: details; }
+.dbody { padding: 14px; }
+.kicker { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--accent-text); }
+.display { font-size: 24px; font-weight: 800; letter-spacing: .04em; line-height: 1.2; margin-top: 4px; }
+.sub { color: var(--dim); margin: 2px 0 10px; }
+.body { font-size: 12.5px; line-height: 1.65; }
+.facts { margin-top: 12px; border-top: 1px solid var(--line); }
+.facts div { display: grid; grid-template-columns: 92px 1fr; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.facts dt { font-size: 11px; font-weight: 700; letter-spacing: .07em; color: var(--dim); }
+
+.flow { grid-area: flow; }
+.flowh { flex-wrap: wrap; }
+.flowh .left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 11px; font-weight: 600; letter-spacing: .05em; color: var(--dim); }
+.legend span { display: inline-flex; align-items: center; gap: 5px; }
+.legend i { width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.transport { display: flex; gap: 6px; align-items: center; }
+.speed { height: 32px; padding: 0 10px; border: 1px solid var(--line-strong); border-radius: 3px; display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; background: var(--panel); }
+.flowbody { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(0,1fr); min-height: 0; }
+.tablewrap { overflow: auto; max-height: 300px; border-right: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; font-size: 12px; font-variant-numeric: tabular-nums; }
+th { position: sticky; top: 0; background: var(--panel); text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .07em; color: var(--dim); padding: 8px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td { padding: 5px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+td.info { width: 100%; max-width: 0; min-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+tbody tr { cursor: pointer; }
+tbody tr:hover { background: var(--raised); }
+tbody tr.sel { background: var(--accent-soft); box-shadow: inset 2px 0 0 var(--accent); }
+.badge { display: inline-flex; width: 19px; height: 19px; border-radius: 50%; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; background: var(--c); color: var(--panel); }
+.ltag { font-size: 11px; font-weight: 700; letter-spacing: .05em; color: var(--c); }
+.decoder { padding: 12px 14px; overflow: auto; max-height: 300px; font-size: 12px; }
+.dh { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 10px; }
+.dh b { display: block; font-size: 12.5px; letter-spacing: .04em; }
+.dh small { display: block; color: var(--dim); font-size: 11.5px; }
+.decoder details { border: 1px solid var(--line); border-radius: 3px; margin-bottom: 8px; }
+.decoder summary { cursor: pointer; padding: 6px 10px; font-size: 11px; font-weight: 700; letter-spacing: .07em; color: var(--dim); background: var(--raised); }
+.decoder dl { padding: 4px 0; }
+.kv { display: grid; grid-template-columns: minmax(110px, 38%) 1fr; gap: 10px; padding: 3px 10px; }
+.kv dt { color: var(--dim); overflow-wrap: anywhere; }
+.kv dd { overflow-wrap: anywhere; }
+.kv.ch { background: var(--diff-bg); box-shadow: inset 2px 0 0 var(--l-control); }
+.kv.ch dd { color: var(--l-control); font-weight: 700; }
+.kv em { font-style: normal; font-size: 10px; font-weight: 800; letter-spacing: .08em; margin-left: 8px; color: var(--l-control); }
+.note { color: var(--dim); font-size: 11.5px; line-height: 1.55; border-left: 2px solid var(--line-strong); padding-left: 10px; }
+.timing { padding: 12px 14px; display: none; }
+.flow.show-timing .timing { display: block; }
+.flow.show-timing .flowbody { display: none; }
+.trow { display: grid; grid-template-columns: 210px 1fr 90px; gap: 12px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line); font-size: 12px; }
+.trow .track { position: relative; height: 12px; background: var(--raised); border-radius: 2px; }
+.trow .bar { position: absolute; top: 0; bottom: 0; background: var(--c); border-radius: 2px; min-width: 3px; }
+.trow .ms { text-align: right; color: var(--dim); font-variant-numeric: tabular-nums; }
+.taxis { display: grid; grid-template-columns: 210px 1fr 90px; gap: 12px; font-size: 11px; color: var(--dim); margin-bottom: 4px; }
+.taxis div { display: flex; justify-content: space-between; }
+
+/* iso */
+.iso polygon, .iso path, .iso ellipse { stroke: var(--iso-line); stroke-width: 1.15; stroke-linejoin: round; }
+.f-t { fill: var(--iso-top); } .f-l { fill: var(--iso-left); } .f-r { fill: var(--iso-right); }
+.hot .f-t { fill: var(--iso-hot-top); } .hot .f-l { fill: var(--iso-hot-left); } .hot .f-r { fill: var(--iso-hot-right); }
+.glass polygon { fill-opacity: .16; }
+.hid { stroke: var(--iso-line); stroke-width: 1; stroke-dasharray: 2 3; opacity: .55; }
+.det { stroke: var(--iso-detail); stroke-width: 1; vector-effect: non-scaling-stroke; opacity: .75; fill: none; }
+.led { fill: var(--l-net); }
+.led.b { fill: var(--accent-text); }
+.display-r { fill: var(--display); stroke: var(--iso-line); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.scr { fill: var(--l-net); font-family: var(--font); font-weight: 700; }
+.scr.d { fill: var(--iso-detail); font-weight: 500; }
+.keys rect { fill: none; stroke: var(--iso-detail); stroke-width: .7; vector-effect: non-scaling-stroke; opacity: .65; }
+.topt { fill: var(--iso-detail); font-family: var(--font); font-weight: 800; }
+.arrows path { fill: none; stroke: var(--iso-detail); stroke-width: 1.5; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; }
+
+.link line { stroke: var(--link); stroke-width: 1.3; stroke-dasharray: 5 5; }
+.link.on line { stroke: var(--c); }
+@media (prefers-reduced-motion: no-preference) { .link.on line { animation: dash .7s linear infinite; } }
+@keyframes dash { to { stroke-dashoffset: -10; } }
+.alabel { font-family: var(--font); }
+.alabel .n { fill: var(--text); font-weight: 700; font-size: 13px; }
+.alabel .ip { fill: var(--dim); font-size: 12px; }
+.actor.on .alabel .n { fill: var(--accent-text); }
+.chip rect { fill: var(--panel); stroke: var(--c); }
+.chip text { fill: var(--c); font-family: var(--font); font-size: 11px; font-weight: 700; }
+
+/* token cards */
+.tokens { display: grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: 12px; margin-top: 6px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 14px; grid-column: span 6; min-width: 0; }
+.card.w4 { grid-column: span 4; } .card.w8 { grid-column: span 8; } .card.w12 { grid-column: span 12; }
+.card h4 { font-size: 11px; font-weight: 700; letter-spacing: .1em; color: var(--dim); margin-bottom: 12px; display: flex; gap: 8px; }
+.card h4 span { color: var(--accent-text); }
+.sw { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 8px; }
+.swi { border: 1px solid var(--line); border-radius: 3px; overflow: hidden; }
+.swi .c { height: 42px; background: var(--v); border-bottom: 1px solid var(--line); }
+.swi .t { padding: 5px 8px; font-size: 11px; }
+.swi .t b { display: block; font-size: 11px; }
+.swi .t span { color: var(--dim); }
+.lay { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.layi { display: grid; grid-template-columns: 14px 86px 1fr auto; gap: 10px; align-items: center; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.layi i { width: 12px; height: 12px; border-radius: 50%; background: var(--c); }
+.layi b { color: var(--c); letter-spacing: .05em; }
+.layi code { color: var(--dim); font-size: 11px; }
+.type div { display: grid; grid-template-columns: 150px 1fr; gap: 14px; align-items: baseline; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.type .meta { font-size: 11px; color: var(--dim); }
+.icons { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+html.embed, html.embed body { background: transparent; }
+html.embed body { padding: 0; }
+.icon-cell { border: 1px solid var(--line); border-radius: 3px; padding: 12px 8px 8px; text-align: center;
+  background-image: repeating-linear-gradient(30deg, var(--grid) 0 1px, transparent 1px 18px), repeating-linear-gradient(-30deg, var(--grid) 0 1px, transparent 1px 18px); }
+.icon-cell svg { width: 100%; height: 110px; display: block; }
+.icon-cell b { display: block; font-size: 12px; margin-top: 6px; }
+.icon-cell small { color: var(--dim); font-size: 11px; }
+.ctrls { display: flex; flex-direction: column; gap: 14px; }
+.ctrls .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.status { font-size: 11px; font-weight: 700; letter-spacing: .06em; padding: 3px 8px; border-radius: 2px; border: 1px solid var(--c); color: var(--c); display: inline-flex; align-items: center; gap: 6px; }
+.status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--c); }
+
+@media (max-width: 1080px) {
+  .app { grid-template-columns: minmax(0,1fr); grid-template-areas: "stage" "details" "flow" "list"; }
+  .flowbody { grid-template-columns: minmax(0,1fr); }
+  .tablewrap { border-right: 0; border-bottom: 1px solid var(--line); }
+  .card, .card.w4, .card.w8 { grid-column: span 12; }
+}
+@media (max-width: 560px) {
+  .search { min-width: 0; flex: 1; }
+  .trow, .taxis { grid-template-columns: 120px 1fr 64px; }
+  .type div { grid-template-columns: 1fr; gap: 2px; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></symbol>
+  <symbol id="i-sidebar" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M9.5 4.5v15"/></symbol>
+  <symbol id="i-panel" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 14.5h17"/></symbol>
+  <symbol id="i-full" viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></symbol>
+  <symbol id="i-keys" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="1.5"/><path d="M6 10h.01M9.5 10h.01M13 10h.01M16.5 10h.01M8 14h8"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5v14l11-7z" fill="currentColor"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14.5 6-6 6 6 6"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="m6 9.5 6 6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+  <symbol id="i-replay" viewBox="0 0 24 24"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m6 12.5 4 4 8-9"/></symbol>
+</svg>
+
+<div class="wrap">
+  <div class="review">
+    <div><span class="tag">AREA 2</span>Visual identity · style tile <span class="dim">— a sample to review, not the app</span></div>
+    <div class="review-r">
+      <span class="lbl">Font</span>
+      <div class="seg" id="fontSeg">
+        <button data-v="jetbrains" class="on">A · JetBrains Mono</button>
+        <button data-v="martian">B · Martian Mono</button>
+        <button data-v="plex">C · IBM Plex Mono</button>
+      </div>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <svg id="logo" class="iso" aria-hidden="true"></svg>
+      <div>
+        <h1 class="wordmark"><span class="k">K8S</span> SIMPLIFIED</h1>
+        <p class="tagline">EVERY LAYER, FROM PACKET TO POD</p>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="search"><svg class="ico"><use href="#i-search"/></svg><span>Search lessons</span><kbd>⌘ K</kbd></button>
+      <button class="ibtn" aria-label="Hide lesson list"><svg class="ico"><use href="#i-sidebar"/></svg></button>
+      <button class="ibtn" aria-label="Diagram only"><svg class="ico"><use href="#i-panel"/></svg></button>
+      <button class="ibtn" aria-label="Fullscreen"><svg class="ico"><use href="#i-full"/></svg></button>
+      <button class="ibtn" aria-label="Keyboard shortcuts"><svg class="ico"><use href="#i-keys"/></svg></button>
+      <span class="vsep"></span>
+      <div class="seg icon" id="themeSeg">
+        <button data-v="light" aria-label="Light mode"><svg class="ico"><use href="#i-sun"/></svg></button>
+        <button data-v="dark" aria-label="Dark mode" class="on"><svg class="ico"><use href="#i-moon"/></svg></button>
+      </div>
+    </div>
+  </header>
+
+  <main class="app">
+    <aside class="panel list">
+      <div class="ph"><h2>Lessons</h2></div>
+      <div class="tabs">
+        <button class="on">ALL<i>24</i></button><button>NETWORK<i>7</i></button><button>NODE<i>5</i></button><button>CONTROL<i>5</i></button><button>APP<i>7</i></button>
+      </div>
+      <ul class="lessons">
+        <li class="lesson open">
+          <div class="lrow"><span class="ring run"></span><div><b>Deploy an app</b><small>kubectl apply → Pod Running</small></div><svg class="ico"><use href="#i-down"/></svg></div>
+          <ol class="steps">
+            <li class="done"><span class="num"><svg class="ico" style="width:12px;height:12px;stroke-width:3"><use href="#i-check"/></svg></span><div><b>SEND THE MANIFEST</b><small>kubectl posts JSON to the API</small></div></li>
+            <li class="done"><span class="num"><svg class="ico" style="width:12px;height:12px;stroke-width:3"><use href="#i-check"/></svg></span><div><b>GATEKEEPING</b><small>Who are you, are you allowed</small></div></li>
+            <li class="done"><span class="num"><svg class="ico" style="width:12px;height:12px;stroke-width:3"><use href="#i-check"/></svg></span><div><b>SAVED TO ETCD</b><small>A record of what you want</small></div></li>
+            <li class="done"><span class="num"><svg class="ico" style="width:12px;height:12px;stroke-width:3"><use href="#i-check"/></svg></span><div><b>CONTROLLERS REACT</b><small>ReplicaSet, then 3 Pods</small></div></li>
+            <li class="active"><span class="num">5</span><div><b>SCHEDULING</b><small>The scheduler picks a node</small></div></li>
+            <li><span class="num">6</span><div><b>KUBELET STARTS IT</b><small>Sandbox, IP, image, container</small></div></li>
+            <li><span class="num">7</span><div><b>READY FOR TRAFFIC</b><small>Probe passes, endpoints update</small></div></li>
+          </ol>
+        </li>
+        <li class="lesson"><div class="lrow"><span class="ring"></span><div><b>A request finds your Pod</b><small>Load balancer to container</small></div><svg class="ico"><use href="#i-right"/></svg></div></li>
+        <li class="lesson"><div class="lrow"><span class="ring"></span><div><b>Rolling update</b><small>New version, zero downtime</small></div><svg class="ico"><use href="#i-right"/></svg></div></li>
+        <li class="lesson"><div class="lrow"><span class="ring"></span><div><b>Pod to Pod, across nodes</b><small>The VXLAN overlay</small></div><svg class="ico"><use href="#i-right"/></svg></div></li>
+        <li class="lesson"><div class="lrow"><span class="ring"></span><div><b>DNS in the cluster</b><small>CoreDNS and ndots:5</small></div><svg class="ico"><use href="#i-right"/></svg></div></li>
+        <li class="lesson"><div class="lrow"><span class="ring"></span><div><b>Probes and restarts</b><small>CrashLoopBackOff, explained</small></div><svg class="ico"><use href="#i-right"/></svg></div></li>
+      </ul>
+    </aside>
+
+    <section class="panel stage">
+      <div class="stage-top">
+        <div class="seg"><button class="on">Cluster</button><button>Sequence</button></div>
+        <div class="crumbs"><b>CLUSTER</b><span>/</span>NODE-2<span>/</span>POD</div>
+      </div>
+      <div class="canvas"><svg id="stage" class="iso" viewBox="0 0 600 360" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Sample cluster diagram with a moving event"></svg></div>
+    </section>
+
+    <aside class="panel details">
+      <div class="ph"><h2>Step details</h2><button class="btn sm"><svg class="ico" style="width:12px;height:12px"><use href="#i-back"/></svg>Overview</button></div>
+      <div class="dbody">
+        <div class="kicker">STEP 5 OF 7</div>
+        <h3 class="display">SCHEDULING</h3>
+        <p class="sub">The scheduler picks a node</p>
+        <p class="body">The Pod exists, but nothing runs it yet: its <code>spec.nodeName</code> is empty. The scheduler watches for exactly these Pods. It drops nodes that can't fit the Pod's CPU and memory requests, scores the rest, and writes its pick back to the API server as a Binding.</p>
+        <dl class="facts">
+          <div><dt>WATCHES</dt><dd>Pods with no node</dd></div>
+          <div><dt>FILTER</dt><dd>3 nodes → 2 fit</dd></div>
+          <div><dt>PICK</dt><dd>node-2</dd></div>
+          <div><dt>WRITES</dt><dd>Binding → API server</dd></div>
+        </dl>
+      </div>
+    </aside>
+
+    <section class="panel flow" id="flow">
+      <div class="ph flowh">
+        <div class="left">
+          <h2>Event flow</h2>
+          <div class="seg" id="flowSeg"><button class="on" data-v="events">Events</button><button data-v="timing">Timing</button></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="transport">
+          <span class="speed">1× <svg class="ico" style="width:12px;height:12px"><use href="#i-down"/></svg></span>
+          <button class="ibtn" aria-label="Previous step"><svg class="ico"><use href="#i-back"/></svg></button>
+          <button class="btn primary"><svg class="ico" style="width:12px;height:12px"><use href="#i-play"/></svg>Play</button>
+          <button class="btn">Step</button>
+          <button class="ibtn" aria-label="Replay"><svg class="ico"><use href="#i-replay"/></svg></button>
+        </div>
+      </div>
+      <div class="flowbody">
+        <div class="tablewrap">
+          <table>
+            <thead><tr><th>NO.</th><th>TIME</th><th>SOURCE</th><th>DESTINATION</th><th>LAYER</th><th>INFO</th><th>SIZE</th></tr></thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <div class="decoder" id="decoder"></div>
+      </div>
+      <div class="timing" id="timing"></div>
+    </section>
+  </main>
+
+  <section class="tokens">
+    <div class="card w8"><h4><span>01</span>SURFACES, TEXT, ACCENT</h4><div class="sw" id="swSurf"></div></div>
+    <div class="card w4"><h4><span>02</span>LAYER COLORS</h4><div class="lay" id="swLayer"></div></div>
+    <div class="card w12"><h4><span>03</span>ICONS · ISOMETRIC LINE ART</h4><div class="icons" id="icons"></div></div>
+    <div class="card w8"><h4><span>04</span>TYPE</h4>
+      <div class="type">
+        <div><span class="meta">DISPLAY · 24 / 800</span><span class="display" style="margin:0">SCHEDULING</span></div>
+        <div><span class="meta">PANEL TITLE · 14 / 700</span><span style="font-size:14px;font-weight:700;letter-spacing:.08em">EVENT FLOW</span></div>
+        <div><span class="meta">BODY · 13 / 400</span><span>The scheduler drops nodes that can't fit the Pod, scores the rest, and writes a Binding.</span></div>
+        <div><span class="meta">LABEL · 11 / 700</span><span style="font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--dim)">DESTINATION</span></div>
+        <div><span class="meta">DATA · 12 / 400</span><span style="font-size:12px;font-variant-numeric:tabular-nums">10.244.2.17:8080 · 0.042s · 1.1 KB</span></div>
+        <div><span class="meta">CODE · 12 / 400</span><span style="font-size:12px"><code>spec.nodeName: "node-2"</code></span></div>
+      </div>
+    </div>
+    <div class="card w4"><h4><span>05</span>CONTROLS</h4>
+      <div class="ctrls">
+        <div class="row"><button class="btn primary"><svg class="ico" style="width:12px;height:12px"><use href="#i-play"/></svg>Play</button><button class="btn">Step</button><button class="ibtn" aria-label="Replay"><svg class="ico"><use href="#i-replay"/></svg></button></div>
+        <div class="row"><div class="seg"><button class="on">Cluster</button><button>Sequence</button></div></div>
+        <div class="row"><span class="status" style="--c:var(--l-control)">PENDING</span><span class="status" style="--c:var(--ok)">RUNNING</span><span class="status" style="--c:var(--l-drop)">CRASHLOOPBACKOFF</span><span class="status" style="--c:var(--dim)">TERMINATING</span></div>
+        <div class="row"><kbd>⌘ K</kbd><kbd>SPACE</kbd><kbd>←</kbd><kbd>→</kbd><kbd>R</kbd><kbd>?</kbd></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const root = document.documentElement;
+if (window.self !== window.top) {
+  root.classList.add("embed");
+  if (matchMedia("(prefers-color-scheme: light)").matches) {
+    root.dataset.theme = "light";
+    document.querySelectorAll("#themeSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === "light"));
+  }
+}
+const C30 = Math.cos(Math.PI / 6);
+const P = (x, y, z, s) => [(x - y) * C30 * s, (x + y) * 0.5 * s - z * s];
+const pts = a => a.map(p => p[0].toFixed(2) + "," + p[1].toFixed(2)).join(" ");
+const mtx = (a, b, c, d, e, f) => `matrix(${[a, b, c, d, e, f].map(n => +n.toFixed(3)).join(" ")})`;
+const faceY = (x, y, z, s) => { const o = P(x, y, z, s); return mtx(C30 * s, .5 * s, 0, s, o[0], o[1]); };
+const faceX = (x, y, z, s) => { const o = P(x, y, z, s); return mtx(C30 * s, -.5 * s, 0, s, o[0], o[1]); };
+const faceT = (x, y, z, s) => { const o = P(x, y, z, s); return mtx(C30 * s, .5 * s, -C30 * s, .5 * s, o[0], o[1]); };
+
+function box(x, y, z, w, d, h, s, cls = "") {
+  const p = (a, b, c) => P(a, b, c, s);
+  const top = [p(x, y, z + h), p(x + w, y, z + h), p(x + w, y + d, z + h), p(x, y + d, z + h)];
+  const left = [p(x, y + d, z), p(x + w, y + d, z), p(x + w, y + d, z + h), p(x, y + d, z + h)];
+  const right = [p(x + w, y, z), p(x + w, y + d, z), p(x + w, y + d, z + h), p(x + w, y, z + h)];
+  return `<g class="${cls}"><polygon class="f-l" points="${pts(left)}"/><polygon class="f-r" points="${pts(right)}"/><polygon class="f-t" points="${pts(top)}"/></g>`;
+}
+function cyl(z, r, h, s) {
+  const rx = 1.2247 * r * s, ry = .7071 * r * s, yb = -z * s, yt = -(z + h) * s;
+  return `<g><path class="f-l" d="M${-rx},${yb} A${rx},${ry} 0 0 0 ${rx},${yb} L${rx},${yt} A${rx},${ry} 0 0 1 ${-rx},${yt} Z"/><ellipse class="f-t" cx="0" cy="${yt}" rx="${rx}" ry="${ry}"/></g>`;
+}
+function arrow(x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L, k = 1.1, a = .6;
+  const h1 = [x2 - k * (ux * Math.cos(a) - uy * Math.sin(a)), y2 - k * (uy * Math.cos(a) + ux * Math.sin(a))];
+  const h2 = [x2 - k * (ux * Math.cos(-a) - uy * Math.sin(-a)), y2 - k * (uy * Math.cos(-a) + ux * Math.sin(-a))];
+  return `M${x1} ${y1} L${x2} ${y2} M${h1[0]} ${h1[1]} L${x2} ${y2} L${h2[0]} ${h2[1]}`;
+}
+
+const ICONS = {
+  kubectl(s) {
+    let g = box(-6, -4, 0, 12, 8, .8, s);
+    g += box(-6, -4, .8, 12, .6, 7.6, s);
+    g += `<g transform="${faceY(-6, -3.4, 8.4, s)}"><rect class="display-r" x=".7" y=".7" width="10.6" height="6.2"/><text class="scr" x="1.3" y="2.6" font-size="1.25">&gt;_ kubectl</text><text class="scr d" x="1.3" y="4.2" font-size="1.1">apply -f</text><text class="scr d" x="1.3" y="5.6" font-size="1.1">web.yaml</text></g>`;
+    let k = "";
+    for (let j = 0; j < 3; j++) for (let i = 0; i < 9; i++) k += `<rect x="${(1 + i * 1.12).toFixed(2)}" y="${(.9 + j * 1.1).toFixed(2)}" width=".8" height=".75"/>`;
+    g += `<g class="keys" transform="${faceT(-6, -3.4, .8, s)}">${k}<rect x="4" y="4.6" width="4" height="2.2"/></g>`;
+    return g;
+  },
+  controlPlane(s) {
+    let g = "";
+    for (let k = 0; k < 3; k++) {
+      const z = k * 2.7;
+      g += box(-5, -5, z, 10, 10, 2.2, s);
+      g += `<g transform="${faceX(5, 5, z + 2.2, s)}"><circle class="led" cx="1.3" cy="1.1" r=".38"/><circle class="led b" cx="2.5" cy="1.1" r=".38"/><line class="det" x1="5" y1=".8" x2="8.8" y2=".8"/><line class="det" x1="5" y1="1.4" x2="8.8" y2="1.4"/></g>`;
+      g += `<g transform="${faceY(-5, 5, z + 2.2, s)}"><line class="det" x1="1" y1="1.1" x2="9" y2="1.1"/></g>`;
+    }
+    g += `<g transform="${faceT(-5, -5, 7.6, s)}"><text class="topt" x="5" y="5.9" font-size="2.6" text-anchor="middle">API</text></g>`;
+    return g;
+  },
+  etcd(s) {
+    let g = "";
+    for (let k = 0; k < 3; k++) g += cyl(k * 2.5, 4.4, 1.9, s);
+    g += `<g transform="${faceT(0, 0, 6.9, s)}"><text class="topt" x="0" y=".8" font-size="2" text-anchor="middle">etcd</text></g>`;
+    return g;
+  },
+  node(s, hot = 3) {
+    let g = box(-8, -8, 0, 16, 16, 2.4, s);
+    g += `<g transform="${faceX(8, 8, 2.4, s)}">${[1.3, 2.6, 3.9].map((u, i) => `<circle class="led${i === 1 ? " b" : ""}" cx="${u}" cy="1.2" r=".4"/>`).join("")}<line class="det" x1="6" y1=".9" x2="14.5" y2=".9"/><line class="det" x1="6" y1="1.6" x2="14.5" y2="1.6"/></g>`;
+    [[-6.8, -6.8], [1.3, -6.8], [-6.8, 1.3], [1.3, 1.3]].forEach((p, i) => { g += box(p[0], p[1], 2.4, 5.5, 5.5, 4.4, s, i === hot ? "hot" : ""); });
+    return g;
+  },
+  pod(s) {
+    const p = (a, b, c) => P(a, b, c, s);
+    const L = (a, b) => `<line class="hid" x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`;
+    let g = L(p(-5, -5, 0), p(-5, -5, 9)) + L(p(-5, -5, 0), p(5, -5, 0)) + L(p(-5, -5, 0), p(-5, 5, 0));
+    g += box(-3.8, -3.8, 0, 2.6, 2.6, 2.6, s);
+    g += box(-1.2, -1.2, 0, 5, 5, 6.2, s, "hot");
+    g += `<g transform="${faceY(-1.2, 3.8, 6.2, s)}"><text class="topt" x=".7" y="1.9" font-size="1.4">app</text></g>`;
+    g += box(-5, -5, 0, 10, 10, 9, s, "glass");
+    return g;
+  },
+  lb(s) {
+    let g = box(-6, -6, 0, 12, 12, 2.6, s);
+    g += `<g class="arrows" transform="${faceT(-6, -6, 2.6, s)}"><path d="${arrow(1.6, 6, 5.2, 6)} ${arrow(5.2, 6, 10.2, 2.4)} ${arrow(5.2, 6, 10.4, 6)} ${arrow(5.2, 6, 10.2, 9.6)}"/></g>`;
+    g += `<g transform="${faceX(6, 6, 2.6, s)}"><circle class="led" cx="1.2" cy="1.3" r=".4"/><circle class="led b" cx="2.4" cy="1.3" r=".4"/><line class="det" x1="5" y1="1.3" x2="10.8" y2="1.3"/></g>`;
+    return g;
+  },
+  logo(s) {
+    const p = (a, b, c) => P(a, b, c, s);
+    const L = (a, b) => `<line class="hid" x1="${a[0].toFixed(1)}" y1="${a[1].toFixed(1)}" x2="${b[0].toFixed(1)}" y2="${b[1].toFixed(1)}"/>`;
+    return L(p(-5, -5, 0), p(-5, -5, 10)) + L(p(-5, -5, 0), p(5, -5, 0)) + L(p(-5, -5, 0), p(-5, 5, 0)) +
+      box(-2.2, -2.2, 0, 4.4, 4.4, 4.4, s, "hot") + box(-5, -5, 0, 10, 10, 10, s, "glass");
+  }
+};
+
+function fit(svg, pad = 3) {
+  const b = svg.getBBox();
+  svg.setAttribute("viewBox", `${(b.x - pad).toFixed(1)} ${(b.y - pad).toFixed(1)} ${(b.width + pad * 2).toFixed(1)} ${(b.height + pad * 2).toFixed(1)}`);
+}
+
+const logo = document.getElementById("logo");
+logo.innerHTML = ICONS.logo(2);
+fit(logo, 2);
+
+const gallery = [
+  ["kubectl", "You", "where commands start", s => ICONS.kubectl(s)],
+  ["controlPlane", "Control plane", "API server, scheduler, controllers", s => ICONS.controlPlane(s)],
+  ["etcd", "etcd", "the cluster's memory", s => ICONS.etcd(s)],
+  ["node", "Worker node", "runs your Pods", s => ICONS.node(s)],
+  ["pod", "Pod", "pause container + your app", s => ICONS.pod(s)],
+  ["lb", "Load balancer", "traffic from outside", s => ICONS.lb(s)]
+];
+const iconsEl = document.getElementById("icons");
+iconsEl.innerHTML = gallery.map(([k, n, d]) => `<div class="icon-cell"><svg class="iso" data-k="${k}" aria-hidden="true"></svg><b>${n}</b><small>${d}</small></div>`).join("");
+iconsEl.querySelectorAll("svg").forEach((svg, i) => { svg.innerHTML = gallery[i][3](6); fit(svg, 4); });
+
+/* stage */
+const stage = document.getElementById("stage");
+const O = [300, 168], G = 6.2, SI = 4.6;
+const W = (gx, gy) => { const p = P(gx, gy, 0, G); return [O[0] + p[0], O[1] + p[1]]; };
+const actors = {
+  cp: { at: W(0, 0), icon: ICONS.controlPlane(SI), name: "Control plane", ip: "10.0.0.10:6443", lx: -54, ly: -24, anchor: "end" },
+  etcd: { at: W(0, -24), icon: ICONS.etcd(SI), name: "etcd", ip: "10.0.0.10:2379", lx: 36, ly: -6, anchor: "start" },
+  laptop: { at: W(0, 26), icon: ICONS.kubectl(SI), name: "You · kubectl", ip: "192.168.1.10", lx: 0, ly: 46, anchor: "middle" },
+  node: { at: W(26, 0), icon: ICONS.node(SI, 3), name: "node-2", ip: "10.0.1.12", lx: 0, ly: 56, anchor: "middle" }
+};
+const links = [["cp", "laptop"], ["cp", "etcd"], ["cp", "node"]];
+function linkSvg(a, b) {
+  const A = actors[a].at, B = actors[b].at, dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy), nx = -dy / L * 3, ny = dx / L * 3;
+  return `<g class="link" data-l="${a}-${b}"><line x1="${A[0] + nx}" y1="${A[1] + ny}" x2="${B[0] + nx}" y2="${B[1] + ny}"/><line x1="${A[0] - nx}" y1="${A[1] - ny}" x2="${B[0] - nx}" y2="${B[1] - ny}"/></g>`;
+}
+let html = links.map(([a, b]) => linkSvg(a, b)).join("");
+for (const [k, a] of Object.entries(actors)) {
+  html += `<g class="actor" data-a="${k}"><g transform="translate(${a.at[0].toFixed(1)} ${a.at[1].toFixed(1)})">${a.icon}</g>
+    <g class="alabel" transform="translate(${(a.at[0] + a.lx).toFixed(1)} ${(a.at[1] + a.ly).toFixed(1)})" text-anchor="${a.anchor}"><text class="n">${a.name}</text><text class="ip" y="16">${a.ip}</text></g></g>`;
+}
+html += `<g id="pkt" style="--c:var(--l-api)"><circle r="11" fill="var(--c)" opacity=".22"/><circle r="5" fill="var(--c)" stroke="var(--panel)" stroke-width="2"/><g class="chip" transform="translate(0 -24)"><rect x="-60" y="-11" width="120" height="20" rx="3"/><text text-anchor="middle" y="3.5">…</text></g></g>`;
+stage.innerHTML = html;
+
+const segs = [
+  { a: "laptop", b: "cp", c: "--l-api", t: "POST /apis/apps/v1/…/deployments" },
+  { a: "cp", b: "etcd", c: "--l-state", t: "Txn put /registry/deployments/…/web" },
+  { a: "cp", b: "node", c: "--l-control", t: "WATCH MODIFIED pod → node-2" },
+  { a: "node", b: "cp", c: "--l-api", t: "PATCH pod status: Running" }
+];
+const pkt = document.getElementById("pkt"), chipRect = pkt.querySelector("rect"), chipText = pkt.querySelector(".chip text");
+function setSeg(i) {
+  const sg = segs[i];
+  pkt.style.setProperty("--c", `var(${sg.c})`);
+  chipText.textContent = sg.t;
+  const w = chipText.getComputedTextLength() + 18;
+  chipRect.setAttribute("x", -w / 2); chipRect.setAttribute("width", w);
+  stage.querySelectorAll(".link").forEach(l => {
+    const on = l.dataset.l === `${sg.a}-${sg.b}` || l.dataset.l === `${sg.b}-${sg.a}`;
+    l.classList.toggle("on", on); l.style.setProperty("--c", `var(${sg.c})`);
+  });
+  stage.querySelectorAll(".actor").forEach(a => a.classList.toggle("on", a.dataset.a === sg.a));
+}
+function place(i, t) {
+  const sg = segs[i], A = actors[sg.a].at, B = actors[sg.b].at, u = .2 + .6 * t;
+  pkt.setAttribute("transform", `translate(${(A[0] + (B[0] - A[0]) * u).toFixed(1)} ${(A[1] + (B[1] - A[1]) * u).toFixed(1)})`);
+}
+const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+if (reduce) { setSeg(0); place(0, .5); }
+else {
+  const DUR = 1700, HOLD = 650;
+  let i = 0, start = null;
+  setSeg(0);
+  const tick = now => {
+    if (start === null) start = now;
+    const el = now - start;
+    if (el > DUR + HOLD) { i = (i + 1) % segs.length; start = now; setSeg(i); }
+    const t = Math.min(1, el / DUR), e = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    place(i, e);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+
+/* legend + layers */
+const LAYERS = [
+  ["api", "API", "--l-api", "requests to the API server"],
+  ["state", "STATE", "--l-state", "reads and writes in etcd"],
+  ["control", "CONTROL", "--l-control", "watches, controllers, scheduler"],
+  ["node", "NODE", "--l-node", "kubelet and the container runtime"],
+  ["net", "NETWORK", "--l-net", "packets on the wire"],
+  ["drop", "DROP", "--l-drop", "denied, failed or killed"]
+];
+const LN = Object.fromEntries(LAYERS.map(l => [l[0], l]));
+document.getElementById("legend").innerHTML = LAYERS.slice(0, 5).map(l => `<span><i style="--c:var(${l[2]})"></i>${l[1]}</span>`).join("");
+
+/* event rows */
+const POD = "web-6f7c9d8b4-x2kqp";
+const rows = [
+  { t: "0.000s", src: "kubectl", dst: "kube-apiserver", l: "api", info: "POST /apis/apps/v1/namespaces/default/deployments", size: "1.1 KB", title: "CREATE DEPLOYMENT",
+    dec: [["HTTP/2 REQUEST", [["method", "POST"], ["path", "/apis/apps/v1/namespaces/default/deployments"], ["host", "10.0.0.10:6443"], ["auth", "client certificate (CN=you)"]]],
+          ["BODY · Deployment", [["metadata.name", "\"web\""], ["spec.replicas", "3"], ["…containers[0].image", "registry.example.com/shop/web:1.4.2"]]]],
+    note: "Before this, kubectl sent GET …/deployments/web and got 404 Not Found, so it creates the object instead of patching it." },
+  { t: "0.004s", src: "kube-apiserver", dst: "etcd", l: "state", info: "Txn put /registry/deployments/default/web", size: "0.9 KB", title: "STORE IN ETCD",
+    dec: [["gRPC · etcdserverpb.KV/Txn", [["compare", "mod_revision = 0 (only if new)"], ["success", "put"], ["key", "/registry/deployments/default/web"], ["value", "protobuf, starts with k8s\\0"]]],
+          ["RESULT", [["revision", "48211"]]]],
+    note: "Nothing is running yet. etcd now holds a record of what you asked for, and that's all." },
+  { t: "0.006s", src: "kube-apiserver", dst: "deployment ctrl", l: "control", info: "WATCH ADDED Deployment default/web", size: "1.2 KB", title: "WATCH EVENT",
+    dec: [["WATCH STREAM", [["request", "GET /apis/apps/v1/deployments?watch=true"], ["type", "ADDED"], ["object", "Deployment default/web"], ["resourceVersion", "48211"]]]],
+    note: "Controllers never poll. They hold a long-lived watch, and the API server pushes each change to them." },
+  { t: "0.011s", src: "deployment ctrl", dst: "kube-apiserver", l: "api", info: "POST …/replicasets  web-6f7c9d8b4", size: "1.4 KB", title: "CREATE REPLICASET",
+    dec: [["BODY · ReplicaSet", [["metadata.name", "web-6f7c9d8b4"], ["ownerReferences", "Deployment/web"], ["labels.pod-template-hash", "6f7c9d8b4"], ["spec.replicas", "3"]]]] },
+  { t: "0.017s", src: "replicaset ctrl", dst: "kube-apiserver", l: "api", info: `POST /api/v1/namespaces/default/pods  ${POD}`, size: "2.3 KB", title: "CREATE POD (1 OF 3)",
+    dec: [["BODY · Pod", [["metadata.generateName", "web-6f7c9d8b4-"], ["metadata.name", POD], ["spec.nodeName", "\"\"  (no node yet)"], ["status.phase", "Pending"]]]] },
+  { t: "0.042s", src: "kube-scheduler", dst: "kube-apiserver", l: "api", info: `POST …/pods/${POD}/binding  → node-2`, size: "0.3 KB", title: "BINDING",
+    dec: [["HTTP/2 REQUEST", [["method", "POST"], ["path", `/api/v1/namespaces/default/pods/${POD}/binding`], ["encoding", "protobuf (shown as JSON)"]]],
+          ["BODY · Binding", [["kind", "Binding"], ["metadata.name", POD], ["target.kind", "Node"], ["target.name", "node-2", true]]],
+          ["EFFECT ON THE POD", [["spec.nodeName", "\"\" → \"node-2\"", true], ["conditions.PodScheduled", "True"]]]] },
+  { t: "0.046s", src: "kube-apiserver", dst: "kubelet · node-2", l: "control", info: `WATCH MODIFIED Pod ${POD}`, size: "2.4 KB", title: "KUBELET SEES ITS POD",
+    dec: [["WATCH STREAM", [["request", "GET /api/v1/pods?fieldSelector=spec.nodeName=node-2&watch=true"], ["type", "MODIFIED"], ["spec.nodeName", "node-2"]]]],
+    note: "Each kubelet only watches Pods assigned to its own node." },
+  { t: "0.058s", src: "kubelet", dst: "containerd", l: "node", info: `RunPodSandbox ${POD}`, size: "0.6 KB", title: "CREATE SANDBOX",
+    dec: [["gRPC · runtime.v1.RuntimeService", [["method", "RunPodSandbox"], ["socket", "unix:///run/containerd/containerd.sock"], ["creates", "pause container + network namespace"]]]] },
+  { t: "0.191s", src: "containerd", dst: "CNI plugin", l: "net", info: "ADD eth0 → 10.244.2.17/24", size: "0.4 KB", title: "GIVE THE POD AN IP",
+    dec: [["CNI ADD", [["CNI_IFNAME", "eth0"], ["CNI_NETNS", "/var/run/netns/cni-4f1c…"], ["ip", "10.244.2.17/24"], ["gateway", "10.244.2.1 (cni0 bridge)"], ["veth", "veth3b1c ⇄ eth0"]]]] },
+  { t: "0.240s", src: "kubelet", dst: "containerd", l: "node", info: "PullImage registry.example.com/shop/web:1.4.2", size: "48 MB", title: "PULL IMAGE",
+    dec: [["gRPC · runtime.v1.ImageService", [["method", "PullImage"], ["layers", "5"], ["size", "48.3 MB"], ["took", "2.6 s"]]]],
+    note: "This one call is most of the time between apply and Running. See the TIMING tab." }
+];
+const tbody = document.getElementById("rows"), dec = document.getElementById("decoder");
+tbody.innerHTML = rows.map((r, i) => `<tr data-i="${i}" tabindex="0"><td><span class="badge" style="--c:var(${LN[r.l][2]})">${i + 1}</span></td><td>${r.t}</td><td>${r.src}</td><td>${r.dst}</td><td><span class="ltag" style="--c:var(${LN[r.l][2]})">${LN[r.l][1]}</span></td><td class="info" title="${r.info}">${r.info}</td><td>${r.size}</td></tr>`).join("");
+function select(i) {
+  const r = rows[i];
+  tbody.querySelectorAll("tr").forEach(tr => tr.classList.toggle("sel", +tr.dataset.i === i));
+  dec.innerHTML = `<div class="dh"><span class="badge" style="--c:var(${LN[r.l][2]})">${i + 1}</span><div><b>${r.title}</b><small>${r.src} → ${r.dst} · ${r.t}</small></div></div>` +
+    r.dec.map(([h, kv]) => `<details open><summary>${h}</summary><dl>${kv.map(([k, v, ch]) => `<div class="kv${ch ? " ch" : ""}"><dt>${k}</dt><dd>${v}${ch ? "<em>CHANGED</em>" : ""}</dd></div>`).join("")}</dl></details>`).join("") +
+    (r.note ? `<p class="note">${r.note}</p>` : "");
+}
+tbody.addEventListener("click", e => { const tr = e.target.closest("tr"); if (tr) select(+tr.dataset.i); });
+tbody.addEventListener("keydown", e => { const tr = e.target.closest("tr"); if (tr && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); select(+tr.dataset.i); } });
+select(5);
+
+/* timing */
+const TOTAL = 4300;
+const spans = [
+  ["API write + etcd", "api", 0, 6], ["Controllers create RS + Pods", "control", 6, 17], ["Scheduling", "control", 17, 42],
+  ["Sandbox + Pod IP (CNI)", "net", 58, 214], ["Image pull · 48 MB", "node", 240, 2840], ["Container start", "node", 2840, 3010],
+  ["Readiness probe passes", "node", 3010, 4200], ["EndpointSlice updated", "control", 4200, 4215]
+];
+document.getElementById("timing").innerHTML =
+  `<div class="taxis"><span class="lbl">SPAN</span><div><span>0 s</span><span>1 s</span><span>2 s</span><span>3 s</span><span>4 s</span></div><span class="lbl" style="text-align:right">TOOK</span></div>` +
+  spans.map(([n, l, a, b]) => `<div class="trow"><span>${n}</span><div class="track"><div class="bar" style="--c:var(${LN[l][2]});left:${(a / TOTAL * 100).toFixed(2)}%;width:${((b - a) / TOTAL * 100).toFixed(2)}%"></div></div><span class="ms">${(b - a) >= 1000 ? ((b - a) / 1000).toFixed(2) + " s" : (b - a) + " ms"}</span></div>`).join("");
+document.getElementById("flowSeg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  e.currentTarget.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+  document.getElementById("flow").classList.toggle("show-timing", b.dataset.v === "timing");
+});
+
+/* swatches */
+const SURF = [["--bg", "Background"], ["--panel", "Panel"], ["--raised", "Raised"], ["--line", "Line"], ["--line-strong", "Line strong"], ["--text", "Text"], ["--dim", "Text dim"], ["--accent", "Accent · K8s blue"], ["--accent-text", "Accent text"], ["--ok", "Done / healthy"]];
+function paintSwatches() {
+  const cs = getComputedStyle(root);
+  document.getElementById("swSurf").innerHTML = SURF.map(([v, n]) => `<div class="swi"><div class="c" style="--v:var(${v})"></div><div class="t"><b>${n}</b><span>${cs.getPropertyValue(v).trim()}</span></div></div>`).join("");
+  document.getElementById("swLayer").innerHTML = LAYERS.map(l => `<div class="layi" style="--c:var(${l[2]})"><i></i><b>${l[1]}</b><span>${l[3]}</span><code>${cs.getPropertyValue(l[2]).trim()}</code></div>`).join("");
+}
+paintSwatches();
+
+function segSwitch(id, apply) {
+  document.getElementById(id).addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    e.currentTarget.querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    apply(b.dataset.v);
+  });
+}
+segSwitch("themeSeg", v => { root.dataset.theme = v; paintSwatches(); });
+segSwitch("fontSeg", v => { root.dataset.font = v; });
+</script>
+</body>
+</html>
