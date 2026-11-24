@@ -36,6 +36,10 @@ Each step has a `view` (which zoom level), a `focus` (the actors the camera fram
 
 Links like `/request-finds-pod/5` open a lesson on a given step; `/rolling-update/summary` opens its summary; `/lessons` is the lesson list and `/` the homepage. The host must serve `index.html` for every path (`wrangler.jsonc` already does).
 
+## Analytics
+
+Production builds include the cookieless [Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/) beacon when `VITE_CF_BEACON_TOKEN` is set in `.env.production`. The token is public, since it ships in the page. Without it, and in `npm run dev`, no beacon is added.
+
 ## Contributing
 
 New lessons, fixes and corrections are welcome. Fork the repo, add or edit a file in `src/data/lessons/` (see "Writing a lesson" above), make sure `npm test` and `npm run typecheck` pass, and open a pull request. If you spot something technically wrong in a lesson, an issue is just as helpful.

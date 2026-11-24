@@ -19,24 +19,25 @@ export const gracefulShutdown: Lesson = {
     [POD]: "Pod p8m4z", "web-…-x2kqp": "Pod x2kqp", [CLIENT]: "client",
   },
   overview: {
-    body: "preStop, SIGTERM, the 30-second grace period, and why requests can still arrive after shutdown starts. Deleting a Pod starts two clocks at once - the control plane removing it from the Service, and the kubelet stopping the container - and they are not synchronized. The whole craft of graceful shutdown is buying overlap between them.",
+    body: "preStop, SIGTERM, the 30-second grace period, and why requests can still arrive after shutdown starts. Deleting a Pod starts two clocks at once - the control plane removing it from the Service, and the kubelet stopping the container - and they are not synchronized. The whole craft of graceful shutdown is buying overlap between them. The times here belong to one example run; Kubernetes guarantees none of the propagation times.",
     facts: [
       ["POD", `${POD} · serving 12 rpm when deleted`],
       ["GRACE", "terminationGracePeriodSeconds 30"],
-      ["PRESTOP", "sleep 5"],
-      ["THE RACE", "endpoint removal vs iptables, up to ~1 s apart"],
+      ["PRESTOP", "sleep 5 · this example's choice"],
+      ["THE RACE", "endpoint removal vs iptables · no fixed bound"],
+      ["TIMINGS", "one example run, not limits"],
     ],
   },
   steps: [
     {
       title: "TWO CLOCKS START",
       subtitle: "nobody synchronizes them",
-      body: `The delete lands and two sequences begin in parallel. Track one, control plane: the endpointslice controller drops 10.244.2.18 from the web Service. Track two, node: the kubelet begins the 30-second countdown to kill the container. Between them sits the actual race - kube-proxy on every node has to notice track one and rewrite its iptables rules before traffic really stops, and that takes a beat longer than you'd guess.`,
+      body: `The delete lands and two sequences begin in parallel. Track one, control plane: the endpointslice controller drops 10.244.2.18 from the web Service. Track two, node: the kubelet begins the 30-second countdown to kill the container. Between them sits the actual race - kube-proxy on every node has to notice track one and rewrite its iptables rules before new connections stop landing here. How long that takes depends on three things: the watch delivering the change, kube-proxy's wait between syncs, and the time to program the rules. minSyncPeriod sets only the middle one.`,
       facts: [
-        ["TRACK 1", "endpoint out of the slice (ms)"],
+        ["TRACK 1", "endpoint out of the slice"],
         ["TRACK 2", "kubelet: 30 s countdown starts"],
         ["BETWEEN THEM", "kube-proxy × N must rewrite rules"],
-        ["GAP", "≈ 0.1-1 s of still-routing"],
+        ["GAP", "watch + sync wait + programming · no fixed bound"],
       ],
       view: "cluster",
       focus: ["cp", "node1", "node2"],
@@ -44,7 +45,7 @@ export const gracefulShutdown: Lesson = {
       events: [
         ev({
           id: "gs1", at: 0, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "ENDPOINT OUT", path: ["cp", "cp"],
-          says: "Within milliseconds, the Pod leaves the Service's endpoint list.",
+          says: "The Pod is marked not ready in the Service's endpoint list, so it should get no new traffic.",
           info: "PUT …/endpointslices/web-7xk2p  10.244.2.18 terminating",
           decoded: [sec("ENDPOINTSLICE", [["10.244.2.18", "ready=true → false · terminating=true", true], ["serving", "2 of 3 ready"]])],
         }),
@@ -56,17 +57,17 @@ export const gracefulShutdown: Lesson = {
         }),
         ev({
           id: "gs3", at: 25, src: PROXY, dst: PROXY, layer: "net", size: " - ", title: "HEARD, NOT YET APPLIED", path: ["node1", "node1"],
-          says: "kube-proxy on node-1 hears the change at once, but its next rule rewrite is up to a second away.",
-          info: "EndpointSlice change queued · next iptables sync ≤ 1 s",
-          decoded: [sec("PROPAGATION", [["watch push", "arrived in ~15 ms"], ["rule sync", "batched · iptables min-sync-period 1 s", true], ["every node", "on its own schedule"], ["until then", "DNAT can still pick the dying Pod"]])],
-          note: "This gap is the entire reason preStop hooks exist. The API said gone; the kernel's rules hadn't heard yet.",
+          says: "In this run node-1's kube-proxy hears within 25 ms, but its rules are not rewritten yet. Other nodes may hear later.",
+          info: "EndpointSlice change queued · iptables not rewritten yet",
+          decoded: [sec("PROPAGATION", [["watch push", "~15 ms here · not bounded"], ["minSyncPeriod", "1 s · minimum gap between syncs, not a deadline", true], ["programming", "takes its own time once a sync starts"], ["every node", "on its own schedule"], ["until then", "DNAT can still pick the dying Pod"]])],
+          note: "minSyncPeriod spaces out rule syncs. It does not limit how late the watch event arrives or how long the rules take to program, so 1 s here does not mean updated within 1 s. This gap is why Pods behind a Service often use a preStop delay.",
         }),
       ],
     },
     {
       title: "THE RACE, LOST",
       subtitle: "without a preStop hook",
-      body: `First, the version without a preStop hook - the default. The kubelet would send SIGTERM at once and the app would close its listener, while the rules on node-1 still point at it. Here's a request that finds that gap: DNAT'd to 10.244.2.18 by rules that were still live, it arrives at a listener that is already closing - connection refused, a reset mid-request at worst. The fix isn't to prevent this; it's to make it survivable: the client's library retries, hits a fresh endpoint, and the user sees a 40-ms wobble, not an error page.`,
+      body: `First, the version without a preStop hook - the default. The kubelet would send SIGTERM at once and the app would close its listener, while the rules on node-1 still point at it. Here's a request that finds that gap: DNAT'd to 10.244.2.18 by rules that were still live, it arrives at a listener that is already closing - connection refused, a reset mid-request at worst. The fix isn't to prevent this; it's to make it survivable: the client's library retries, this time draws a healthy endpoint, and the user sees a 40-ms wobble, not an error page. Until node-1's rules are rewritten, a retry could draw the dying Pod again.`,
       facts: [
         ["REQUEST", `GET /cart · ${CLIENT}`],
         ["DNAT", "→ 10.244.2.18:8080 (stale rule)"],
@@ -78,7 +79,7 @@ export const gracefulShutdown: Lesson = {
       events: [
         ev({
           id: "gs4", at: 60, src: CLIENT, dst: POD, layer: "net", size: "0.4 KB", title: "INTO THE GAP", path: ["node1", "node2"],
-          says: "Without a hook: one request, routed by rules a fraction of a second out of date, reaches a Pod that already got SIGTERM.",
+          says: "Without a hook: one request, routed by rules that are out of date, reaches a Pod that already got SIGTERM.",
           info: "SYN → DNAT 10.244.2.18:8080 (rule still installed)",
           decoded: [sec("WHY IT LANDED HERE", [["rule state", "pre-change snapshot"], ["conntrack", "fresh connection - no old entry"]])],
         }),
@@ -90,37 +91,39 @@ export const gracefulShutdown: Lesson = {
         }),
         ev({
           id: "gs6", at: 118, src: CLIENT, dst: "web-…-x2kqp", layer: "net", size: "0.4 KB", title: "RETRY WINS", path: ["node1", "node2"],
-          says: "The retry lands on a healthy endpoint and the request costs 38 extra milliseconds.",
+          says: "This retry draws a healthy endpoint, so in this run the request costs 38 extra milliseconds.",
           info: "retry → 10.244.2.17:8080 · 200 OK",
-          decoded: [sec("RECOVERY", [["retry policy", "client library, 3 attempts"], ["picked", "10.244.2.17 (fresh rules)"], ["user-visible cost", "≈ 38 ms", true]])],
+          decoded: [sec("RECOVERY", [["retry policy", "client library, 3 attempts"], ["picked", "10.244.2.17 · a new random draw"], ["guaranteed", "no - stale rules can pick the dying Pod again"], ["user-visible cost", "≈ 38 ms in this run", true]])],
           note: "Zero downtime is a group project: the platform races the rules, and the app's clients must tolerate a retry. Neither half works alone.",
         }),
       ],
     },
     {
       title: "PRESTOP",
-      subtitle: "buying the overlap",
-      body: `Now the version this Pod actually has. Back on node-2, the kubelet runs the preStop hook before anything terminal happens: sleep 5. Five seconds of deliberate nothing, while the container keeps serving normally. That's most of the propagation gap from step 1 bought outright, and it's why the arithmetic of shutdown works: 30 total = 5 preStop + 25 for SIGTERM and drain.`,
+      subtitle: "buying time, not proof",
+      body: `Now the version this Pod actually has. Back on node-2, the kubelet runs the preStop hook before anything terminal happens: sleep 5. Five seconds of deliberate nothing, while the container keeps serving normally. That gives the change from step 1 time to spread, but it confirms nothing: the kubelet never asks any kube-proxy whether its rules changed. When the timer ends, SIGTERM follows, even if a node is still behind. The sleep also spends the grace period: 30 total = 5 preStop + 25 for SIGTERM and drain.`,
       facts: [
         ["HOOK", "exec sleep 5"],
         ["SERVES DURING", "yes - listener stays open"],
         ["ARITHMETIC", "30 = 5 preStop + 25 drain"],
-        ["IF NO HOOK", "SIGTERM at t=0, rules still stale"],
+        ["CONFIRMS", "nothing - no node reports back"],
+        ["IF NO HOOK", "SIGTERM at t=0, rules likely stale"],
       ],
       view: "node2",
       focus: ["n2.kubelet", "n2.podB"],
       events: [
         ev({
           id: "gs7", at: 200, src: KUBELET, dst: POD, layer: "node", size: " - ", title: "RUN THE HOOK", path: ["n2.kubelet", "n2.podB"],
-          says: "Before any signal, the kubelet runs the preStop hook: five seconds of nothing.",
+          says: "Before any signal, the kubelet runs the preStop hook: five seconds for the change to spread.",
           info: "lifecycle.preStop.exec: sleep 5",
-          decoded: [sec("LIFECYCLE BLOCK", [["preStop.exec", "sleep 5", true], ["runs", "before SIGTERM, serially"], ["why 5", "≥ the rules-propagation gap (step 1)"], ["container state", "still serving traffic"]])],
+          decoded: [sec("LIFECYCLE BLOCK", [["preStop.exec", "sleep 5", true], ["runs", "before SIGTERM, serially"], ["why 5", "an assumed margin - measure your own cluster"], ["container state", "still serving traffic"]])],
         }),
         ev({
           id: "gs8", at: 5200, src: KUBELET, dst: POD, layer: "node", size: "0.1 KB", title: "HOOK DONE", path: ["n2.kubelet", "n2.podB"],
-          says: "The hook finishes; by now every node's rules agree the Pod is gone.",
+          says: "The sleep is over. The kubelet moves on without checking whether every node's rules have changed.",
           info: "preStop complete · ≈ 25 s of grace left",
-          decoded: [sec("WHERE WE STAND", [["rules on all nodes", "updated (gap closed)", true], ["grace remaining", "≈ 25 s"], ["next", "SIGTERM"]])],
+          decoded: [sec("WHERE WE STAND", [["time bought", "5 s", true], ["rules on all nodes", "assumed updated · not checked"], ["a late node", "can still send new connections here"], ["grace remaining", "≈ 25 s"], ["next", "SIGTERM, either way"]])],
+          note: "A finished sleep means five seconds passed, not that the cluster converged. Choose the delay from what you measure, keep it well inside the grace period, and let clients retry for the cases it misses.",
         }),
       ],
     },
@@ -180,6 +183,7 @@ export const gracefulShutdown: Lesson = {
       ],
     },
   ],
+  timingNote: "These times are assumptions of this example. Watch delivery and rule programming have no fixed bound, and the sleep ends on a timer, not when every node has updated.",
   timing: [
     { value: "t1", label: "endpoint out → kube-proxy hears it", layer: "net", start: 0, duration: 25 },
     { value: "t2", label: "without a hook: reset + retry", layer: "drop", start: 60, duration: 60 },
@@ -189,9 +193,10 @@ export const gracefulShutdown: Lesson = {
   ],
   summary: {
     title: "BOUGHT OVERLAP",
-    body: "Shutdown is a distributed dance with no conductor: the control plane retires the endpoint, every node's rules converge at their own pace, and the process drains at its own. preStop buys the overlap the platform can't promise, SIGTERM asks the process politely, and the 30-second grace is the exact width of the platform's patience. Deliver all three and users see nothing; skip one and step 2's reset is what they get.",
+    body: "Shutdown is a distributed dance with no conductor: the control plane retires the endpoint, every node's rules converge at their own pace, and the process drains at its own. preStop buys time for those rules to change without confirming that they did, SIGTERM asks the process politely, and the 30-second grace is the exact width of the platform's patience. Together they make step 2's reset unlikely, not impossible, so clients still need to retry.",
     facts: [
-      ["USED", "≈ 7 s of the 30 s budget"],
+      ["USED", "≈ 7 s of the 30 s budget, in this run"],
+      ["PRESTOP", "time to propagate, not confirmation"],
       ["WITHOUT PRESTOP", "1 request reset · saved by a retry"],
       ["NEXT", "Autoscaling"],
     ],

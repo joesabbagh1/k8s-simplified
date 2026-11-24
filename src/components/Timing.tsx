@@ -39,6 +39,7 @@ export default function Timing() {
       <p className="timing-note">
         Most of the time goes to <b>{longest.label.toLowerCase()}</b>: {took(longest.duration)}.
       </p>
+      {lesson.timingNote && <p className="timing-note">{lesson.timingNote}</p>}
       <Waterfall aria-label="Where the time goes" items={items} range={[0, end]} format={axisLabel} className="waterfall">
         <WaterfallHeaderRow className="wf-head">
           <WaterfallColumnHeader>SPAN</WaterfallColumnHeader>

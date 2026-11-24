@@ -122,6 +122,8 @@ export interface Lesson {
   res?: ResourcePatch
   steps: Step[]
   timing?: TimingSpan[]
+  /** shown above the timing chart, for a lesson whose times could be mistaken for guarantees */
+  timingNote?: string
   /** groups event sources and destinations into sequence-diagram lanes, e.g. "iptables" → "node-1" */
   lanes?: Record<string, string>
   summary?: { title: string; body: string; facts: Fact[] }

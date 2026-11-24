@@ -22,7 +22,7 @@ export const rollingUpdate: Lesson = {
     "kubelet · node-2": "node-2", "containerd · node-2": "node-2", [`${OLD}-p8m4z`]: "node-2",
   },
   overview: {
-    body: "Change the image of a running Deployment and watch two ReplicaSets trade Pods one at a time. At every moment at least three Pods are ready to serve, so no request is turned away, as long as the app shuts down politely.",
+    body: "Change the image of a running Deployment and watch two ReplicaSets trade Pods one at a time. At every moment at least three Pods are ready to serve, so capacity never dips. Avoiding dropped requests also takes an app that shuts down politely and clients that retry.",
     facts: [
       ["COMMAND", "kubectl set image deployment/web web=…:1.5.0"],
       ["REPLICAS", "3"],
@@ -177,7 +177,7 @@ export const rollingUpdate: Lesson = {
     {
       title: "GRACEFUL SHUTDOWN",
       subtitle: "preStop, SIGTERM, then gone",
-      body: "Zoom into node-2. The kubelet sees the deletion and starts shutting the Pod down. At the same moment kube-proxy on every node is removing the Pod from its rules, and those two things race. The preStop hook, a 5-second sleep, gives the rules time to catch up. Then the kubelet sends SIGTERM, the app finishes its open requests and exits. Had it ignored SIGTERM, SIGKILL would follow when the 30 seconds ran out.",
+      body: "Zoom into node-2. The kubelet sees the deletion and starts shutting the Pod down. At the same moment kube-proxy on every node is removing the Pod from its rules, and those two things race. The preStop hook, a 5-second sleep, gives the rules time to catch up, though nothing checks that they have. Then the kubelet sends SIGTERM, the app finishes its open requests and exits. Had it ignored SIGTERM, SIGKILL would follow when the 30 seconds ran out.",
       facts: [
         ["PRESTOP", "sleep 5"],
         ["THEN", "SIGTERM to PID 1"],
@@ -196,9 +196,9 @@ export const rollingUpdate: Lesson = {
         }),
         ev({
           id: "u14", at: 11170, src: "kubelet · node-2", dst: `${OLD}-p8m4z`, layer: "node", size: " - ", title: "RUN PRESTOP", path: ["n2.kubelet", "n2.podB"],
-          says: "First, a 5-second pause, so every node has time to stop sending it traffic.",
+          says: "First, a 5-second pause, to give every node time to stop sending it traffic. Nothing checks that they did.",
           info: "preStop: exec sleep 5",
-          decoded: [sec("lifecycle.preStop", [["exec", "sleep 5"], ["why", "let every node drop 10.244.2.18 from its rules first"]])],
+          decoded: [sec("lifecycle.preStop", [["exec", "sleep 5"], ["why", "time for nodes to drop 10.244.2.18 from their rules"], ["confirms", "nothing - a timer, not a check"]])],
         }),
         ev({
           id: "u15", at: 16170, src: "kubelet · node-2", dst: "containerd · node-2", layer: "node", size: "0.1 KB", title: "SIGTERM", path: ["n2.kubelet", "n2.containerd"],
