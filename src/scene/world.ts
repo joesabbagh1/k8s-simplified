@@ -41,6 +41,8 @@ const GEOMETRY: Record<Level, { origin: Point; k: number }> = {
   node1: { origin: [500, 320], k: 0.78 },
   node2: { origin: [500, 320], k: 0.78 },
   pod: { origin: [500, 320], k: 0.8 },
+  mesh: { origin: [500, 320], k: 0.78 },
+  ambient: { origin: [500, 320], k: 0.78 },
 }
 
 export const toScreen = (level: Level, [x, y]: Point): Point => {
@@ -196,6 +198,104 @@ const POD: Def[] = [
   },
 ]
 
+/** Two Pods with a proxy beside each app, and the control plane that configures both proxies. */
+const MESH: Def[] = [
+  {
+    id: "m.istiod", level: "mesh", g: [0, -54], foot: [23, 18], name: "istiod", sub: "the control plane · :15012",
+    about: "Istio's control plane. It adds the proxies to new Pods, signs their certificates and pushes their configuration. Requests between apps never pass through it.",
+    label: [52, -12, "start"], box: [-60, -60, 220, 40], art: memo(chip(S, 10, 8, 5, "istiod")),
+  },
+  {
+    id: "m.web", level: "mesh", g: [-60, 16], foot: [18, 16], name: "web", sub: "the app",
+    about: "The web container. It makes a plain HTTP call to api and knows nothing about the mesh.",
+    label: below(34), box: [-60, -55, 60, 60], art: memo(chip(S, 8, 7, 5, "web", "hot")),
+  },
+  {
+    id: "m.wipt", level: "mesh", g: [-60, -16], foot: [18, 14], name: "iptables", sub: "in the Pod's namespace",
+    about: "Rules in the Pod's own network namespace. They send every TCP connection the app opens to the proxy instead.",
+    label: [0, -48, "middle"], box: [-70, -75, 70, 30], art: memo(chip(S, 8, 6, 2.2, "iptables")),
+  },
+  {
+    id: "m.wproxy", level: "mesh", g: [-24, -16], foot: [23, 16], name: "istio-proxy", sub: "Envoy · out :15001",
+    about: "The sidecar: an Envoy proxy in the same Pod as web. It decides where each call goes and encrypts it.",
+    label: [0, -60, "middle"], box: [-70, -85, 70, 30], art: memo(chip(S, 10, 7, 4, "istio-proxy")),
+  },
+  {
+    id: "m.weth0", level: "mesh", g: [-24, 16], foot: [14, 12], name: "eth0", sub: "10.244.1.40",
+    about: "The web Pod's network interface. Only encrypted traffic leaves through it.",
+    label: below(30), box: [-60, -35, 60, 55], art: memo(chip(S, 6, 5, 1.6, "eth0")),
+  },
+  {
+    id: "m.aeth0", level: "mesh", g: [24, 16], foot: [14, 12], name: "eth0", sub: "10.244.2.40",
+    about: "The api Pod's network interface.",
+    label: below(30), box: [-60, -35, 60, 55], art: memo(chip(S, 6, 5, 1.6, "eth0")),
+  },
+  {
+    id: "m.aipt", level: "mesh", g: [24, -16], foot: [18, 14], name: "iptables", sub: "in the Pod's namespace",
+    about: "Rules in the Pod's own network namespace. They send every TCP connection that arrives to the proxy instead.",
+    label: [0, -48, "middle"], box: [-70, -75, 70, 30], art: memo(chip(S, 8, 6, 2.2, "iptables")),
+  },
+  {
+    id: "m.aproxy", level: "mesh", g: [60, -16], foot: [23, 16], name: "istio-proxy", sub: "Envoy · in :15006",
+    about: "The sidecar in the api Pod. It checks who is calling and whether they may, then hands the request to api.",
+    label: [0, -60, "middle"], box: [-70, -85, 70, 30], art: memo(chip(S, 10, 7, 4, "istio-proxy")),
+  },
+  {
+    id: "m.api", level: "mesh", g: [60, 16], foot: [18, 16], name: "api", sub: "the app · :8080",
+    about: "The api container. It gets a plain HTTP request from its own proxy.",
+    label: below(34), box: [-60, -55, 60, 60], art: memo(chip(S, 8, 7, 5, "api", "hot")),
+  },
+  {
+    id: "m.busybox", level: "mesh", g: [-44, 54], foot: [18, 18], name: "busybox-…-c4t2m", sub: "10.244.1.30",
+    about: "A Pod that has no business calling api.",
+    label: below(40), box: [-80, -60, 80, 70], art: memo(pod(S * 0.75)),
+  },
+  {
+    id: "m.v1b", level: "mesh", g: [20, 54], foot: [18, 18], name: "api-v1-…-m9x2t", sub: "10.244.1.42",
+    about: "Another api Pod, the same version, with a sidecar of its own.",
+    label: below(40), box: [-80, -60, 80, 70], art: memo(pod(S * 0.75)),
+  },
+  {
+    id: "m.v2", level: "mesh", g: [62, 54], foot: [18, 18], name: "api-v2-…-q7zr5", sub: "10.244.2.43",
+    about: "The new version of api, with a sidecar of its own.",
+    label: below(40), box: [-80, -60, 80, 70], art: memo(pod(S * 0.75)),
+  },
+]
+
+/** The same two Pods in ambient mode: no sidecars, one ztunnel per node and an optional waypoint. */
+const AMBIENT: Def[] = [
+  {
+    id: "a.cni", level: "ambient", g: [-54, -22], foot: [18, 14], name: "istio-cni", sub: "one per node",
+    about: "A DaemonSet that sets up the redirect inside each Pod's network namespace, from the node.",
+    label: [0, -48, "middle"], box: [-70, -75, 70, 30], art: memo(chip(S, 8, 6, 2.2, "istio-cni")),
+  },
+  {
+    id: "a.web", level: "ambient", g: [-54, 10], foot: [20, 20], name: "web-…-mv5tz", sub: "one container",
+    about: "The web Pod, with nothing added to it.",
+    label: below(44), box: [-80, -65, 80, 75], art: memo(pod(S * 0.85)),
+  },
+  {
+    id: "a.zt1", level: "ambient", g: [-22, 10], foot: [20, 16], name: "ztunnel", sub: "one per node",
+    about: "A small proxy shared by every Pod on the node. It does encryption, identity and connection-level rules, and doesn't read HTTP.",
+    label: below(38), box: [-70, -50, 70, 65], art: memo(chip(S, 9, 7, 3, "ztunnel", "hot")),
+  },
+  {
+    id: "a.waypoint", level: "ambient", g: [0, -44], foot: [23, 16], name: "waypoint", sub: "Envoy · optional",
+    about: "An Envoy proxy that runs as its own Deployment. Add one for a Service or a namespace that needs HTTP routing, retries or rules.",
+    label: [0, -60, "middle"], box: [-80, -85, 80, 30], art: memo(chip(S, 10, 7, 4, "waypoint")),
+  },
+  {
+    id: "a.zt2", level: "ambient", g: [22, 10], foot: [20, 16], name: "ztunnel", sub: "one per node",
+    about: "The proxy of the node api runs on. It ends the encrypted tunnel and hands the bytes to api.",
+    label: below(38), box: [-70, -50, 70, 65], art: memo(chip(S, 9, 7, 3, "ztunnel", "hot")),
+  },
+  {
+    id: "a.api", level: "ambient", g: [54, 10], foot: [20, 20], name: "api-v1-…-d4k8w", sub: "one container",
+    about: "The api Pod, with nothing added to it.",
+    label: below(44), box: [-80, -65, 80, 75], art: memo(pod(S * 0.85)),
+  },
+]
+
 const place = (d: Def): Actor => ({ ...d, pos: toScreen(d.level, d.g) })
 
 export const ACTORS: Actor[] = [
@@ -203,6 +303,8 @@ export const ACTORS: Actor[] = [
   ...nodeActors({ level: "node1", prefix: "n1", ip: "10.0.1.11", podCidrGateway: "10.244.1.1", flannelIp: "10.244.1.0", podA: ["web-…-kq9tw", "10.244.1.12"], podB: ["coredns-…-7fx2q", "10.244.1.3"] }),
   ...nodeActors({ level: "node2", prefix: "n2", ip: "10.0.1.12", podCidrGateway: "10.244.2.1", flannelIp: "10.244.2.0", podA: ["web-…-x2kqp", "10.244.2.17"], podB: ["web-…-p8m4z", "10.244.2.18"] }),
   ...POD,
+  ...MESH,
+  ...AMBIENT,
 ].map(place)
 
 const BADGE: Record<ResourceKind, string> = {
@@ -290,6 +392,28 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("p.pause", "p.app", [0, -12], [40, -12]),
     cable("p.eth0", "p.app", [0, 24], [40, 24], [40, -12]),
   ],
+  mesh: [
+    cable("m.istiod", "m.wproxy", [0, -54], [-24, -54], [-24, -16]),
+    cable("m.istiod", "m.aproxy", [0, -54], [60, -54], [60, -16]),
+    cable("m.web", "m.wipt", [-60, 16], [-60, -16]),
+    cable("m.wipt", "m.wproxy", [-60, -16], [-24, -16]),
+    cable("m.wproxy", "m.weth0", [-24, -16], [-24, 16]),
+    cable("m.weth0", "m.aeth0", [-24, 16], [24, 16]),
+    cable("m.aeth0", "m.aipt", [24, 16], [24, -16]),
+    cable("m.aipt", "m.aproxy", [24, -16], [60, -16]),
+    cable("m.aproxy", "m.api", [60, -16], [60, 16]),
+    cable("m.weth0", "m.v1b", [-24, 16], [0, 16], [0, 38], [20, 38], [20, 54]),
+    cable("m.weth0", "m.v2", [-24, 16], [0, 16], [0, 38], [62, 38], [62, 54]),
+    cable("m.busybox", "m.aeth0", [-44, 54], [-44, 38], [0, 38], [0, 16], [24, 16]),
+  ],
+  ambient: [
+    cable("a.cni", "a.web", [-54, -22], [-54, 10]),
+    cable("a.web", "a.zt1", [-54, 10], [-22, 10]),
+    cable("a.zt1", "a.zt2", [-22, 10], [22, 10]),
+    cable("a.zt2", "a.api", [22, 10], [54, 10]),
+    cable("a.zt1", "a.waypoint", [-22, 10], [-22, -44], [0, -44]),
+    cable("a.waypoint", "a.zt2", [0, -44], [22, -44], [22, 10]),
+  ],
 }
 
 /** Where a bus splits: drawn as a small ring. */
@@ -298,6 +422,8 @@ export const JOINTS: Record<Level, Point[]> = {
   node1: [[34, 8]],
   node2: [[34, 8]],
   pod: [],
+  mesh: [[0, 16], [0, 38], [20, 38]],
+  ambient: [],
 }
 
 /** The plate each level stands on, in ground units, and what is written on it (one line per \\n). */
@@ -306,6 +432,8 @@ export const FLOORS: Record<Level, { x0: number; x1: number; y0: number; y1: num
   node1: { x0: -70, x1: 66, y0: -58, y1: 60, text: "node-1 · 10.0.1.11", at: [8, 57] },
   node2: { x0: -70, x1: 66, y0: -58, y1: 60, text: "node-2 · 10.0.1.12", at: [8, 57] },
   pod: { x0: -14, x1: 54, y0: -34, y1: 38, text: "network namespace\nshared by pause and web", at: [-11, -30.8] },
+  mesh: { x0: -80, x1: 80, y0: -68, y1: 70, text: "the mesh · namespace default", at: [-22, 66.6] },
+  ambient: { x0: -78, x1: 78, y0: -58, y1: 46, text: "the mesh · namespace default", at: [-74, 42.6] },
 }
 
 export type Floor = (typeof FLOORS)[Level]
@@ -329,6 +457,34 @@ export const GROUPS: Group[] = [
     members: ["sched", "kcm", "etcd", "api"],
     hub: "api",
     floor: { x0: -45, x1: 17, y0: -37, y1: 22, text: "control plane", at: [-43, 19.6] },
+  },
+  {
+    id: "m.webpod", level: "mesh", name: "The web Pod",
+    about: "One Pod, one network namespace, two containers that matter: the app and its proxy. They share an IP and reach each other over localhost.",
+    members: ["m.web", "m.wipt", "m.wproxy", "m.weth0"],
+    hub: "m.weth0",
+    floor: { x0: -74, x1: -10, y0: -29, y1: 31, text: "Pod web-…-mv5tz", at: [-53, 1] },
+  },
+  {
+    id: "m.apipod", level: "mesh", name: "The api Pod",
+    about: "The Pod being called, with a proxy of its own.",
+    members: ["m.aeth0", "m.aipt", "m.aproxy", "m.api"],
+    hub: "m.aeth0",
+    floor: { x0: 10, x1: 74, y0: -29, y1: 31, text: "Pod api-v1-…-d4k8w", at: [30, 1] },
+  },
+  {
+    id: "a.node1", level: "ambient", name: "node-1",
+    about: "A worker node with one ztunnel, shared by all its Pods.",
+    members: ["a.cni", "a.web", "a.zt1"],
+    hub: "a.zt1",
+    floor: { x0: -70, x1: -8, y0: -34, y1: 34, text: "node-1 · 10.0.1.11", at: [-51, -30] },
+  },
+  {
+    id: "a.node2", level: "ambient", name: "node-2",
+    about: "Another worker node, with its own ztunnel.",
+    members: ["a.zt2", "a.api"],
+    hub: "a.zt2",
+    floor: { x0: 8, x1: 70, y0: -34, y1: 34, text: "node-2 · 10.0.1.12", at: [27, -30] },
   },
 ]
 
@@ -494,6 +650,8 @@ export const LEVEL_NAME: Record<Level, string> = {
   node1: "node-1",
   node2: "node-2",
   pod: "Pod web-…-x2kqp",
+  mesh: "Mesh, with sidecars",
+  ambient: "Mesh, ambient mode",
 }
 
 /** The chain of levels above and including this one, for the breadcrumb. */

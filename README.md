@@ -20,7 +20,7 @@ npm run build      # static site in dist/, one HTML file per page
 |---|---|
 | `src/data/lessons/*.ts` | One file per lesson: steps, the events in each step, timing spans, summary. Adding a lesson means writing one of these. |
 | `src/data/types.ts` | The lesson format. |
-| `src/scene/world.ts` | Every actor in the diagram, at three zoom levels (cluster, inside a node, inside a Pod), with positions, links and descriptions. |
+| `src/scene/world.ts` | Every actor in the diagram, at each zoom level (cluster, inside a node, inside a Pod, and two Pods in a service mesh with or without sidecars), with positions, links and descriptions. |
 | `src/scene/camera.ts` | The stage camera: the auto-framing the lesson drives, plus hand-steering — scroll to zoom at the cursor, drag or pinch to pan, +/− keys and buttons, Reset view. |
 | `src/iso/iso.ts` | Isometric drawing helpers that produce the SVG icons. |
 | `src/playback.ts`, `src/hooks.ts`, `src/store.ts` | Playback: the lesson timeline, the driver that launches and lands each event, and app state (Zustand). |
