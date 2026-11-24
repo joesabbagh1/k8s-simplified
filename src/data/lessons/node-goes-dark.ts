@@ -40,10 +40,10 @@ export const nodeGoesDark: Lesson = {
         ["SEPARATE", "status on change or every 5 min · lease every 10 s"],
       ],
       view: "cluster",
-      focus: ["cp", "node2"],
+      focus: ["api", "node2"],
       events: [
         ev({
-          id: "dk1", at: 0, src: K2, dst: API, layer: "api", size: "0.2 KB", title: "LEASE RENEWED", path: ["node2", "cp"],
+          id: "dk1", at: 0, src: K2, dst: API, layer: "api", size: "0.2 KB", title: "LEASE RENEWED", path: ["node2", "api"],
           says: "node-2 renews its lease - healthy, as it has been all morning.",
           info: `PUT ${LEASE}  renewTime 10:41:20Z`,
           decoded: [sec("BODY · LEASE", [["spec.holderIdentity", "node-2"], ["spec.renewTime", "10:41:20Z", true], ["leaseDurationSeconds", "40"], ["cost", "~200 B per 10 s"]])],
@@ -67,16 +67,16 @@ export const nodeGoesDark: Lesson = {
         ["WHO DECIDES", "node-lifecycle controller"],
       ],
       view: "cluster",
-      focus: ["cp", "node2"],
+      focus: ["api", "kcm", "node2"],
       events: [
         ev({
-          id: "dk3", at: 40000, src: "node-lifecycle ctrl", dst: API, layer: "control", size: "0.5 KB", title: "NOT READY", path: ["cp", "node2"],
+          id: "dk3", at: 40000, src: "node-lifecycle ctrl", dst: API, layer: "control", size: "0.5 KB", title: "NOT READY", path: ["kcm", "node2"],
           says: "Forty seconds after the last renewal, the controller declares node-2 NotReady.",
           info: "PATCH …/nodes/node-2  Ready=Unknown + taint unreachable",
           decoded: [sec("NODE UPDATE", [["conditions.Ready", "True → Unknown", true], ["taint added", "node.kubernetes.io/unreachable:NoExecute", true], ["checked against", "lease renewTime + 40 s"], ["timer", "node-monitor-grace-period · 40 s in this cluster"]])],
         }),
         ev({
-          id: "dk4", at: 41000, src: "endpointslice ctrl", dst: API, layer: "control", size: "0.7 KB", title: "ENDPOINTS DRAIN", path: ["cp", "cp"],
+          id: "dk4", at: 41000, src: "endpointslice ctrl", dst: API, layer: "control", size: "0.7 KB", title: "ENDPOINTS DRAIN", path: ["kcm", "api"],
           says: "The dark node's Pods are marked not ready, so the Service stops sending them new traffic.",
           info: "endpoints web: 10.244.2.17, 10.244.2.18 → ready=false",
           decoded: [sec("ENDPOINTSLICE", [["10.244.2.17", "ready=true → false", true], ["10.244.2.18", "ready=true → false"], ["why", "node-lifecycle marked the Pods Ready=False"], ["serving now", "1 of 3 - capacity down, not down-time"]])],
@@ -94,10 +94,10 @@ export const nodeGoesDark: Lesson = {
         ["TUNABLE", "tolerationSeconds per Pod"],
       ],
       view: "cluster",
-      focus: ["cp", "node2"],
+      focus: ["api", "kcm", "node2"],
       events: [
         ev({
-          id: "dk5", at: 41500, src: "node-lifecycle ctrl", dst: "node-lifecycle ctrl", layer: "control", size: " - ", title: "COUNTING DOWN", path: ["cp", "cp"],
+          id: "dk5", at: 41500, src: "node-lifecycle ctrl", dst: "node-lifecycle ctrl", layer: "control", size: " - ", title: "COUNTING DOWN", path: ["kcm", "kcm"],
           says: "For five minutes, the system deliberately does nothing about the missing Pods.",
           info: "toleration expires at 10:47:40Z (taint + 300 s)",
           decoded: [sec("THE WAIT", [["taint", "unreachable since 10:42:40"], ["tolerationSeconds", "300 (every Pod's default)", true], ["expires", "10:47:40"], ["reason", "rescheduling a DB or a busy node on a blip is worse than waiting"]])],
@@ -115,25 +115,25 @@ export const nodeGoesDark: Lesson = {
         ["TIMELINE", "40 + 300 + 7 s"],
       ],
       view: "cluster",
-      focus: ["cp", "node1"],
+      focus: ["api", "kcm", "node1"],
       pods: { node2: ["other", "terminating", "terminating"] },
       events: [
         ev({
-          id: "dk6", at: 340000, src: "taint-eviction ctrl", dst: API, layer: "drop", size: "0.4 KB", title: "EVICT", path: ["cp", "cp"],
+          id: "dk6", at: 340000, src: "taint-eviction ctrl", dst: API, layer: "drop", size: "0.4 KB", title: "EVICT", path: ["kcm", "api"],
           says: "The grace runs out and the Pods are deleted. They stay Terminating, because no kubelet can confirm.",
           info: "DELETE …/pods web-…-x2kqp, web-…-p8m4z (grace 30 s)",
           decoded: [sec("EVICTION", [["deletionTimestamp", "set", true], ["confirmation", "needs node-2's kubelet - it's off"], ["state", "Terminating, until node-2 returns or someone force-deletes", true]])],
           note: "A StatefulSet wouldn't move on here: it waits for the old Pod to be truly gone before reusing its name, so its Pod stays down until node-2 returns or you force-delete it.",
         }),
         ev({
-          id: "dk7", at: 340100, src: "replicaset ctrl", dst: API, layer: "control", size: "2.3 KB", title: "REBUILD ×2", path: ["cp", "cp"],
+          id: "dk7", at: 340100, src: "replicaset ctrl", dst: API, layer: "control", size: "2.3 KB", title: "REBUILD ×2", path: ["kcm", "api"],
           says: "The ReplicaSet does its ordinary arithmetic: wants 3, has 1, creates 2.",
           info: "POST …/pods ×2 (scheduler → node-1)",
           decoded: [sec("RECONCILE, AGAIN", [["have", "1 (node-1) · terminating Pods don't count"], ["creates", "web-…-t4c8e, web-…-v7m2kp", true], ["placed", "node-1 - the only live node"]])],
           pods: { node2: ["other"], node1: ["other", "v1", "starting", "starting"] },
         }),
         ev({
-          id: "dk8", at: 347000, src: "kubelet · node-1", dst: API, layer: "api", size: "0.9 KB", title: "BACK TO THREE", path: ["node1", "cp"],
+          id: "dk8", at: 347000, src: "kubelet · node-1", dst: API, layer: "api", size: "0.9 KB", title: "BACK TO THREE", path: ["node1", "api"],
           says: "Seven seconds later, three web Pods are Ready again - all on node-1.",
           info: "PATCH …/pods/…/status Ready=True (×2)",
           decoded: [sec("RECOVERED", [["web serving", "3 of 3", true], ["elapsed since power loss", "≈ 5 min 47 s"], ["nobody migrated anything", "these are newborn Pods"]])],
@@ -153,16 +153,16 @@ export const nodeGoesDark: Lesson = {
         ["BALANCE", "returns with future placements"],
       ],
       view: "cluster",
-      focus: ["cp", "node1", "node2"],
+      focus: ["api", "kcm", "node1", "node2"],
       events: [
         ev({
-          id: "dk9", at: 600000, src: K2, dst: API, layer: "api", size: "0.2 KB", title: "HEARTBEAT RETURNS", path: ["node2", "cp"],
+          id: "dk9", at: 600000, src: K2, dst: API, layer: "api", size: "0.2 KB", title: "HEARTBEAT RETURNS", path: ["node2", "api"],
           says: "node-2's kubelet boots and renews its lease like nothing happened.",
           info: `PUT ${LEASE}  renewTime 10:51:20Z`,
           decoded: [sec("RENEWAL", [["spec.renewTime", "10:51:20Z", true], ["holder", "node-2 - same identity"], ["stuck Pods", "x2kqp, p8m4z confirmed gone · objects removed", true]])],
         }),
         ev({
-          id: "dk10", at: 600100, src: "node-lifecycle ctrl", dst: API, layer: "control", size: "0.5 KB", title: "READY AGAIN", path: ["cp", "node2"],
+          id: "dk10", at: 600100, src: "node-lifecycle ctrl", dst: API, layer: "control", size: "0.5 KB", title: "READY AGAIN", path: ["kcm", "node2"],
           says: "One update later the node is Ready and schedulable, empty and willing.",
           info: "PATCH …/nodes/node-2  Ready=True − taint",
           decoded: [sec("REJOIN", [["conditions.Ready", "Unknown → True", true], ["taint", "removed"], ["Pods on node-2", "only what the scheduler sends next"], ["cluster", "capacity 2 nodes again"]])],

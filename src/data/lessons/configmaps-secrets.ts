@@ -40,10 +40,10 @@ export const configmapsSecrets: Lesson = {
         ["AT REST", "plaintext unless etcd encryption is on"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "app-cm", "app-secret"],
+      focus: ["you", "api", "app-cm", "app-secret"],
       events: [
         ev({
-          id: "cf1", at: 0, src: "kubectl", dst: "kube-apiserver", layer: "api", size: "1.6 KB", title: "APPLY BOTH", path: ["you", "cp"],
+          id: "cf1", at: 0, src: "kubectl", dst: "kube-apiserver", layer: "api", size: "1.6 KB", title: "APPLY BOTH", path: ["you", "api"],
           says: "kubectl posts the ConfigMap and the Secret in one apply.",
           info: "POST …/configmaps/web-config · POST …/secrets/stripe-key",
           res: {

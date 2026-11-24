@@ -14,7 +14,7 @@ export const rbacTokens: Lesson = {
     title: "Kubernetes RBAC and ServiceAccount tokens",
     description: "How a Kubernetes Pod proves who it is with a projected ServiceAccount token, and how Roles and RoleBindings decide each API request.",
   },
-  actors: ["you", "cp", "etcd", "node1"],
+  actors: ["you", "cp", "node1"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {
     [K1]: "node-1",
@@ -41,10 +41,10 @@ export const rbacTokens: Lesson = {
         ["DEFAULT SA", "what a Pod gets if you say nothing"],
       ],
       view: "cluster",
-      focus: ["you", "cp"],
+      focus: ["you", "api", "etcd"],
       events: [
         ev({
-          id: "rb1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.9 KB", title: "APPLY THE THREE OBJECTS", path: ["you", "cp"],
+          id: "rb1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.9 KB", title: "APPLY THE THREE OBJECTS", path: ["you", "api"],
           says: "kubectl creates the account, the role and the binding that ties them.",
           info: "POST ×3 · serviceaccounts, roles, rolebindings",
           decoded: [
@@ -53,7 +53,7 @@ export const rbacTokens: Lesson = {
           ],
         }),
         ev({
-          id: "rb2", at: 8, src: API, dst: "etcd", layer: "state", size: "0.8 KB", title: "SAVED", path: ["cp", "etcd"],
+          id: "rb2", at: 8, src: API, dst: "etcd", layer: "state", size: "0.8 KB", title: "SAVED", path: ["api", "etcd"],
           says: "All three land in etcd like any other object.",
           info: "put /registry/rolebindings/default/report-list …",
           decoded: [sec("KEYS", [["serviceaccounts/default/report-runner", "stored"], ["roles/default/report-reader", "stored"], ["rolebindings/default/report-list", "stored"]])],
@@ -107,7 +107,7 @@ export const rbacTokens: Lesson = {
         ["SIGNATURE", "RS256 - unforgeable by the holder"],
       ],
       view: "cluster",
-      focus: ["cp", "node1"],
+      focus: ["api", "node1"],
       events: [
         ev({
           id: "rb6", at: 500, src: POD, dst: POD, layer: "node", size: "0.9 KB", title: "READ THE TOKEN", path: ["node1", "node1"],
@@ -120,7 +120,7 @@ export const rbacTokens: Lesson = {
           note: "One wrinkle: by default the API server stretches the exp of these auto-mounted tokens to a year, so old clients that never re-read the file keep working, and it logs a warning when a token is used past warnafter. The kubelet still rewrites the file well before that.",
         }),
         ev({
-          id: "rb7", at: 520, src: POD, dst: API, layer: "api", size: "0.3 KB", title: "THE ASK", path: ["node1", "cp"],
+          id: "rb7", at: 520, src: POD, dst: API, layer: "api", size: "0.3 KB", title: "THE ASK", path: ["node1", "api"],
           says: "One request carries both the question and the identity: list Deployments, Bearer token attached.",
           info: "GET /apis/apps/v1/namespaces/default/deployments",
           decoded: [sec("HTTP/2 REQUEST", [["method", "GET"], ["path", "/apis/apps/v1/namespaces/default/deployments"], ["host", "10.96.0.1:443 (kubernetes.default.svc → 10.0.0.10:6443)"], ["authorization", "Bearer eyJhbGciOi…", true]])],
@@ -138,22 +138,22 @@ export const rbacTokens: Lesson = {
         ["DECISION", "allow → 200 · 3 Deployments"],
       ],
       view: "cluster",
-      focus: ["cp", "node1"],
+      focus: ["api", "node1"],
       events: [
         ev({
-          id: "rb8", at: 530, src: API, dst: API, layer: "api", size: " - ", title: "AUTHENTICATION", path: ["cp", "cp"],
+          id: "rb8", at: 530, src: API, dst: API, layer: "api", size: " - ", title: "AUTHENTICATION", path: ["api", "api"],
           says: "Question one: is the token genuine and alive? Yes.",
           info: "authn: JWT signature + exp + aud",
           decoded: [sec("RESULT", [["signature", "valid - kid sa-signing-key-2026-3"], ["exp", "not reached"], ["aud", "this server"], ["user", "system:serviceaccount:default:report-runner", true], ["groups", "system:serviceaccounts · system:serviceaccounts:default · system:authenticated"]])],
         }),
         ev({
-          id: "rb9", at: 531, src: API, dst: API, layer: "api", size: " - ", title: "AUTHORIZATION · RBAC", path: ["cp", "cp"],
+          id: "rb9", at: 531, src: API, dst: API, layer: "api", size: " - ", title: "AUTHORIZATION · RBAC", path: ["api", "api"],
           says: "Question two: may this subject list deployments here? The binding says yes.",
           info: "authz: RoleBinding report-list → Role report-reader → allow",
           decoded: [sec("RBAC EVALUATION", [["subject", "system:serviceaccount:default:report-runner"], ["RoleBinding", "report-list (ns default)"], ["Role rules", "[get list watch] × [deployments.apps]", true], ["decision", "allow", true]])],
         }),
         ev({
-          id: "rb10", at: 545, src: API, dst: POD, layer: "api", size: "2.8 KB", title: "200 OK", path: ["cp", "node1"],
+          id: "rb10", at: 545, src: API, dst: POD, layer: "api", size: "2.8 KB", title: "200 OK", path: ["api", "node1"],
           says: "The list comes back: three Deployments.",
           info: "200 OK · DeploymentList · 3 items",
           decoded: [sec("HTTP/2 RESPONSE", [["status", "200 OK"], ["items", "web · web-cache · web-worker"], ["resourceVersion", "48211"]])],
@@ -171,23 +171,23 @@ export const rbacTokens: Lesson = {
         ["RESULT", "403 Forbidden"],
       ],
       view: "cluster",
-      focus: ["cp", "node1"],
+      focus: ["api", "node1"],
       events: [
         ev({
-          id: "rb11", at: 600, src: POD, dst: API, layer: "api", size: "0.2 KB", title: "ASK FOR SECRETS", path: ["node1", "cp"],
+          id: "rb11", at: 600, src: POD, dst: API, layer: "api", size: "0.2 KB", title: "ASK FOR SECRETS", path: ["node1", "api"],
           says: "The same Pod, the same token, asks for Secrets this time.",
           info: "GET /api/v1/namespaces/default/secrets",
           decoded: [sec("HTTP/2 REQUEST", [["method", "GET"], ["path", "/api/v1/namespaces/default/secrets"], ["authorization", "Bearer eyJhbGciOi… (same token)"]])],
         }),
         ev({
-          id: "rb12", at: 601, src: API, dst: API, layer: "api", size: " - ", title: "NO RULE MATCHES", path: ["cp", "cp"],
+          id: "rb12", at: 601, src: API, dst: API, layer: "api", size: " - ", title: "NO RULE MATCHES", path: ["api", "api"],
           says: "Authn passes again; authz finds no rule that grants secrets to this subject.",
           info: "authz: no binding grants list secrets → deny",
           decoded: [sec("RBAC EVALUATION", [["subject", "system:serviceaccount:default:report-runner"], ["union of bindings", "get list watch × deployments - nothing for secrets"], ["deny rules", "don't exist - there is nothing to check", true], ["decision", "deny (the default)", true]])],
           note: "RBAC has no order and no priorities: every matching binding adds to the union, and only the union is consulted. If nothing matches, the answer is no.",
         }),
         ev({
-          id: "rb13", at: 610, src: API, dst: POD, layer: "drop", size: "0.4 KB", title: "403 FORBIDDEN", path: ["cp", "node1"],
+          id: "rb13", at: 610, src: API, dst: POD, layer: "drop", size: "0.4 KB", title: "403 FORBIDDEN", path: ["api", "node1"],
           says: "The answer is 403, with the exact reason in the body.",
           info: "403 Forbidden · User \"…report-runner\" cannot list resource \"secrets\"",
           decoded: [sec("HTTP/2 RESPONSE", [["status", "403 Forbidden", true], ["reason", "Forbidden"], ["message", "…cannot list resource \"secrets\" in API group \"\" in the namespace \"default\""]])],
@@ -205,16 +205,16 @@ export const rbacTokens: Lesson = {
         ["PREVIEW", "kubectl auth can-i --as (impersonation)"],
       ],
       view: "cluster",
-      focus: ["you", "cp"],
+      focus: ["you", "api"],
       events: [
         ev({
-          id: "rb14", at: 700, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "TURN OFF THE FAUCET", path: ["you", "cp"],
+          id: "rb14", at: 700, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "TURN OFF THE FAUCET", path: ["you", "api"],
           says: "The web Pods never call the API, so their template turns automount off.",
           info: "PATCH …/deployments/web  template: automountServiceAccountToken=false",
           decoded: [sec("POD TEMPLATE", [["automountServiceAccountToken", "false", true], ["effect", "no TokenRequest, no file at /var/run/secrets/kubernetes.io/serviceaccount"], ["applies to", "most Pods - they never talk to the API"]])],
         }),
         ev({
-          id: "rb15", at: 780, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "PREVIEW WITH --AS", path: ["you", "cp"],
+          id: "rb15", at: 780, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "PREVIEW WITH --AS", path: ["you", "api"],
           says: "Impersonation answers \"what could this identity do?\" without its credentials.",
           info: "kubectl --as=system:serviceaccount:default:report-runner auth can-i --list",
           decoded: [sec("IMPERSONATION", [["header", "Impersonate-User: system:serviceaccount:default:report-runner", true], ["authn", "still you - your client certificate"], ["authz 1", "you may impersonate"], ["authz 2", "then the target's bindings decide"]])],

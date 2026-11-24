@@ -1,5 +1,5 @@
 import type { ActorId, Level, PodSlot, Resource, ResourceKind } from "../data/types"
-import { chip, controlPlane, etcd, iso, laptop, loadBalancer, pod, rack, resourceCard, workerNode, type Point } from "../iso/iso"
+import { apiServer, chip, controllerManager, etcd, iso, laptop, loadBalancer, pod, rack, resourceCard, scheduler, workerNode, type Point } from "../iso/iso"
 
 export const WORLD = { width: 1000, height: 640 }
 
@@ -60,17 +60,17 @@ export const floorMatrix = (level: Level, at: Point) => {
 
 const CLUSTER: Def[] = [
   {
-    id: "resolver", level: "cluster", g: [76, 64], foot: [18, 18], name: "DNS resolver", sub: "198.51.100.53",
+    id: "resolver", level: "cluster", g: [80, 55], foot: [18, 18], name: "DNS resolver", sub: "198.51.100.53",
     about: "A public DNS server outside the cluster. It turns shop.example.com into an IP address.",
     label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.85, "DNS")),
   },
   {
-    id: "visitor", level: "cluster", g: [76, 40], foot: [23, 28], name: "Visitor", sub: "198.51.100.7",
+    id: "visitor", level: "cluster", g: [80, 31], foot: [23, 28], name: "Visitor", sub: "198.51.100.7",
     about: "Someone on the internet opening your shop in a browser.",
     label: below(46), box: [-80, -75, 80, 85], art: memo(laptop(S, "browser")),
   },
   {
-    id: "lb", level: "cluster", g: [76, 1], foot: [28, 28], name: "Load balancer", sub: "203.0.113.50",
+    id: "lb", level: "cluster", g: [80, -8], foot: [28, 28], name: "Load balancer", sub: "203.0.113.50",
     about: "A cloud load balancer created by a Service of type LoadBalancer. It forwards traffic to a NodePort on healthy nodes.",
     label: below(50), box: [-80, -55, 80, 90], art: memo(loadBalancer(S)),
   },
@@ -80,9 +80,14 @@ const CLUSTER: Def[] = [
     label: below(46), box: [-80, -75, 80, 85], art: memo(laptop(S)),
   },
   {
-    id: "cp", level: "cluster", g: [0, 0], foot: [23, 23], name: "Control plane", sub: "10.0.0.10:6443",
-    about: "The API server, scheduler and controller manager. Every component reads and writes cluster state through the API server.",
-    label: [-48, -34, "end"], box: [-180, -70, 60, 40], art: memo(controlPlane(S)),
+    id: "sched", level: "cluster", g: [-28, 0], foot: [20, 20], name: "Scheduler", sub: "10.0.0.10:10259",
+    about: "Watches the API server for Pods with no node, picks the best node for each, and writes the choice back.",
+    label: below(38), box: [-80, -50, 60, 70], art: memo(scheduler(S)),
+  },
+  {
+    id: "kcm", level: "cluster", g: [-28, -24], foot: [20, 20], name: "Controller manager", sub: "10.0.0.10:10257",
+    about: "Runs the built-in controllers: Deployment, ReplicaSet, Job, node lifecycle and more. Each one watches the API server and works to make reality match what was asked for.",
+    label: [0, -62, "middle"], box: [-90, -85, 90, 40], art: memo(controllerManager(S)),
   },
   {
     id: "etcd", level: "cluster", g: [0, -24], foot: [21, 21], name: "etcd", sub: "10.0.0.10:2379",
@@ -90,12 +95,17 @@ const CLUSTER: Def[] = [
     label: [34, -14, "start"], box: [-40, -60, 160, 30], art: memo(etcd(S)),
   },
   {
-    id: "node1", level: "cluster", g: [32, 18], foot: [37, 37], name: "node-1", sub: "10.0.1.11 · Pods 10.244.1.0/24", opens: "node1",
+    id: "api", level: "cluster", g: [0, 0], foot: [23, 23], name: "API server", sub: "10.0.0.10:6443",
+    about: "The front door to the cluster. Every other component reads and writes cluster state through it, and only it talks to etcd.",
+    label: below(48), box: [-80, -70, 80, 80], art: memo(apiServer(S)),
+  },
+  {
+    id: "node1", level: "cluster", g: [36, 10], foot: [37, 37], name: "node-1", sub: "10.0.1.11 · Pods 10.244.1.0/24", opens: "node1",
     about: "A worker node: a machine that runs Pods. Click to look inside.",
     label: below(58), box: [-90, -60, 90, 95], art: (slots) => workerNode(S, slots),
   },
   {
-    id: "node2", level: "cluster", g: [32, -16], foot: [37, 37], name: "node-2", sub: "10.0.1.12 · Pods 10.244.2.0/24", opens: "node2",
+    id: "node2", level: "cluster", g: [36, -26], foot: [37, 37], name: "node-2", sub: "10.0.1.12 · Pods 10.244.2.0/24", opens: "node2",
     about: "A worker node: a machine that runs Pods. Click to look inside.",
     label: [76, -2, "start"], box: [-90, -60, 250, 60], art: (slots) => workerNode(S, slots),
   },
@@ -118,7 +128,7 @@ function nodeActors(n: NodeInfo): Def[] {
     {
       id: id("api"), level: L, g: [-90, -44], foot: [14, 14], name: "API server", sub: "10.0.0.10:6443",
       about: "The way out to the control plane. The kubelet watches it for Pods and reports their status back.",
-      label: below(36), box: [-70, -60, 70, 60], art: memo(controlPlane(S * 0.6)),
+      label: below(36), box: [-70, -60, 70, 60], art: memo(apiServer(S * 0.6)),
     },
     {
       id: id("kubelet"), level: L, g: [-24, -44], foot: [21, 16], name: "kubelet", sub: "the node agent",
@@ -203,7 +213,7 @@ const BADGE: Record<ResourceKind, string> = {
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
   place({
-    id, level: "cluster", kind, g, foot: [23, 16], name, sub, about, label: label ?? below(42), box: [-34, -28, 34, 50],
+    id, level: "cluster", kind, g, foot: [23, 16], name, sub, about, label: label ?? below(42), box: [-80, -28, 80, 50],
     art: memo(resourceCard(S * 0.85, BADGE[kind])),
   })
 
@@ -211,22 +221,22 @@ const resource = (id: string, kind: ResourceKind, name: string, sub: string, abo
  *  events put them on screen, and no lesson shows two groups at once, so groups may share a spot. */
 const RESOURCES: Actor[] = [
   // workloads: a row behind the control plane, on the left
-  resource("web-hpa", "hpa", "HPA web", "target 60% CPU", "The Horizontal Pod Autoscaler: reads Pod metrics, does one divide, and patches the Deployment's replica count.", [-40, 12]),
-  resource("web-deploy", "deployment", "Deployment web", "replicas 3", "The record you applied: desired state in etcd. It owns ReplicaSets, never Pods directly.", [-40, -20]),
-  resource("web-rs", "replicaset", "ReplicaSet …d8b4", "3 Pods", "Created by the Deployment for one Pod-template hash. It counts matching Pods and creates or deletes them until the count is right.", [-40, -52]),
-  resource("web-rs2", "replicaset", "ReplicaSet …c9f6", "1 Pod", "The ReplicaSet for the new template hash. During a rollout it scales up while the old one scales down.", [-72, -20]),
+  resource("web-hpa", "hpa", "HPA web", "target 60% CPU", "The Horizontal Pod Autoscaler: reads Pod metrics, does one divide, and patches the Deployment's replica count.", [-66, 24]),
+  resource("web-deploy", "deployment", "Deployment web", "replicas 3", "The record you applied: desired state in etcd. It owns ReplicaSets, never Pods directly.", [-66, -12]),
+  resource("web-rs", "replicaset", "ReplicaSet …d8b4", "3 Pods", "Created by the Deployment for one Pod-template hash. It counts matching Pods and creates or deletes them until the count is right.", [-66, -54]),
+  resource("web-rs2", "replicaset", "ReplicaSet …c9f6", "1 Pod", "The ReplicaSet for the new template hash. During a rollout it scales up while the old one scales down.", [-98, -12]),
   // traffic: in front of the nodes
-  resource("web-svc", "service", "Service web", "10.96.120.15:80", "A stable virtual IP and DNS name. Its EndpointSlices list the Pod IPs that currently answer.", [40, 56]),
-  resource("shop-ing", "ingress", "Ingress shop", "shop.example.com", "Layer-7 routing rules: hosts and paths to Services, served by an ingress controller behind a load balancer.", [40, 84]),
+  resource("web-svc", "service", "Service web", "10.96.120.15:80", "A stable virtual IP and DNS name. Its EndpointSlices list the Pod IPs that currently answer.", [44, 56]),
+  resource("shop-ing", "ingress", "Ingress shop", "shop.example.com", "Layer-7 routing rules: hosts and paths to Services, served by an ingress controller behind a load balancer.", [44, 84]),
   // everything else: a row behind node-2, one lesson at a time
-  resource("db-sts", "statefulset", "StatefulSet db", "replicas 3", "Like a Deployment, but with stable identities: db-0, db-1, db-2 start one at a time and keep their volumes.", [28, -60]),
-  resource("uploads-pvc", "pvc", "PVC uploads", "10Gi · fast-nvme", "A PersistentVolumeClaim: the app's ask for storage. The provisioner fulfils it with a volume that outlives the Pod.", [28, -60]),
-  resource("uploads-pv", "pv", "PV pvc-3f8a91c2…", "10 Gi · nvme", "The PersistentVolume the driver carved out for the claim: a real disk, attachable to one node at a time.", [60, -60], [0, -52, "middle"]),
-  resource("app-cm", "configmap", "ConfigMap app-config", "rev 2", "Key-value configuration stored in the API and projected into Pods as files or env vars.", [28, -60]),
-  resource("app-secret", "secret", "Secret api-key", "base64", "Sensitive bytes in the API, delivered to Pods only through mounted or env sources.", [60, -60], [0, -52, "middle"]),
-  resource("backup-cj", "cronjob", "CronJob backup", "0 2 * * *", "A schedule in the API. At each tick its controller creates a Job object.", [28, -60]),
-  resource("backup-job", "job", "Job backup-28471", "completions 1/1", "Runs Pods until the completions count is reached, retrying failures up to backoffLimit.", [60, -60], [0, -52, "middle"]),
-  resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -92]),
+  resource("db-sts", "statefulset", "StatefulSet db", "replicas 3", "Like a Deployment, but with stable identities: db-0, db-1, db-2 start one at a time and keep their volumes.", [28, -68]),
+  resource("uploads-pvc", "pvc", "PVC uploads", "10Gi · fast-nvme", "A PersistentVolumeClaim: the app's ask for storage. The provisioner fulfils it with a volume that outlives the Pod.", [28, -68]),
+  resource("uploads-pv", "pv", "PV pvc-3f8a91c2…", "10 Gi · nvme", "The PersistentVolume the driver carved out for the claim: a real disk, attachable to one node at a time.", [60, -68], [0, -52, "middle"]),
+  resource("app-cm", "configmap", "ConfigMap app-config", "rev 2", "Key-value configuration stored in the API and projected into Pods as files or env vars.", [28, -68]),
+  resource("app-secret", "secret", "Secret api-key", "base64", "Sensitive bytes in the API, delivered to Pods only through mounted or env sources.", [60, -68], [0, -52, "middle"]),
+  resource("backup-cj", "cronjob", "CronJob backup", "0 2 * * *", "A schedule in the API. At each tick its controller creates a Job object.", [28, -68]),
+  resource("backup-job", "job", "Job backup-28471", "completions 1/1", "Runs Pods until the completions count is reached, retrying failures up to backoffLimit.", [60, -68], [0, -52, "middle"]),
+  resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
 ]
 
 const byId = new Map([...ACTORS, ...RESOURCES].map((a) => [a.id, a]))
@@ -260,15 +270,17 @@ const nodeCables = (p: string): Cable[] => {
 
 export const CABLES: Record<Level, Cable[]> = {
   cluster: [
-    cable("you", "cp", [0, 50], [0, 0]),
-    cable("cp", "etcd", [0, 0], [0, -24]),
-    cable("cp", "node1", [0, 0], [16, 0], [16, 18], [32, 18]),
-    cable("cp", "node2", [0, 0], [16, 0], [16, -16], [32, -16]),
-    cable("node1", "node2", [32, 18], [32, -16]),
-    cable("lb", "node1", [76, 1], [50, 1], [50, 18], [32, 18]),
-    cable("lb", "node2", [76, 1], [50, 1], [50, -16], [32, -16]),
-    cable("visitor", "lb", [76, 40], [76, 1]),
-    cable("visitor", "resolver", [76, 40], [76, 64]),
+    cable("you", "api", [0, 50], [0, 0]),
+    cable("api", "etcd", [0, 0], [0, -24]),
+    cable("api", "sched", [0, 0], [-28, 0]),
+    cable("api", "kcm", [0, 0], [-14, 0], [-14, -24], [-28, -24]),
+    cable("api", "node1", [0, 0], [23, 0], [23, 10], [36, 10]),
+    cable("api", "node2", [0, 0], [23, 0], [23, -26], [36, -26]),
+    cable("node1", "node2", [36, 10], [36, -26]),
+    cable("lb", "node1", [80, -8], [54, -8], [54, 10], [36, 10]),
+    cable("lb", "node2", [80, -8], [54, -8], [54, -26], [36, -26]),
+    cable("visitor", "lb", [80, 31], [80, -8]),
+    cable("visitor", "resolver", [80, 31], [80, 55]),
   ],
   node1: nodeCables("n1"),
   node2: nodeCables("n2"),
@@ -282,7 +294,7 @@ export const CABLES: Record<Level, Cable[]> = {
 
 /** Where a bus splits: drawn as a small ring. */
 export const JOINTS: Record<Level, Point[]> = {
-  cluster: [[16, 0], [50, 1]],
+  cluster: [[-14, 0], [23, 0], [54, -8]],
   node1: [[34, 8]],
   node2: [[34, 8]],
   pod: [],
@@ -290,7 +302,7 @@ export const JOINTS: Record<Level, Point[]> = {
 
 /** The plate each level stands on, in ground units, and what is written on it (one line per \\n). */
 export const FLOORS: Record<Level, { x0: number; x1: number; y0: number; y1: number; text: string; at: Point }> = {
-  cluster: { x0: -12, x1: 54, y0: -34, y1: 30, text: "cluster", at: [2, 27.6] },
+  cluster: { x0: -51, x1: 58, y0: -43, y1: 30, text: "cluster", at: [2, 27.6] },
   node1: { x0: -70, x1: 66, y0: -58, y1: 60, text: "node-1 · 10.0.1.11", at: [8, 57] },
   node2: { x0: -70, x1: 66, y0: -58, y1: 60, text: "node-2 · 10.0.1.12", at: [8, 57] },
   pod: { x0: -14, x1: 54, y0: -34, y1: 38, text: "network namespace\nshared by pause and web", at: [-11, -30.8] },
@@ -298,20 +310,53 @@ export const FLOORS: Record<Level, { x0: number; x1: number; y0: number; y1: num
 
 export type Floor = (typeof FLOORS)[Level]
 
+/** Actors that belong together, standing on a plate of their own inside their level's floor. */
+export interface Group {
+  id: ActorId
+  level: Level
+  name: string
+  about: string
+  members: ActorId[]
+  /** the member the others reach the rest of the cluster through */
+  hub: ActorId
+  floor: Floor
+}
+
+export const GROUPS: Group[] = [
+  {
+    id: "cp", level: "cluster", name: "Control plane",
+    about: "The components that run the cluster: the API server, etcd, the scheduler and the controller manager. They decide what should run; the worker nodes run it.",
+    members: ["sched", "kcm", "etcd", "api"],
+    hub: "api",
+    floor: { x0: -45, x1: 17, y0: -37, y1: 22, text: "control plane", at: [-43, 19.6] },
+  },
+]
+
+/** An actor list with each group written out as its members. */
+export const expand = (ids: ActorId[]): ActorId[] => ids.flatMap((id) => GROUPS.find((g) => g.id === id)?.members ?? [id])
+
 /** Who stands on a level's floor. When a lesson leaves some of them out, the floor shrinks to the rest. */
-const ON_FLOOR: Partial<Record<Level, ActorId[]>> = { cluster: ["cp", "etcd", "node1", "node2"] }
+const ON_FLOOR: Partial<Record<Level, ActorId[]>> = { cluster: ["cp", "node1", "node2"] }
+
+/** The ground a group or actor covers, as [x0, y0, x1, y1]. */
+function covers(id: ActorId, margin = 0): Box {
+  const plate = GROUPS.find((g) => g.id === id)?.floor
+  if (plate) return [plate.x0 - margin / 2, plate.y0 - margin / 2, plate.x1 + margin / 2, plate.y1 + margin / 2]
+  const a = actorById(id)!
+  const unit = S * GEOMETRY[a.level].k
+  return [a.g[0] - a.foot[0] / unit - margin, a.g[1] - a.foot[1] / unit - margin, a.g[0] + a.foot[0] / unit + margin, a.g[1] + a.foot[1] / unit + margin]
+}
 
 /** The floor as a lesson shows it: the full plate, or one fitted around the members it keeps. */
 export function floorFor(level: Level, shown: Set<ActorId>): Floor {
   const full = FLOORS[level]
-  const members = (ON_FLOOR[level] ?? []).filter((id) => shown.has(id)).map(actorById).filter((a): a is Actor => !!a)
-  if (!members.length || members.length === ON_FLOOR[level]?.length) return full
-  const unit = S * GEOMETRY[level].k
-  const margin = 12
-  const x0 = Math.max(full.x0, Math.min(...members.map((a) => a.g[0] - a.foot[0] / unit - margin)))
-  const x1 = Math.min(full.x1, Math.max(...members.map((a) => a.g[0] + a.foot[0] / unit + margin)))
-  const y0 = Math.max(full.y0, Math.min(...members.map((a) => a.g[1] - a.foot[1] / unit - margin)))
-  const y1 = Math.min(full.y1, Math.max(...members.map((a) => a.g[1] + a.foot[1] / unit + margin)))
+  const on = ON_FLOOR[level] ?? []
+  const boxes = on.filter((id) => expand([id]).every((m) => shown.has(m))).map((id) => covers(id, 12))
+  if (!boxes.length || boxes.length === on.length) return full
+  const x0 = Math.max(full.x0, Math.min(...boxes.map((b) => b[0])))
+  const y0 = Math.max(full.y0, Math.min(...boxes.map((b) => b[1])))
+  const x1 = Math.min(full.x1, Math.max(...boxes.map((b) => b[2])))
+  const y1 = Math.min(full.y1, Math.max(...boxes.map((b) => b[3])))
   return { ...full, x0, x1, y0, y1, at: [x0 + 2, y1 - 2.4] }
 }
 
@@ -329,8 +374,34 @@ const length = (r: Point[]) => r.slice(1).reduce((sum, p, i) => sum + Math.abs(p
 /** An L along the floor's axes from one ground point to another: along x first, then y. */
 const ell = (a: Point, b: Point): Point[] => (a[0] === b[0] || a[1] === b[1] ? [a, b] : [a, [b[0], a[1]], b])
 
+/** Where a route without a cable may turn: the aisles between the actors on the cluster floor, in ground units. */
+const AISLES = { x: [-54, -14, 23, 54], y: [-40, -12, 26] }
+
+/** A route along the floor's axes between two actors that no cable connects: the shortest one that
+ *  runs over the fewest other actors, turning at most twice. */
+function openRoute(level: Level, A: Actor, B: Actor): Point[] {
+  const [a, b] = [A.g, B.g]
+  const aisles = level === "cluster" ? AISLES : { x: [], y: [] }
+  const options: Point[][] = [
+    ell(a, b),
+    [a, [a[0], b[1]], b],
+    ...aisles.x.map((x): Point[] => [a, [x, a[1]], [x, b[1]], b]),
+    ...aisles.y.map((y): Point[] => [a, [a[0], y], [b[0], y], b]),
+  ]
+  const others = actorsAt(level).filter((o) => o.id !== A.id && o.id !== B.id).map((o) => covers(o.id))
+  const hits = (r: Point[]) =>
+    others.filter(([x0, y0, x1, y1]) =>
+      r.slice(1).some((p, i) => {
+        const q = r[i]
+        return Math.max(p[0], q[0]) > x0 && Math.min(p[0], q[0]) < x1 && Math.max(p[1], q[1]) > y0 && Math.min(p[1], q[1]) < y1
+      }),
+    ).length
+  const cost = (r: Point[]) => hits(r) * 10_000 + length(r)
+  return options.reduce((best, r) => (cost(r) < cost(best) ? r : best))
+}
+
 /** The route a packet takes between two actors, in ground units: along the cables when they connect
- *  (through other actors if it must), otherwise an L across the floor. */
+ *  (through other actors if it must), otherwise across the open floor, passing the API server on the way out of the control plane. */
 export function groundRoute(level: Level, from: ActorId, to: ActorId): Point[] {
   const A = actorById(from)
   const B = actorById(to)
@@ -357,7 +428,11 @@ export function groundRoute(level: Level, from: ActorId, to: ActorId): Point[] {
       }
     }
   }
-  if (!prev.has(to)) return ell(A.g, B.g)
+  if (!prev.has(to)) {
+    const hubOf = (id: ActorId) => GROUPS.find((g) => g.members.includes(id) && g.hub !== id)?.hub
+    const via = hubOf(from) ?? hubOf(to)
+    return via ? [...groundRoute(level, from, via), ...groundRoute(level, via, to).slice(1)] : openRoute(level, A, B)
+  }
   const legs: Point[][] = []
   for (let at = to; at !== from; at = prev.get(at)!.from) legs.unshift(prev.get(at)!.route)
   return legs.reduce<Point[]>((all, leg) => [...all, ...(all.length ? leg.slice(1) : leg)], [])

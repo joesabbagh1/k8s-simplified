@@ -77,7 +77,8 @@ export function laptop(s: number, screen: "terminal" | "browser" = "terminal") {
   return g
 }
 
-export function controlPlane(s: number) {
+/** The API server: a stack of three units. */
+export function apiServer(s: number) {
   let g = ""
   for (let k = 0; k < 3; k++) {
     const z = k * 2.7
@@ -86,6 +87,30 @@ export function controlPlane(s: number) {
     g += `<g transform="${faceY(-5, 5, z + 2.2, s)}"><line class="det" x1="1" y1="1.1" x2="9" y2="1.1"/></g>`
   }
   g += `<g transform="${faceTop(-5, -5, 7.6, s)}"><text class="topt" x="5" y="5.9" font-size="2.6" text-anchor="middle">API</text></g>`
+  return g
+}
+
+/** The scheduler: a grid of nodes on its top face, one of them picked. */
+export function scheduler(s: number) {
+  let g = box(-4.6, -4.6, 0, 9.2, 9.2, 3, s)
+  let cells = ""
+  for (let i = 0; i < 4; i++) cells += `<rect class="cell" x="${1.4 + (i % 2) * 3.5}" y="${1.4 + (i >> 1) * 3.5}" width="2.9" height="2.9"/>`
+  g += `<g transform="${faceTop(-4.6, -4.6, 3, s)}">${cells}</g>`
+  g += `<g transform="${faceX(4.6, 4.6, 3, s)}">${leds([1.2, 2.4], 1.4)}<line class="det" x1="4.5" y1="1.1" x2="8" y2="1.1"/><line class="det" x1="4.5" y1="1.8" x2="8" y2="1.8"/></g>`
+  g += box(0.3, -3.2, 3, 2.9, 2.9, 2.4, s, "hot")
+  return g
+}
+
+/** The controller manager: a control loop on its top face. */
+export function controllerManager(s: number) {
+  const loop = (from: number, to: number) => {
+    const at = (a: number, r = 2.7) => [4.6 + r * Math.cos(a), 4.6 + r * Math.sin(a)]
+    const n = (v: number[]) => v.map((x) => x.toFixed(2)).join(" ")
+    return `M${n(at(from))} A2.7 2.7 0 0 1 ${n(at(to))} M${n(at(to - 0.45, 3.6))} L${n(at(to))} L${n(at(to - 0.5, 1.9))}`
+  }
+  let g = box(-4.6, -4.6, 0, 9.2, 9.2, 3.6, s)
+  g += `<g class="arrows" transform="${faceTop(-4.6, -4.6, 3.6, s)}"><path d="${loop(0.3, 2.8)} ${loop(0.3 + Math.PI, 2.8 + Math.PI)}"/></g>`
+  g += `<g transform="${faceX(4.6, 4.6, 3.6, s)}">${leds([1.2, 2.4], 1.7)}<line class="det" x1="4.5" y1="1.3" x2="8" y2="1.3"/><line class="det" x1="4.5" y1="2" x2="8" y2="2"/></g>`
   return g
 }
 

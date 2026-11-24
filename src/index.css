@@ -23,7 +23,7 @@
   --ok: #3ccf8e;
   --iso-top: #1b2b52; --iso-left: #142245; --iso-right: #0f1a38; --iso-line: #79a0ff; --iso-detail: #a9c2ff; --display: #0a1633;
   --iso-hot-top: #26478f; --iso-hot-left: #1c3878; --iso-hot-right: #152d63;
-  --link: #2a3f72; --floor: rgba(121, 160, 255, .035); --floor-edge: #0c1326; --diff-bg: rgba(245, 184, 61, .13);
+  --link: #2a3f72; --floor: rgba(121, 160, 255, .035); --floor-edge: #0c1326; --plate: #0e1832; --diff-bg: rgba(245, 184, 61, .13);
   --iso-v2-top: #1b4d3c; --iso-v2-left: #143e30; --iso-v2-right: #0f3226; --iso-v2-line: #4ade80;
   --iso-other-top: #232a3c; --iso-other-left: #1b2131; --iso-other-right: #161b29; --iso-other-line: #56607a;
   --shadow: 0 18px 50px rgba(0, 0, 0, .5);
@@ -38,7 +38,7 @@
   --ok: #15803d;
   --iso-top: #ffffff; --iso-left: #e8eefb; --iso-right: #d9e3f7; --iso-line: #2f5fd0; --iso-detail: #2f5fd0; --display: #e3ebfb;
   --iso-hot-top: #e1eaff; --iso-hot-left: #cfdcfc; --iso-hot-right: #bccff8;
-  --link: #b3c2e1; --floor: rgba(47, 95, 208, .035); --floor-edge: #e6ecf8; --diff-bg: rgba(161, 92, 0, .10);
+  --link: #b3c2e1; --floor: rgba(47, 95, 208, .035); --floor-edge: #e6ecf8; --plate: #f9fbff; --diff-bg: rgba(161, 92, 0, .10);
   --iso-v2-top: #dcf5e6; --iso-v2-left: #c6ecd6; --iso-v2-right: #b2e2c5; --iso-v2-line: #15803d;
   --iso-other-top: #f3f4f7; --iso-other-left: #e6e8ee; --iso-other-right: #d9dce5; --iso-other-line: #98a2b8;
   --shadow: 0 18px 50px rgba(20, 32, 60, .18);
@@ -162,7 +162,9 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 @keyframes zoom-out { from { opacity: 0; transform: scale(1.1); } }
 .floor .floor-top { fill: var(--floor); stroke: var(--line-strong); stroke-width: 1; }
 .floor .floor-edge { fill: var(--floor-edge); stroke: var(--line-strong); stroke-width: 1; }
+.floor[data-group] .floor-top, .hero-art .plate .floor-top { fill: var(--plate); }
 .iso .floor-grid { stroke: var(--grid); stroke-width: 1; fill: none; }
+.iso .cell { fill: none; stroke: var(--iso-detail); stroke-width: .8; vector-effect: non-scaling-stroke; opacity: .75; }
 .floor-name { fill: var(--faint); font-family: var(--mono); font-weight: 500; }
 .actor[data-interactive] { cursor: zoom-in; outline: none; }
 .actor[data-interactive]:hover .f-t, .actor[data-interactive]:focus-visible .f-t { fill: var(--iso-hot-top); }
@@ -206,15 +208,15 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .res[data-state="terminating"] { opacity: .45; }
 .res[data-state="terminating"] polygon { stroke: var(--l-drop); stroke-dasharray: 3 3; }
 @media (prefers-reduced-motion: no-preference) {
-  .res[data-state="creating"] { animation: blink 2.4s ease-in-out infinite; }
-  .res { animation: card-in .5s cubic-bezier(.2, .7, .2, 1); }
+  .res { animation: card-in .5s cubic-bezier(.2, .7, .2, 1) var(--born) backwards; }
+  .res[data-state="creating"] { animation: card-in .5s cubic-bezier(.2, .7, .2, 1) var(--born) backwards, blink 2.4s ease-in-out calc(var(--born) + .5s) infinite; }
+  .own { animation: own-in .4s ease-out var(--born) backwards; }
+  /* the marker that carries a new card to its place, gone once the card is there */
+  .birth { animation: birth-out .25s ease-out var(--born) forwards; }
 }
+@keyframes own-in { from { opacity: 0; } }
+@keyframes birth-out { to { opacity: 0; } }
 @keyframes card-in { from { opacity: 0; transform: scale(.7); } }
-.res-badge circle { fill: var(--panel); stroke: var(--c); stroke-width: 1.5; }
-.res-badge text { fill: var(--c); font-family: var(--font); font-size: 10.5px; font-weight: 800; text-anchor: middle; }
-@media (prefers-reduced-motion: no-preference) { .res-badge { animation: badge-in .45s ease-out; } }
-/* opacity only: a transform here would override the badge's translate attribute */
-@keyframes badge-in { from { opacity: 0; } }
 
 /* ownership edges between cards, and traffic flow on cables */
 .iso .own path { stroke: var(--link); stroke-width: 1.2; fill: none; stroke-linejoin: round; stroke-linecap: round; transition: stroke .3s; }

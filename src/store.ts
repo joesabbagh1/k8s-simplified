@@ -38,6 +38,8 @@ interface AppState {
   finished: boolean
   mode: Mode
   flight: Flight | null
+  /** the event playback has just landed, until the next one sets off; jumping to a step lands nothing */
+  landed: string | null
   /** true while the camera moves to a new step and the reader takes it in, before its first event */
   intro: boolean
   /** true while the reader takes in the event that just landed */
@@ -99,7 +101,7 @@ const lastId = (lesson: Lesson, revealed: number) => (revealed > 0 ? timeline(le
 
 const shown = (lesson: Lesson, step: number) => {
   const revealed = revealedThrough(lesson, step)
-  return { step, revealed, selectedEvent: lastId(lesson, revealed), finished: false, mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null, viewOverride: null }
+  return { step, revealed, selectedEvent: lastId(lesson, revealed), finished: false, mode: null, flight: null, landed: null, intro: false, reading: false, advancing: false, transit: null, viewOverride: null }
 }
 
 export const currentLesson = (s: Pick<AppState, "lessonId">) => lessonById(s.lessonId) ?? LESSONS[0]
@@ -129,6 +131,7 @@ export const useApp = create<AppState>((set, get) => ({
   finished: false,
   mode: null,
   flight: null,
+  landed: null,
   intro: false,
   reading: false,
   advancing: false,
@@ -210,30 +213,30 @@ export const useApp = create<AppState>((set, get) => ({
     }
   },
 
-  restart: () => set({ step: -1, revealed: 0, selectedEvent: null, finished: false, mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null, viewOverride: null }),
+  restart: () => set({ step: -1, revealed: 0, selectedEvent: null, finished: false, mode: null, flight: null, landed: null, intro: false, reading: false, advancing: false, transit: null, viewOverride: null }),
 
   showSummary: () => {
     const lesson = currentLesson(get())
     if (!lesson.steps.length) return
     const all = timeline(lesson).events.length
-    set({ step: lesson.steps.length - 1, revealed: all, selectedEvent: lastId(lesson, all), finished: true, mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null, viewOverride: null })
+    set({ step: lesson.steps.length - 1, revealed: all, selectedEvent: lastId(lesson, all), finished: true, mode: null, flight: null, landed: null, intro: false, reading: false, advancing: false, transit: null, viewOverride: null })
   },
 
-  launch: (flight) => set({ flight: flight && { ...flight, key: ++flightKey }, reading: false }),
+  launch: (flight) => set({ flight: flight && { ...flight, key: ++flightKey }, landed: null, reading: false }),
 
   land: () => {
     const lesson = currentLesson(get())
     const revealed = get().revealed + 1
     const { mode, pauseAfter } = get()
     const pause = mode === "event" || (mode === "play" && pauseAfter === "event")
-    set({ revealed, selectedEvent: lastId(lesson, revealed), flight: null, ...(pause ? { mode: null } : { reading: mode === "play" }) })
+    set({ revealed, selectedEvent: lastId(lesson, revealed), flight: null, landed: lastId(lesson, revealed), ...(pause ? { mode: null } : { reading: mode === "play" }) })
   },
 
   advanceStep: () => {
     const lesson = currentLesson(get())
     const { step, mode } = get()
-    if (step >= lesson.steps.length - 1) set({ finished: true, mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null })
-    else set({ step: step + 1, viewOverride: null, intro: mode === "play", advancing: false, transit: null })
+    if (step >= lesson.steps.length - 1) set({ finished: true, mode: null, flight: null, landed: null, intro: false, reading: false, advancing: false, transit: null })
+    else set({ step: step + 1, landed: null, viewOverride: null, intro: mode === "play", advancing: false, transit: null })
   },
 
   endIntro: () => set({ intro: false }),
@@ -252,8 +255,8 @@ export const useApp = create<AppState>((set, get) => ({
   setSpeed: (speed) => set({ speed }),
   speedUp: () => set((s) => ({ speed: SPEEDS[(SPEEDS.indexOf(s.speed) + 1) % SPEEDS.length] ?? 1 })),
   selectEvent: (selectedEvent) => set({ selectedEvent }),
-  drill: (viewOverride) => set({ viewOverride }),
-  setStageView: (stageView) => set({ stageView }),
+  drill: (viewOverride) => set({ viewOverride, landed: null }),
+  setStageView: (stageView) => set({ stageView, landed: null }),
   setFlowTab: (flowTab) => set({ flowTab }),
   setTheme: (theme) => {
     document.documentElement.dataset.theme = theme

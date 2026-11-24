@@ -14,7 +14,7 @@ export const deployAnApp: Lesson = {
     title: "What happens when you run kubectl apply",
     description: "Follow one kubectl apply through the API server, etcd, controllers, scheduler and kubelet until the Kubernetes Pod is running, event by event.",
   },
-  actors: ["you", "cp", "etcd", "node1", "node2", "web-deploy", "web-rs", "web-svc"],
+  actors: ["you", "cp", "node1", "node2", "web-deploy", "web-rs", "web-svc"],
   pods: { node1: ["other"], node2: ["other"] },
   res: { "web-svc": { kind: "service", name: "Service web", sub: "endpoints: none" } },
   lanes: { [POD]: "Pod x2kqp", "CNI plugin": "CNI" },
@@ -38,10 +38,10 @@ export const deployAnApp: Lesson = {
         ["AUTH", "client certificate from kubeconfig"],
       ],
       view: "cluster",
-      focus: ["you", "cp"],
+      focus: ["you", "api"],
       events: [
         ev({
-          id: "e1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DOES IT EXIST?", path: ["you", "cp"],
+          id: "e1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DOES IT EXIST?", path: ["you", "api"],
           says: "kubectl asks the API server whether a Deployment called web already exists. It doesn't.",
           info: "GET /apis/apps/v1/namespaces/default/deployments/web",
           decoded: [
@@ -51,7 +51,7 @@ export const deployAnApp: Lesson = {
           note: "apply always checks first. A 404 means create; an existing object would get a PATCH instead.",
         }),
         ev({
-          id: "e2", at: 9, src: "kubectl", dst: API, layer: "api", size: "1.1 KB", title: "CREATE DEPLOYMENT", path: ["you", "cp"],
+          id: "e2", at: 9, src: "kubectl", dst: API, layer: "api", size: "1.1 KB", title: "CREATE DEPLOYMENT", path: ["you", "api"],
           says: "So kubectl sends the whole Deployment, as JSON, and asks the API server to create it.",
           info: "POST /apis/apps/v1/namespaces/default/deployments",
           res: { "web-deploy": { kind: "deployment", name: "Deployment web", sub: "wants 3 replicas", state: "creating" } },
@@ -72,22 +72,22 @@ export const deployAnApp: Lesson = {
         ["ORDER", "authn → authz → mutating admission → validation → validating admission"],
       ],
       view: "cluster",
-      focus: ["cp"],
+      focus: ["api"],
       events: [
         ev({
-          id: "e3", at: 10, src: API, dst: API, layer: "api", size: " - ", title: "AUTHENTICATION", path: ["cp", "cp"],
+          id: "e3", at: 10, src: API, dst: API, layer: "api", size: " - ", title: "AUTHENTICATION", path: ["api", "api"],
           says: "The API server checks who is asking: your client certificate says you.",
           info: "authn: client certificate CN=you O=developers",
           decoded: [sec("RESULT", [["method", "x509 client certificate"], ["user", "you"], ["groups", "developers, system:authenticated"]])],
         }),
         ev({
-          id: "e4", at: 10, src: API, dst: API, layer: "api", size: " - ", title: "AUTHORIZATION · RBAC", path: ["cp", "cp"],
+          id: "e4", at: 10, src: API, dst: API, layer: "api", size: " - ", title: "AUTHORIZATION · RBAC", path: ["api", "api"],
           says: "Then it checks you're allowed to create Deployments here. RBAC says yes.",
           info: "authz: RBAC allows create deployments.apps in default",
           decoded: [sec("CHECK", [["verb", "create"], ["resource", "deployments.apps"], ["namespace", "default"], ["decision", "allow"], ["because", "RoleBinding developers-edit → ClusterRole edit"]])],
         }),
         ev({
-          id: "e5", at: 11, src: API, dst: API, layer: "api", size: " - ", title: "DEFAULTS AND ADMISSION", path: ["cp", "cp"],
+          id: "e5", at: 11, src: API, dst: API, layer: "api", size: " - ", title: "DEFAULTS AND ADMISSION", path: ["api", "api"],
           says: "It fills in the fields you left out with defaults, and admission checks the object.",
           info: "defaults filled, admission passed",
           decoded: [
@@ -107,10 +107,10 @@ export const deployAnApp: Lesson = {
         ["REVISION", "48211"],
       ],
       view: "cluster",
-      focus: ["cp", "etcd", "you"],
+      focus: ["api", "etcd", "you"],
       events: [
         ev({
-          id: "e6", at: 13, src: API, dst: "etcd", layer: "state", size: "0.9 KB", title: "STORE IN ETCD", path: ["cp", "etcd"],
+          id: "e6", at: 13, src: API, dst: "etcd", layer: "state", size: "0.9 KB", title: "STORE IN ETCD", path: ["api", "etcd"],
           says: "The API server saves the Deployment in etcd. Nothing is running yet.",
           info: "Txn put /registry/deployments/default/web",
           res: { "web-deploy": { kind: "deployment", name: "Deployment web", sub: "saved · rev 48211" } },
@@ -120,7 +120,7 @@ export const deployAnApp: Lesson = {
           ],
         }),
         ev({
-          id: "e7", at: 15, src: API, dst: "kubectl", layer: "api", size: "1.6 KB", title: "201 CREATED", path: ["cp", "you"],
+          id: "e7", at: 15, src: API, dst: "kubectl", layer: "api", size: "1.6 KB", title: "201 CREATED", path: ["api", "you"],
           says: "kubectl gets 201 Created and exits. The rest happens without it.",
           info: "201 Created deployment.apps/web",
           decoded: [sec("HTTP/2 RESPONSE", [["status", "201 Created"], ["metadata.resourceVersion", "\"48211\"", true], ["metadata.uid", "3c1f6b2e-…"]])],
@@ -138,24 +138,24 @@ export const deployAnApp: Lesson = {
         ["CREATED", `ReplicaSet ${RS}, 3 Pods`],
       ],
       view: "cluster",
-      focus: ["cp", "web-deploy", "web-rs"],
+      focus: ["api", "kcm", "web-deploy", "web-rs"],
       events: [
         ev({
-          id: "e8", at: 17, src: API, dst: "deployment ctrl", layer: "control", size: "1.2 KB", title: "WATCH EVENT", path: ["cp", "web-deploy"],
+          id: "e8", at: 17, src: API, dst: "deployment ctrl", layer: "control", size: "1.2 KB", title: "WATCH EVENT", path: ["api", "web-deploy"],
           says: "The Deployment controller is watching, so it hears about the new Deployment at once.",
           info: "WATCH ADDED Deployment default/web",
           decoded: [sec("WATCH STREAM", [["request", "GET /apis/apps/v1/deployments?watch=true"], ["type", "ADDED"], ["object", "Deployment default/web"], ["resourceVersion", "48211"]])],
           note: "Controllers never poll. They keep a watch open and the API server pushes each change to them.",
         }),
         ev({
-          id: "e9", at: 21, src: "deployment ctrl", dst: API, layer: "api", size: "1.4 KB", title: "CREATE REPLICASET", path: ["cp", "web-rs"],
+          id: "e9", at: 21, src: "deployment ctrl", dst: API, layer: "api", size: "1.4 KB", title: "CREATE REPLICASET", path: ["kcm", "web-rs"],
           says: "It creates a ReplicaSet: the thing that keeps a set number of identical Pods.",
           info: `POST …/replicasets  ${RS}`,
           res: { "web-rs": { kind: "replicaset", name: "ReplicaSet …d8b4", sub: "wants 3 Pods", state: "creating" } },
           decoded: [sec("BODY · REPLICASET", [["metadata.name", RS], ["ownerReferences", "Deployment/web"], ["labels.pod-template-hash", "6f7c9d8b4"], ["spec.replicas", "3"]])],
         }),
         ev({
-          id: "e10", at: 24, src: API, dst: "replicaset ctrl", layer: "control", size: "1.4 KB", title: "WATCH EVENT", path: ["cp", "web-rs"],
+          id: "e10", at: 24, src: API, dst: "replicaset ctrl", layer: "control", size: "1.4 KB", title: "WATCH EVENT", path: ["api", "web-rs"],
           says: "The ReplicaSet controller hears about the new ReplicaSet. It wants 3 Pods and has 0.",
           info: `WATCH ADDED ReplicaSet ${RS}`,
           decoded: [sec("WATCH STREAM", [["type", "ADDED"], ["object", `ReplicaSet ${RS}`], ["wants", "3 Pods"], ["has", "0 Pods"]])],
@@ -180,17 +180,17 @@ export const deployAnApp: Lesson = {
         ["WRITES", "Binding → API server"],
       ],
       view: "cluster",
-      focus: ["cp", "web-rs", "node1", "node2"],
+      focus: ["api", "sched", "web-rs", "node1", "node2"],
       pods: { node1: ["other", "starting"], node2: ["other", "starting", "starting"] },
       events: [
         ev({
-          id: "e12", at: 31, src: API, dst: "kube-scheduler", layer: "control", size: "2.3 KB", title: "UNSCHEDULED POD", path: ["cp", "cp"],
+          id: "e12", at: 31, src: API, dst: "kube-scheduler", layer: "control", size: "2.3 KB", title: "UNSCHEDULED POD", path: ["api", "sched"],
           says: "The scheduler is watching every Pod. This one has no node, so it joins the queue.",
           info: `WATCH ADDED Pod ${POD} (no node)`,
           decoded: [sec("WATCH STREAM", [["request", "GET /api/v1/pods?fieldSelector=status.phase!=Succeeded,status.phase!=Failed&watch=true"], ["type", "ADDED"], ["spec.nodeName", "\"\" → into the scheduling queue", true]])],
         }),
         ev({
-          id: "e13", at: 52, src: "kube-scheduler", dst: API, layer: "api", size: "0.3 KB", title: "BINDING", path: ["cp", "cp"],
+          id: "e13", at: 52, src: "kube-scheduler", dst: API, layer: "api", size: "0.3 KB", title: "BINDING", path: ["sched", "api"],
           says: "It picks node-2 and records that choice as a Binding. It never contacts node-2 itself.",
           info: `POST …/pods/${POD}/binding  → node-2`,
           res: { "web-rs": { kind: "replicaset", name: "ReplicaSet …d8b4", sub: "3 Pods · 1 on node-2" } },
@@ -271,7 +271,7 @@ export const deployAnApp: Lesson = {
         ["ENDPOINT ADDED", "10.244.2.17:8080"],
       ],
       view: "cluster",
-      focus: ["cp", "web-svc", "node1", "node2"],
+      focus: ["api", "kcm", "web-svc", "node1", "node2"],
       pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
       events: [
         ev({
@@ -281,13 +281,13 @@ export const deployAnApp: Lesson = {
           decoded: [sec("HTTP PROBE", [["type", "readiness"], ["request", "GET http://10.244.2.17:8080/healthz"], ["from", "kubelet on node-2"], ["result", "200 OK"]])],
         }),
         ev({
-          id: "e22", at: 4210, src: "kubelet", dst: API, layer: "api", size: "0.9 KB", title: "POD IS READY", path: ["node2", "cp"],
+          id: "e22", at: 4210, src: "kubelet", dst: API, layer: "api", size: "0.9 KB", title: "POD IS READY", path: ["node2", "api"],
           says: "The kubelet reports the Pod as Ready.",
           info: `PATCH …/pods/${POD}/status  Ready=True`,
           decoded: [sec("STATUS PATCH", [["conditions.Ready", "False → True", true], ["conditions.ContainersReady", "True"]])],
         }),
         ev({
-          id: "e23", at: 4224, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "UPDATE ENDPOINTS", path: ["cp", "web-svc"],
+          id: "e23", at: 4224, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "UPDATE ENDPOINTS", path: ["kcm", "web-svc"],
           says: "The Pod's IP is added to the Service's list of endpoints. Traffic can now reach it.",
           info: "PUT …/endpointslices/web-7xk2p  +10.244.2.17:8080",
           res: { "web-svc": { kind: "service", name: "Service web", sub: "endpoints: 1 · 10.244.2.17" } },

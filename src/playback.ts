@@ -89,6 +89,15 @@ export function resourcesAt(lesson: Lesson, step: number, revealed = Infinity): 
   return cards
 }
 
+/** The cards an event puts on screen, as opposed to the ones it changes. */
+export function createdBy(lesson: Lesson, event: ClusterEvent & { step: number; index: number }): string[] {
+  const before = resourcesAt(lesson, event.step, event.index)
+  return Object.entries(event.res ?? {}).filter(([id, r]) => r !== null && !before[id]).map(([id]) => id)
+}
+
+/** How long a new card's marker takes from where its event landed to where the card appears, at 1× speed. */
+export const CREATE_MS = 900
+
 export interface LessonStats {
   events: number
   apiCalls: number

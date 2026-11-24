@@ -9,10 +9,10 @@ import { LAYERS } from "../data/layers"
 import type { ActorId, ClusterEvent, Lesson, Level, PodSlot, Resource } from "../data/types"
 import type { Point } from "../iso/iso"
 import { useReducedMotion } from "../hooks"
-import { podsAt, resourcesAt, timeline } from "../playback"
+import { CREATE_MS, createdBy, podsAt, resourcesAt, timeline } from "../playback"
 import { useExploreCamera } from "../scene/camera"
 import { CARRY_MS, DEPTH } from "../scene/transition"
-import { actorById, actorsAt, CABLES, floorCorners, floorFor, floorMatrix, frame, groundRoute, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape } from "../scene/world"
+import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
 import { useApp, useLesson, type Flight, type StageView } from "../store"
 import { sentence } from "../data/text"
 import { Icon } from "./Icon"
@@ -20,6 +20,9 @@ import { Transport } from "./Transport"
 
 const SequenceView = lazy(() => import("./SequenceView"))
 
+
+/** anything the reader can point at for a caption: an actor, or a group of them */
+type Described = Pick<Actor, "id" | "name" | "about">
 
 interface SceneState {
   level: Level
@@ -43,7 +46,8 @@ function useSceneState(lesson: Lesson): SceneState {
     const entering = step < 0 && !finished && !!transit
     const level: Level = override ?? current?.view ?? (entering ? actorById(transit.to)?.level : undefined) ?? "cluster"
     const all = actorsAt(level)
-    const visible = level === "cluster" && lesson.actors.length ? all.filter((a) => lesson.actors.includes(a.id)) : all
+    const used = expand(lesson.actors)
+    const visible = level === "cluster" && used.length ? all.filter((a) => used.includes(a.id)) : all
     const following = !override && (!!current || entering)
     if (following && transit && transit.phase !== "surface") {
       const ids = transit.phase === "carry" ? [transit.from, transit.to] : [transit.to]
@@ -70,7 +74,7 @@ function CableLine({ level, cable, on }: { level: Level; cable: Cable; on: boole
 }
 
 /** An ownership edge between a card and what it owns: a thin dashed L on the floor, arrow at the owned end. */
-function OwnLink({ a, b, on }: { a: Actor; b: Actor; on: boolean }) {
+function OwnLink({ a, b, on, delay }: { a: Actor; b: Actor; on: boolean; delay: number }) {
   const pts = screenRoute(a.level, ownRoute(a, b), a, b)
   const [p, q] = [pts[pts.length - 2], pts[pts.length - 1]]
   const len = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1
@@ -78,7 +82,7 @@ function OwnLink({ a, b, on }: { a: Actor; b: Actor; on: boolean }) {
   const head = (ang: number) => [q[0] - 7 * (ux * Math.cos(ang) - uy * Math.sin(ang)), q[1] - 7 * (uy * Math.cos(ang) + ux * Math.sin(ang))]
   const [h1, h2] = [head(0.5), head(-0.5)]
   return (
-    <g className="own" data-on={on || undefined}>
+    <g className="own" data-on={on || undefined} style={{ "--born": `${delay}ms` } as CSSProperties}>
       <path className="own-line" d={d(pts)} />
       <path d={`M${h1[0].toFixed(1)} ${h1[1].toFixed(1)} L${q[0].toFixed(1)} ${q[1].toFixed(1)} L${h2[0].toFixed(1)} ${h2[1].toFixed(1)}`} />
     </g>
@@ -139,7 +143,7 @@ function useProgress(key: string | number, duration: number, enabled: boolean, o
 }
 
 /** The cable an event travels, lighting up behind its packet. Drawn under the actors. */
-function Trail({ flight, event }: { flight: Flight; event: ClusterEvent }) {
+function Trail({ flight, event }: { flight: Pick<Flight, "duration"> & { key: string | number }; event: ClusterEvent }) {
   const ref = useRef<SVGPathElement>(null)
   const { pts } = useFlightRoute(event)
   useProgress(flight.key, flight.duration, pts.length > 1, (t) => ref.current?.style.setProperty("stroke-dashoffset", String(1 - t)))
@@ -150,7 +154,7 @@ function Trail({ flight, event }: { flight: Flight; event: ClusterEvent }) {
 const clip = (text: string, max = 44) => (text.length > max ? `${text.slice(0, max - 1)}…` : text)
 
 /** The event in flight: a packet that travels the cables from one actor to another, or a ring that pulses on one. */
-function Marker({ flight, event }: { flight: Flight; event: ClusterEvent }) {
+function Marker({ flight, event }: { flight: Pick<Flight, "duration"> & { key: string | number }; event: ClusterEvent }) {
   const ref = useRef<SVGGElement>(null)
   const textRef = useRef<SVGTextElement>(null)
   const rectRef = useRef<SVGRectElement>(null)
@@ -240,14 +244,13 @@ function ActorNode({ actor, focused, dimmed, slots, onHover }: {
 }
 
 /** A Kubernetes object (Deployment, ReplicaSet, Service…) drawn as a card, materialized by the event that touched it. */
-function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover }: {
+function ResourceNode({ actor, res, focused, dimmed, delay, onHover }: {
   actor: Actor
   res: Resource
   focused: boolean
   dimmed: boolean
-  /** number of the event that last touched this card */
-  badge?: number
-  badgeColor: string
+  /** how long after its event lands the card appears, in milliseconds */
+  delay: number
   onHover: (a: Actor | null) => void
 }) {
   const art = useMemo(() => actor.art(), [actor])
@@ -258,6 +261,7 @@ function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover 
       data-state={res.state ?? "active"}
       data-on={focused || undefined}
       data-dim={dimmed || undefined}
+      style={{ "--born": `${delay}ms` } as CSSProperties}
       onPointerEnter={() => onHover(actor)}
       onPointerLeave={() => onHover(null)}
     >
@@ -266,18 +270,12 @@ function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover 
         <text className="n">{res.name}</text>
         {res.sub && <text className="ip" y="16">{res.sub}</text>}
       </g>
-      {badge !== undefined && (
-        <g key={badge} className="res-badge" style={{ "--c": badgeColor } as CSSProperties} transform={`translate(${actor.pos[0] + 30} ${actor.pos[1] - 22})`}>
-          <circle r="9" />
-          <text y="3.5">{badge}</text>
-        </g>
-      )}
     </g>
   )
 }
 
-/** The plate a level stands on: a thin slab with a faint grid and its name lying on it. */
-function Floor({ level, floor }: { level: Level; floor: FloorShape }) {
+/** The plate a level or a group stands on: a thin slab with a faint grid and its name lying on it. */
+function Floor({ level, floor, group, onHover }: { level: Level; floor: FloorShape; group?: Group; onHover?: (g: Group | null) => void }) {
   const markup = useMemo(() => {
     const { x0, x1, y0, y1 } = floor
     const P = (x: number, y: number) => toScreen(level, [x, y])
@@ -290,7 +288,7 @@ function Floor({ level, floor }: { level: Level; floor: FloorShape }) {
     return { edge: [pts([e, c, down(c), down(e)]), pts([c, b, down(b), down(c)])], top: pts([a, b, c, e]), grid }
   }, [level, floor])
   return (
-    <g className="floor">
+    <g className="floor" data-group={group?.id} onPointerEnter={() => group && onHover?.(group)} onPointerLeave={() => group && onHover?.(null)}>
       {markup.edge.map((p) => <polygon key={p} className="floor-edge" points={p} />)}
       <polygon className="floor-top" points={markup.top} />
       <path className="floor-grid" d={markup.grid} />
@@ -320,7 +318,7 @@ function ClusterScene() {
   const transit = useApp((s) => s.transit)
   const speed = useApp((s) => s.speed)
   const scene = useSceneState(lesson)
-  const [hover, setHover] = useState<Actor | null>(null)
+  const [hover, setHover] = useState<Described | null>(null)
 
   const [entered, setEntered] = useState<{ level: Level; direction: "in" | "out" | "emerge" }>({ level: scene.level, direction: "in" })
   if (entered.level !== scene.level) {
@@ -376,10 +374,26 @@ function ClusterScene() {
           ...workloadNodes(resources, pods).filter(([a, b]) => resIds.has(a) && ids.has(b)),
         ]
 
-  // the cards the event that just landed changed, and its number for their badges
+  // the cards the event that just landed changed
   const { events } = timeline(lesson)
   const lastEvent = revealed > 0 ? events[revealed - 1] : undefined
   const touched = new Set(Object.entries(lastEvent?.res ?? {}).filter(([, r]) => r !== null).map(([id]) => id))
+
+  // a card created somewhere other than where its event landed: a marker carries it the rest of the way
+  const landed = useApp((s) => s.landed)
+  const reduced = useReducedMotion()
+  const origin = lastEvent?.path?.[1]
+  const creating =
+    lastEvent && landed === lastEvent.id && origin && onScreen(origin) && !reduced
+      ? createdBy(lesson, lastEvent).filter((id) => id !== origin && resIds.has(id))
+      : []
+  const createMs = CREATE_MS / speed
+  const births = creating.map((id) => ({
+    flight: { key: `born-${lastEvent!.id}-${id}`, duration: createMs },
+    event: { ...lastEvent!, title: resources[id].name, path: [origin, id] as [ActorId, ActorId] },
+  }))
+  const bornDelay = (id: ActorId) => (creating.includes(id) ? createMs : 0)
+  const bornStyle = { "--born": `${createMs}ms` } as CSSProperties
 
   // the reader can take the camera: scroll to zoom, drag to move; a new level takes it back
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -404,6 +418,9 @@ function ClusterScene() {
         <g key={scene.level} className="camera" data-dive={scene.dive || undefined} data-manual={cam.manual || undefined} data-surface={transit?.phase === "surface" || undefined} style={camera}>
           <g className="level" data-enter={entered.direction}>
             <Floor level={scene.level} floor={floor} />
+            {GROUPS.filter((g) => g.level === scene.level && g.members.every((m) => ids.has(m))).map((g) => (
+              <Floor key={g.id} level={g.level} floor={g.floor} group={g} onHover={(h) => !cam.panning && setHover(h)} />
+            ))}
             {cables.map((c) => (
                 <CableLine key={`${c.a}-${c.b}`} level={scene.level} cable={c} on={scene.focus.has(c.a) && scene.focus.has(c.b)} />
               ))}
@@ -412,7 +429,10 @@ function ClusterScene() {
               return <circle key={p.join()} className="joint" cx={cx} cy={cy} r={2.2} />
             })}
             {ownLinks.map(([a, b]) => (
-              <OwnLink key={`own-${a}-${b}`} a={actorById(a)!} b={actorById(b)!} on={scene.focus.has(a) && scene.focus.has(b)} />
+              <OwnLink key={`own-${a}-${b}`} a={actorById(a)!} b={actorById(b)!} on={scene.focus.has(a) && scene.focus.has(b)} delay={Math.max(bornDelay(a), bornDelay(b))} />
+            ))}
+            {births.map((b) => (
+              <g key={b.flight.key} className="birth" style={bornStyle}><Trail flight={b.flight} event={b.event} /></g>
             ))}
             {flight && flying && <Trail key={`trail-${flight.key}`} flight={flight} event={flying} />}
             {carried && <Trail key={`trail-${carried.flight.key}`} flight={carried.flight} event={carried.event} />}
@@ -435,13 +455,15 @@ function ClusterScene() {
                   actor={actor}
                   res={res}
                   focused={scene.focus.has(id)}
-                  dimmed={scene.dim && !scene.focus.has(id)}
-                  badge={touched.has(id) && lastEvent ? lastEvent.index + 1 : undefined}
-                  badgeColor={lastEvent ? LAYERS[lastEvent.layer].color : ""}
+                  dimmed={scene.dim && !scene.focus.has(id) && !touched.has(id)}
+                  delay={bornDelay(id)}
                   onHover={(a) => !cam.panning && setHover(a)}
                 />
               )
             })}
+            {births.map((b) => (
+              <g key={b.flight.key} className="birth" style={bornStyle}><Marker flight={b.flight} event={b.event} /></g>
+            ))}
             {flight && flying && <Marker key={flight.key} flight={flight} event={flying} />}
             {carried && <Marker key={carried.flight.key} flight={carried.flight} event={carried.event} />}
           </g>
@@ -466,7 +488,7 @@ function ClusterScene() {
 }
 
 /** The caption under the diagram: what's happening right now, in one plain sentence. */
-function Narration({ hover }: { hover: Actor | null }) {
+function Narration({ hover }: { hover: Described | null }) {
   const lesson = useLesson()
   const step = useApp((s) => s.step)
   const intro = useApp((s) => s.intro)

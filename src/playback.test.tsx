@@ -3,7 +3,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { lessonById } from "./data/lessons"
 import type { Lesson } from "./data/types"
 import { usePlayback } from "./hooks"
-import { eventReadTime, podsAt, resourcesAt, timeline } from "./playback"
+import { createdBy, eventReadTime, podsAt, resourcesAt, timeline } from "./playback"
 import { useApp } from "./store"
 
 const lesson = lessonById("deploy-an-app")!
@@ -206,7 +206,7 @@ test("going from Scheduling into node-2, a marker carries playback in and the ca
   act(() => useApp.getState().goToStep(4))
   act(() => useApp.getState().togglePlay())
   // the Binding stays on the control plane, so a marker first carries the next event (the watch push) out to node-2
-  expect(useApp.getState().transit).toMatchObject({ from: "cp", to: "node2", eventId: "e14", phase: "carry" })
+  expect(useApp.getState().transit).toMatchObject({ from: "api", to: "node2", eventId: "e14", phase: "carry" })
   expect(useApp.getState().step).toBe(4)
   run(1150)
   expect(useApp.getState().transit).toMatchObject({ to: "node2", phase: "dive" })
@@ -306,4 +306,26 @@ test("Play from the overview of a lesson that starts inside a Pod dives through 
   expect(useApp.getState().transit).toMatchObject({ phase: "dive" })
   run(900)
   expect(useApp.getState()).toMatchObject({ step: 0, transit: null, intro: true })
+})
+
+test("an event creates a card only the first time it puts it on screen", () => {
+  const { events } = timeline(lesson)
+  const created = (id: string) => createdBy(lesson, events.find((e) => e.id === id)!)
+  expect(created("e2")).toEqual(["web-deploy"])
+  expect(created("e6")).toEqual([])
+  expect(created("e9")).toEqual(["web-rs"])
+})
+
+test("an event counts as just landed until playback moves on, and never when jumping to a step", () => {
+  vi.useFakeTimers()
+  render(<Driver />)
+  act(() => useApp.getState().stepEvent())
+  run(1150)
+  expect(useApp.getState().landed).toBe("e1")
+  act(() => useApp.getState().stepEvent())
+  expect(useApp.getState().landed).toBe(null)
+  run(1150)
+  expect(useApp.getState().landed).toBe("e2")
+  act(() => useApp.getState().goToStep(0))
+  expect(useApp.getState()).toMatchObject({ revealed: timeline(lesson).end[0], landed: null })
 })
