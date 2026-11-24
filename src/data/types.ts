@@ -72,6 +72,7 @@ export type ResourceKind =
   | "ingress"
   | "pvc"
   | "pv"
+  | "pod"
 
 export interface Resource {
   kind: ResourceKind

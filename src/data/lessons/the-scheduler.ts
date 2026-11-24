@@ -128,10 +128,10 @@ export const theScheduler: Lesson = {
     {
       title: "WHEN NOTHING FITS",
       subtitle: "Pending, or preempt",
-      body: `If every node is filtered out, the scheduler doesn't error - it writes a condition and stops. The Pod sits Pending with PodScheduled=False, and the scheduler retries gently forever, because a filtered-out node can free up at any moment: a DaemonSet finishes, a Pod is deleted, a cordoned node is uncordoned. One exception escalates: a Pod with a high PriorityClass may preempt - evict lower-priority Pods until it fits.`,
+      body: `If every node is filtered out, the scheduler doesn't error - it writes a condition and parks the Pod. The Pod sits Pending with PodScheduled=False until a change that could help wakes it: a Pod is deleted, a node is added, a cordoned node is uncordoned. One exception escalates: a Pod with a high PriorityClass may preempt - evict lower-priority Pods until it fits.`,
       facts: [
         ["PHASE", "Pending · PodScheduled=False"],
-        ["RETRY", "gentle, forever - state may change"],
+        ["RETRY", "when the cluster changes · or after 5 min"],
         ["PREEMPTION", "high priority evicts the low"],
         ["REASONS", "Insufficient cpu/memory · taints · affinity"],
       ],
@@ -142,7 +142,7 @@ export const theScheduler: Lesson = {
           id: "sd7", at: 200, src: SCHED, dst: API, layer: "drop", size: "0.4 KB", title: "THE OTHER OUTCOME", path: ["sched", "api"],
           says: "On a full cluster, the same loop ends here instead: Pending, with the reason recorded.",
           info: "PodStatus conditions.PodScheduled=False (Unschedulable)",
-          decoded: [sec("PENDING", [["reason", "0/2 nodes available: 2 Insufficient cpu", true], ["who fixes it", "a cluster autoscaler adding a node, or you"], ["preemption", "only if priority demands it"], ["events", "FailedScheduling, visible in describe"]])],
+          decoded: [sec("PENDING", [["reason", "0/2 nodes are available: 2 Insufficient cpu", true], ["who fixes it", "a cluster autoscaler adding a node, or you"], ["preemption", "only if priority demands it"], ["events", "FailedScheduling, visible in describe"]])],
           note: "Preemption picks the lowest-priority Pods whose removal frees enough room and deletes them gracefully. Their ReplicaSets create replacements, which then have to find room somewhere else.",
         }),
       ],
@@ -153,7 +153,7 @@ export const theScheduler: Lesson = {
     { value: "t2", label: "filter 2 nodes", layer: "control", start: 60, duration: 15 },
     { value: "t3", label: "score + decide", layer: "control", start: 75, duration: 15 },
     { value: "t4", label: "bind → kubelet watch", layer: "api", start: 90, duration: 60 },
-    { value: "t5", label: "retry loop if Pending", layer: "drop", start: 200, duration: 200 },
+    { value: "t5", label: "parked if nothing fits", layer: "drop", start: 200, duration: 200 },
   ],
   summary: {
     title: "ONE FIELD",
@@ -161,7 +161,7 @@ export const theScheduler: Lesson = {
     facts: [
       ["DECIDED IN", "≈ 40 ms · 2 nodes, 9 plugins"],
       ["AUTHORITY", "writes spec.nodeName - nothing more"],
-      ["NEXT", "Reconcile loops"],
+      ["NEXT", "Why is my Pod Pending?"],
     ],
   },
 }

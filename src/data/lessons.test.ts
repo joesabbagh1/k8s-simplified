@@ -17,7 +17,7 @@ test("every lesson is written", () => {
     "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf",
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "list-and-watch",
-    "the-scheduler", "reconcile-loops", "node-goes-dark",
+    "the-scheduler", "pending-pod", "reconcile-loops", "node-goes-dark",
     "graceful-shutdown", "autoscaling", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens",
   ])

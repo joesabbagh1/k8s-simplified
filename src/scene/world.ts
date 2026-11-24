@@ -208,7 +208,7 @@ export const ACTORS: Actor[] = [
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV",
+  pvc: "PVC", pv: "PV", pod: "POD",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -237,6 +237,8 @@ const RESOURCES: Actor[] = [
   resource("backup-cj", "cronjob", "CronJob backup", "0 2 * * *", "A schedule in the API. At each tick its controller creates a Job object.", [28, -68]),
   resource("backup-job", "job", "Job backup-28471", "completions 1/1", "Runs Pods until the completions count is reached, retrying failures up to backoffLimit.", [60, -68], [0, -52, "middle"]),
   resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
+  resource("search-pod", "pod", "Pod search", "Pending", "A Pod with no node: it exists only as a record in the API until the scheduler places it.", [28, -68]),
+  resource("search-pod2", "pod", "Pod search", "Pending", "The replacement Pod, made from the Deployment's new template. It is only a record until the scheduler places it.", [28, -100]),
 ]
 
 const byId = new Map([...ACTORS, ...RESOURCES].map((a) => [a.id, a]))

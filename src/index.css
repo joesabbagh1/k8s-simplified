@@ -192,7 +192,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .res.kind-statefulset, .res.kind-job, .res.kind-cronjob { --rk: var(--l-node); }
 .res.kind-configmap, .res.kind-pvc { --rk: var(--l-state); }
 .res.kind-secret { --rk: var(--l-drop); }
-.res.kind-pv { --rk: var(--l-node); }
+.res.kind-pv, .res.kind-pod { --rk: var(--l-node); }
 .res.kind-hpa { --rk: #f0abfc; }
 :root[data-theme="light"] .res.kind-hpa { --rk: #a21caf; }
 .res .f-t { fill: color-mix(in srgb, var(--rk) 20%, var(--iso-top)); }

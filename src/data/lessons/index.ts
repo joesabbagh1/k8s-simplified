@@ -16,6 +16,7 @@ import { oomKilled } from "./oom-killed"
 import { mountingVolume } from "./mounting-volume"
 import { listAndWatch } from "./list-and-watch"
 import { theScheduler } from "./the-scheduler"
+import { pendingPod } from "./pending-pod"
 import { reconcileLoops } from "./reconcile-loops"
 import { nodeGoesDark } from "./node-goes-dark"
 import { gracefulShutdown } from "./graceful-shutdown"
@@ -43,6 +44,7 @@ export const LESSONS: Lesson[] = [
   mountingVolume,
   listAndWatch,
   theScheduler,
+  pendingPod,
   reconcileLoops,
   nodeGoesDark,
   gracefulShutdown,
