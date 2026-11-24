@@ -15,6 +15,10 @@ export const statefulsetStorage: Lesson = {
   title: "StatefulSet with storage",
   subtitle: "Stable names, ordered starts",
   category: "app",
+  seo: {
+    title: "Kubernetes StatefulSet storage and identity",
+    description: "Why Kubernetes database Pods get names like db-0: how a StatefulSet gives each Pod a stable name, its own volume and an ordered start.",
+  },
   actors: ["you", "cp", "node1", "node2", "db-sts"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1"] },
   lanes: {

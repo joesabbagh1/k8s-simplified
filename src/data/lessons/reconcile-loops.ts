@@ -11,6 +11,10 @@ export const reconcileLoops: Lesson = {
   title: "Reconcile loops",
   subtitle: "Desired vs. actual state",
   category: "control",
+  seo: {
+    title: "Kubernetes reconcile loops, explained",
+    description: "Delete a Pod and watch the ReplicaSet controller put it back: how Kubernetes compares desired with actual state, and what level-triggered means.",
+  },
   actors: ["you", "cp", "node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: { "kubelet · node-2": "kubelet", "kubelet · node-1": "kubelet" },

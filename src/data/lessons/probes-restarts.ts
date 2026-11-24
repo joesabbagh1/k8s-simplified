@@ -11,6 +11,10 @@ export const probesRestarts: Lesson = {
   title: "Probes and restarts",
   subtitle: "CrashLoopBackOff, explained",
   category: "node",
+  seo: {
+    title: "CrashLoopBackOff and Kubernetes probes",
+    description: "Why a Pod ends up in CrashLoopBackOff: liveness and readiness probes, restart counts, and the Kubernetes backoff that doubles up to five minutes.",
+  },
   actors: ["you", "cp", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

@@ -8,6 +8,10 @@ export const dnsInCluster: Lesson = {
   title: "DNS in the cluster",
   subtitle: "CoreDNS and ndots:5",
   category: "network",
+  seo: {
+    title: "Kubernetes DNS: CoreDNS and ndots:5",
+    description: "Why one lookup of api.example.com in a Kubernetes Pod can hit CoreDNS four times: resolv.conf, search domains and ndots:5, query by query.",
+  },
   actors: ["resolver", "node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

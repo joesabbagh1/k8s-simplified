@@ -1,4 +1,4 @@
-# K8s Simplified
+# KubeLearn
 
 Every layer, from packet to pod. An interactive explainer that plays out what a Kubernetes cluster actually does, event by event: API calls, etcd writes, watch notifications, container runtime calls and real packets, each one decoded field by field.
 
@@ -11,7 +11,7 @@ npm install
 npm run dev        # http://localhost:5173
 npm test           # Vitest + jsdom
 npm run typecheck
-npm run build      # static site in dist/
+npm run build      # static site in dist/, one HTML file per page
 ```
 
 ## How it's put together
@@ -25,6 +25,8 @@ npm run build      # static site in dist/
 | `src/iso/iso.ts` | Isometric drawing helpers that produce the SVG icons. |
 | `src/playback.ts`, `src/hooks.ts`, `src/store.ts` | Playback: the lesson timeline, the driver that launches and lands each event, and app state (Zustand). |
 | `src/components/` | The homepage, the Lessons page (search and category filter), the header breadcrumb, the diagram with its playback controls, the sequence view, the story column, and the events drawer with decoder and timing. |
+| `src/route.ts`, `src/meta.ts` | Which page an address is, and that page's title, description and share tags. |
+| `src/prerender.tsx`, `scripts/prerender.mjs` | Writes every page as its own HTML file after the build. |
 | `src/data/text.ts` | Turns the lessons' capitalized titles into sentence case for display. |
 | `design/style-tile.html` | The approved visual identity. |
 
@@ -34,7 +36,13 @@ Interactive controls come from [UI SDK](https://ui-sdk.dev) (`@ui-sdk/react`, pi
 
 Each step has a `view` (which zoom level), a `focus` (the actors the camera frames) and `events`. Each event can have a `path: [from, to]` of actor ids on that level; the same id twice makes the marker pulse on one actor instead of travelling. `npm test` checks that every id exists on the right level, that event times never go backwards, and that each lesson has a summary and timing.
 
-Links like `/request-finds-pod/5` open a lesson on a given step; `/rolling-update/summary` opens its summary; `/lessons` is the lesson list and `/` the homepage. The host must serve `index.html` for every path (`wrangler.jsonc` already does).
+Links like `/request-finds-pod/5` open a lesson on a given step; `/rolling-update/summary` opens its summary; `/lessons` is the lesson list and `/` the homepage. `npm run build` writes each of these as its own HTML file, so the host needs no fallback: serve `/rolling-update` from `rolling-update.html`, and `404.html` for anything else (`wrangler.jsonc` already does).
+
+`seo` is the lesson's search result: a title people would search for, and a description. `npm test` checks their lengths.
+
+## Search engines
+
+`scripts/prerender.mjs` runs at the end of the build. It renders every page (`src/prerender.tsx`) with its own title, description, canonical address, share tags and structured data (`src/meta.ts`), and writes `sitemap.xml`. A lesson's steps and summary name the lesson as their canonical address, since its overview holds the whole lesson as text.
 
 ## Analytics
 

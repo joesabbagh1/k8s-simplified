@@ -9,6 +9,10 @@ export const ingressGateway: Lesson = {
   title: "Ingress and Gateway API",
   subtitle: "Host and path routing",
   category: "network",
+  seo: {
+    title: "Kubernetes Ingress and Gateway API",
+    description: "How one public IP serves many Kubernetes apps: TLS termination, host and path routing in ingress-nginx, and where the Gateway API fits in.",
+  },
   actors: ["visitor", "lb", "cp", "node1", "node2", "shop-ing", "web-svc"],
   pods: { node1: ["other", "other", "v1"], node2: ["other", "v1", "v1"] },
   res: {

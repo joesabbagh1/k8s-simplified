@@ -2,6 +2,7 @@ import { Button } from "@ui-sdk/react/button"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@ui-sdk/react/tooltip"
 import { logo } from "../iso/iso"
 import { HOME_PATH, LIBRARY_PATH, REPO_URL } from "../route"
+import { SITE } from "../meta"
 import { useApp, useLesson } from "../store"
 import { Icon } from "./Icon"
 import { IsoArt } from "./IsoArt"
@@ -19,9 +20,9 @@ export function Header() {
 
   return (
     <header className="topbar">
-      <Link className="brand" to={HOME_PATH} aria-label="K8s Simplified, home" aria-current={page === "home" ? "page" : undefined}>
+      <Link className="brand" to={HOME_PATH} aria-label={`${SITE}, home`} aria-current={page === "home" ? "page" : undefined}>
         <IsoArt markup={LOGO} pad={2} className="brand-mark" />
-        <span className="wordmark"><span className="k">K8s</span> Simplified</span>
+        <span className="wordmark"><span className="k">Kube</span>Learn</span>
       </Link>
       <span className="topbar-sep" aria-hidden="true">/</span>
       <nav className="crumbs" aria-label="Breadcrumb">

@@ -10,6 +10,10 @@ export const theScheduler: Lesson = {
   title: "The scheduler",
   subtitle: "Filter, score, bind",
   category: "control",
+  seo: {
+    title: "How the Kubernetes scheduler picks a node",
+    description: "Watch the Kubernetes scheduler place one Pod: filter nodes by resources, affinity and taints, score the ones left, then bind the Pod to the winner.",
+  },
   actors: ["you", "cp", "node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {},

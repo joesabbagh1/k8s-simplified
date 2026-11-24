@@ -11,6 +11,10 @@ export const listAndWatch: Lesson = {
   title: "List and watch",
   subtitle: "How components stay in sync",
   category: "control",
+  seo: {
+    title: "Kubernetes list and watch, explained",
+    description: "How Kubernetes components see every change without polling: resource versions, one LIST, long-lived watch streams and informers.",
+  },
   actors: ["you", "cp", "etcd", "node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

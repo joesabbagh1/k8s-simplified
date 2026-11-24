@@ -2,13 +2,13 @@ import { create } from "zustand"
 import { LESSONS, lessonById } from "./data/lessons"
 import type { Category, Lesson, Level } from "./data/types"
 import { revealedThrough, timeline } from "./playback"
-import { LIBRARY_ROUTE, readLocation } from "./route"
+import { readLocation, type Route } from "./route"
 import { entryPath, type Transit } from "./scene/transition"
 
 export type Theme = "dark" | "light"
 export type StageView = "cluster" | "sequence"
 export type FlowTab = "events" | "timing"
-export type Page = "home" | "lesson" | "library"
+export type Page = Route["page"]
 export type LibraryFilter = Category | "all"
 /** "play" runs until the next pause; "event" animates a single event, then stops */
 export type Mode = "play" | "event" | null
@@ -61,6 +61,7 @@ interface AppState {
   openLesson: (id: string, step?: number) => void
   showHome: () => void
   showLibrary: () => void
+  showNotFound: () => void
   setLibraryQuery: (query: string) => void
   setLibraryFilter: (filter: LibraryFilter) => void
   goToStep: (step: number) => void
@@ -107,21 +108,16 @@ let flightKey = 0
 
 export const SPEEDS = [1, 2, 4]
 
-/** Reads /lesson-id/step from the address bar, so a shared link opens straight on that step. */
-function fromLocation(): Partial<AppState> {
-  if (typeof window === "undefined") return {}
-  const [id, part] = readLocation()
-  if (id === LIBRARY_ROUTE) return { page: "library" }
-  const lesson = id ? lessonById(id) : undefined
-  if (!lesson) return {}
-  if (part === "summary" && lesson.steps.length) {
-    const all = timeline(lesson).events.length
-    return { page: "lesson", lessonId: id, step: lesson.steps.length - 1, revealed: all, selectedEvent: lastId(lesson, all), finished: true }
-  }
-  const step = part ? Number(part) - 1 : -1
-  if (Number.isNaN(step)) return { page: "lesson", lessonId: id }
-  return { page: "lesson", lessonId: id, ...shown(lesson, Math.max(-1, Math.min(step, lesson.steps.length - 1))) }
+/** The state that shows a page as it first opens. */
+export function stateFor(route: Route): Partial<AppState> {
+  if (route.page !== "lesson") return { page: route.page }
+  const { lesson, step, finished } = route
+  return { page: "lesson", lessonId: lesson.id, ...shown(lesson, step), finished }
 }
+
+/** The page the app is on. */
+export const routeOf = (s: Pick<AppState, "page" | "lessonId" | "step" | "finished">): Route =>
+  s.page === "lesson" ? { page: "lesson", lesson: currentLesson(s), step: s.step, finished: s.finished } : { page: s.page }
 
 export const useApp = create<AppState>((set, get) => ({
   page: "home",
@@ -155,6 +151,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   showHome: () => set({ page: "home", mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null }),
   showLibrary: () => set({ page: "library", mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null }),
+  showNotFound: () => set({ page: "notFound", mode: null, flight: null, intro: false, reading: false, advancing: false, transit: null }),
   setLibraryQuery: (libraryQuery) => set({ libraryQuery }),
   setLibraryFilter: (libraryFilter) => set({ libraryFilter }),
 
@@ -272,7 +269,8 @@ export const useApp = create<AppState>((set, get) => ({
   setFlowOpen: (flowOpen) => set({ flowOpen }),
   toggleFlow: () => set((s) => ({ flowOpen: !s.flowOpen })),
   toggleDiagramOnly: () => set((s) => ({ diagramOnly: !s.diagramOnly })),
-  ...fromLocation(),
+  // a shared link opens straight on its step
+  ...(typeof window === "undefined" ? {} : stateFor(readLocation())),
 }))
 
 export const useLesson = () => useApp(currentLesson)

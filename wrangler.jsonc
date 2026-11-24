@@ -4,8 +4,8 @@
   "compatibility_date": "2026-11-22",
   "assets": {
     "directory": "./dist",
-    // SPA: unknown paths fall back to index.html
-    "not_found_handling": "single-page-application"
+    // every page is a file written by scripts/prerender.mjs; any other path gets 404.html with a 404 status
+    "not_found_handling": "404-page"
   },
   "routes": [{ "pattern": "kubelearn.joesabbagh.com", "custom_domain": true }]
 }

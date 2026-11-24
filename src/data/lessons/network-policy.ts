@@ -11,6 +11,10 @@ export const networkPolicy: Lesson = {
   title: "NetworkPolicy",
   subtitle: "A packet gets dropped",
   category: "network",
+  seo: {
+    title: "How Kubernetes NetworkPolicy drops a packet",
+    description: "Write a Kubernetes NetworkPolicy and watch the CNI plugin enforce it in the node's kernel: which Pods it selects, what it allows and what it drops.",
+  },
   actors: ["you", "cp", "etcd", "node1", "node2"],
   pods: { node1: ["other", "other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

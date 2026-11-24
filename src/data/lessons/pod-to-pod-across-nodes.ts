@@ -11,6 +11,10 @@ export const podToPodAcrossNodes: Lesson = {
   title: "Pod to Pod, across nodes",
   subtitle: "The VXLAN overlay",
   category: "network",
+  seo: {
+    title: "Kubernetes VXLAN overlay, packet by packet",
+    description: "How a packet gets from a Pod on one Kubernetes node to a Pod on another: flannel wraps it in VXLAN over UDP, sends it and unwraps it.",
+  },
   actors: ["node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

@@ -10,6 +10,10 @@ export const deployAnApp: Lesson = {
   title: "Deploy an app",
   subtitle: "kubectl apply → Pod Running",
   category: "control",
+  seo: {
+    title: "What happens when you run kubectl apply",
+    description: "Follow one kubectl apply through the API server, etcd, controllers, scheduler and kubelet until the Kubernetes Pod is running, event by event.",
+  },
   actors: ["you", "cp", "etcd", "node1", "node2", "web-deploy", "web-rs", "web-svc"],
   pods: { node1: ["other"], node2: ["other"] },
   res: { "web-svc": { kind: "service", name: "Service web", sub: "endpoints: none" } },

@@ -4,6 +4,7 @@ import { EventFlow } from "./components/EventFlow"
 import { Header } from "./components/Header"
 import { Home } from "./components/Home"
 import { Library } from "./components/Library"
+import { NotFound } from "./components/NotFound"
 import { Stage } from "./components/Stage"
 import { useRoute, useKeyboard, usePlayback } from "./hooks"
 import { useApp } from "./store"
@@ -24,6 +25,8 @@ export default function App() {
         <Home />
       ) : page === "library" ? (
         <Library />
+      ) : page === "notFound" ? (
+        <NotFound />
       ) : (
         <main className="workspace" data-diagram-only={diagramOnly || undefined} data-flow-open={flowOpen || undefined}>
           <ErrorBoundary label="The diagram">

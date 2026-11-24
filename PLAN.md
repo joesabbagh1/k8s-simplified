@@ -1,4 +1,4 @@
-# K8s Simplified · plan
+# KubeLearn · plan
 
 Every layer, from packet to pod. An interactive explainer for developers who use Kubernetes but have never seen inside it.
 
@@ -40,7 +40,7 @@ Vite, React 19, TypeScript, UI SDK (`@ui-sdk/react` 0.1.0-beta.13, pinned), Zust
 ## Area 11 · Minimal layout (done)
 
 - At 1440×900 the diagram went from about 30% of the screen to about 65%.
-- Lesson list → a Lessons page at `/lessons`, linked from the header breadcrumb (K8s Simplified / Lessons / current lesson). It has a search over lesson titles, subtitles and step titles (matching steps link straight to that step) and a category filter (All · Network · Node · Control plane · App, with counts). Lesson shortcuts are off there. The search and filter are kept while you're in a lesson, so Back returns to the same list. (Replaced the ⌘K dropdown palette; there is no ⌘K shortcut any more.)
+- Lesson list → a Lessons page at `/lessons`, linked from the header breadcrumb (KubeLearn / Lessons / current lesson). It has a search over lesson titles, subtitles and step titles (matching steps link straight to that step) and a category filter (All · Network · Node · Control plane · App, with counts). Lesson shortcuts are off there. The search and filter are kept while you're in a lesson, so Back returns to the same list. (Replaced the ⌘K dropdown palette; there is no ⌘K shortcut any more.)
 - Event flow → a drawer under the diagram, closed by default; E, the bar, or a caption's event badge opens it. The decoder appears only once an event is selected. Table columns: No. · From → to · Info · Size.
 - Each thing is said once: the step lives in the story column (with the step list under it); the caption narrates events; the zoom breadcrumb shows only inside a node or Pod.
 - Transport: Previous · Play/Next · settings popover (Pause after: Never/Step/Event, Speed 1×/2×/4×, Restart), centered under the diagram.
@@ -56,4 +56,8 @@ Vite, React 19, TypeScript, UI SDK (`@ui-sdk/react` 0.1.0-beta.13, pinned), Zust
 
 ## Routing
 
-Clean paths, not `#` addresses: `/`, `/lessons`, `/deploy-an-app`, `/deploy-an-app/5`, `/deploy-an-app/summary`. `src/route.ts` reads and pushes them, `Link` in `src/components/Link.tsx` moves without a reload, and Cloudflare's `not_found_handling: "single-page-application"` (in `wrangler.jsonc`) serves `index.html` for every path. Old `/#/deploy-an-app/5` links still open and are rewritten to the path. Hosting elsewhere needs the same fallback to `index.html`.
+Clean paths, not `#` addresses: `/`, `/lessons`, `/deploy-an-app`, `/deploy-an-app/5`, `/deploy-an-app/summary`. `src/route.ts` reads and pushes them, and `Link` in `src/components/Link.tsx` moves without a reload. The build writes every page as its own HTML file (`scripts/prerender.mjs`), and any other address gets `404.html` with a 404 status (`not_found_handling: "404-page"` in `wrangler.jsonc`). Old `/#/deploy-an-app/5` links still open and are rewritten to the path.
+
+## Search engines
+
+Every page is prerendered with its own title, description, canonical address, share tags and structured data (`src/meta.ts`); `sitemap.xml` lists the homepage, the Lessons page and the lessons. A lesson's steps and summary are canonical to the lesson, whose overview holds the whole lesson as text. The site was renamed from K8s Simplified to KubeLearn on 2026-11-24.

@@ -12,6 +12,10 @@ export const gracefulShutdown: Lesson = {
   title: "Graceful shutdown",
   subtitle: "SIGTERM and the endpoint race",
   category: "app",
+  seo: {
+    title: "Kubernetes graceful shutdown and SIGTERM",
+    description: "preStop, SIGTERM and the 30-second grace period: why a Kubernetes Pod can still get requests after shutdown starts, and how to avoid dropping them.",
+  },
   actors: ["cp", "node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

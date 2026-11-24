@@ -14,6 +14,10 @@ export const startingAContainer: Lesson = {
   title: "Starting a container",
   subtitle: "Namespaces and cgroups",
   category: "node",
+  seo: {
+    title: "How a container starts: namespaces, cgroups",
+    description: "What a Kubernetes container really is: a Linux process with its own namespaces, a root file system made of layers, and cgroup limits.",
+  },
   actors: ["cp", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

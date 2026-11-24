@@ -10,6 +10,10 @@ export const podToPodSameNode: Lesson = {
   title: "Pod to Pod, same node",
   subtitle: "veth pairs and the bridge",
   category: "network",
+  seo: {
+    title: "Kubernetes Pod networking on one node",
+    description: "How two Pods on the same Kubernetes node talk: veth pairs, a Linux bridge, ARP and plain Ethernet switching, with no overlay and no NAT.",
+  },
   actors: ["node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

@@ -1,11 +1,11 @@
 import { useShortcut } from "@ui-sdk/react/shortcuts"
 import { useEffect, useState } from "react"
-import { lessonById } from "./data/lessons"
 import type { ActorId } from "./data/types"
 import { eventReadTime, STEP_GAP, stepReadTime, timeline, travelTime } from "./playback"
 import { CARRY_MS, DIVE_MS, EMERGE_MS, entryPath, SURFACE_MS, surfaceAfter, transitionAfter } from "./scene/transition"
-import { hasLegacyHash, HOME_PATH, LIBRARY_PATH, LIBRARY_ROUTE, lessonPath, readLocation } from "./route"
-import { currentLesson, useApp } from "./store"
+import { applyMeta, metaFor } from "./meta"
+import { hasLegacyHash, pathOf, readLocation } from "./route"
+import { currentLesson, routeOf, useApp } from "./store"
 
 /** Moves playback forward: launches each event's marker, lands it, then moves to the next step. */
 export function usePlayback() {
@@ -116,55 +116,33 @@ export function useKeyboard() {
 
 export { toggleFullscreen }
 
-type State = ReturnType<typeof useApp.getState>
-
-const pathOf = (s: State) =>
-  s.page === "home" ? HOME_PATH : s.page === "library" ? LIBRARY_PATH : lessonPath(s.lessonId, s.finished ? "summary" : s.step >= 0 ? s.step + 1 : undefined)
-
-const SITE = "K8s Simplified"
-const HOME_TITLE = `${SITE} · Every layer, from packet to pod`
-
-/** The tab title for the page: the lesson, and where in it the reader stands. */
-const titleOf = (s: State) => {
-  if (s.page === "home") return HOME_TITLE
-  if (s.page === "library") return `Lessons · ${SITE}`
-  const lesson = currentLesson(s)
-  const part = s.finished ? "Summary" : s.step < 0 ? null : `Step ${s.step + 1} of ${lesson.steps.length}`
-  return part ? `${lesson.title} · ${part} · ${SITE}` : `${lesson.title} · ${SITE}`
-}
-
-/** Keeps the address bar in step with the page: /, /lessons, /deploy-an-app/5, or /deploy-an-app/summary. */
+/** Keeps the address bar and the page's title and description in step with the page: /, /lessons, /deploy-an-app/5, or /deploy-an-app/summary. */
 export function useRoute() {
   useEffect(() => {
     const apply = () => {
-      const [id, part] = readLocation()
-      if (!id) {
-        if (useApp.getState().page !== "home") useApp.getState().showHome()
-        return
-      }
-      if (id === LIBRARY_ROUTE) {
-        if (useApp.getState().page !== "library") useApp.getState().showLibrary()
-        return
-      }
-      const lesson = id ? lessonById(id) : undefined
-      if (!lesson) return
-      if (useApp.getState().page !== "lesson") useApp.setState({ page: "lesson" })
+      const route = readLocation()
       const state = useApp.getState()
-      if (part === "summary") {
-        if (state.lessonId !== id) state.openLesson(id)
-        useApp.getState().showSummary()
+      if (route.page !== "lesson") {
+        if (state.page === route.page) return
+        if (route.page === "home") state.showHome()
+        else if (route.page === "library") state.showLibrary()
+        else state.showNotFound()
         return
       }
-      const step = part ? Number(part) - 1 : -1
-      if (Number.isNaN(step)) return
-      if (state.lessonId !== id || state.step !== step) state.openLesson(id, step)
+      const { lesson, step, finished } = route
+      if (state.page !== "lesson") useApp.setState({ page: "lesson" })
+      if (finished) {
+        if (state.lessonId !== lesson.id) state.openLesson(lesson.id)
+        useApp.getState().showSummary()
+      } else if (state.lessonId !== lesson.id || state.step !== step || state.finished) {
+        state.openLesson(lesson.id, step)
+      }
     }
-    const write = (s: State) => {
-      const path = pathOf(s)
-      document.title = titleOf(s)
-      // share previews follow the page the reader is on
-      for (const el of document.querySelectorAll('meta[property="og:title"], meta[name="twitter:title"]')) el.setAttribute("content", document.title)
-      if (window.location.pathname !== path || hasLegacyHash()) window.history.replaceState(null, "", path)
+    const write = (s: ReturnType<typeof useApp.getState>) => {
+      const route = routeOf(s)
+      applyMeta(metaFor(route))
+      const path = pathOf(route)
+      if (path !== null && (window.location.pathname !== path || hasLegacyHash())) window.history.replaceState(null, "", path)
     }
 
     apply()

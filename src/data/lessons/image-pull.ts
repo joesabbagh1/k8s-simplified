@@ -12,6 +12,10 @@ export const imagePull: Lesson = {
   title: "Pulling an image",
   subtitle: "Manifests, layers, cache",
   category: "node",
+  seo: {
+    title: "How Kubernetes pulls a container image",
+    description: "How containerd resolves a tag, downloads only the missing image layers and unpacks them on a Kubernetes node, and why the second pull is instant.",
+  },
   actors: ["cp", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

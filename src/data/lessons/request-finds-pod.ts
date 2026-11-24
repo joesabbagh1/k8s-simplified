@@ -8,6 +8,10 @@ export const requestFindsPod: Lesson = {
   title: "A request finds your Pod",
   subtitle: "Load balancer to container",
   category: "network",
+  seo: {
+    title: "How a request reaches a Kubernetes Pod",
+    description: "Follow one HTTP request from a visitor's laptop through the load balancer, NodePort and NAT to a Kubernetes Pod and back, packet by packet.",
+  },
   actors: ["resolver", "visitor", "lb", "node1", "node2", "web-svc"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   res: { "web-svc": { kind: "service", name: "Service web", sub: "10.96.120.15:80 · endpoints: 3" } },

@@ -10,6 +10,10 @@ export const nodeGoesDark: Lesson = {
   title: "A node goes dark",
   subtitle: "Heartbeats and eviction",
   category: "control",
+  seo: {
+    title: "What happens when a Kubernetes node fails",
+    description: "A Kubernetes node loses power: its lease stops renewing, the node turns NotReady, taints start a clock, and its Pods are rescheduled.",
+  },
   actors: ["cp", "node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {
