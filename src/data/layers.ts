@@ -11,12 +11,13 @@ export const LAYERS: Record<Layer, { label: string; color: string; meaning: stri
 
 export const LEGEND: Layer[] = ["api", "state", "control", "node", "net"]
 
-/** The order lessons are grouped in, from the wire up to the app. */
-export const CATEGORIES: Category[] = ["network", "node", "control", "app"]
+/** The order lessons are grouped in: from the wire up to the app, then what guards all of it. */
+export const CATEGORIES: Category[] = ["network", "node", "control", "app", "security"]
 
 export const CATEGORY_NAME: Record<Category, string> = {
   network: "Network",
   node: "Node",
   control: "Control plane",
   app: "App",
+  security: "Security",
 }

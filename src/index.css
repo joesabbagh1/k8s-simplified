@@ -190,7 +190,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .res.kind-deployment { --rk: var(--l-api); }
 .res.kind-replicaset { --rk: var(--l-control); }
 .res.kind-service, .res.kind-ingress { --rk: var(--l-net); }
-.res.kind-statefulset, .res.kind-job, .res.kind-cronjob { --rk: var(--l-node); }
+.res.kind-statefulset, .res.kind-daemonset, .res.kind-job, .res.kind-cronjob { --rk: var(--l-node); }
 .res.kind-configmap, .res.kind-pvc { --rk: var(--l-state); }
 .res.kind-secret { --rk: var(--l-drop); }
 .res.kind-pv { --rk: var(--l-node); }
@@ -492,7 +492,10 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .how-n { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .how h3 { margin-top: 8px; font-size: 15px; font-weight: 500; }
 .how p { margin-top: 4px; color: var(--dim); }
-.topics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+/* five topics: three, then two */
+.topics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
+.topics .topic { grid-column: span 2; }
+.topics .topic:nth-child(n + 4) { grid-column: span 3; }
 .topic { display: flex; flex-direction: column; gap: 8px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
 .topic-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
 .topic-head h3 { font-size: 15px; font-weight: 500; }
@@ -572,6 +575,8 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 @media (max-width: 1000px) {
   .hero { grid-template-columns: minmax(0, 1fr); padding-top: 32px; }
   .topics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .topics .topic, .topics .topic:nth-child(n + 4) { grid-column: auto; }
+  .topics .topic:last-child:nth-child(odd) { grid-column: 1 / -1; }
   .cluster-facts { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .library-group { gap: 0 32px; }
   .lesson-list { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }

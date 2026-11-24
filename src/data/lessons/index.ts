@@ -25,6 +25,7 @@ import { configmapsSecrets } from "./configmaps-secrets"
 import { statefulsetStorage } from "./statefulset-storage"
 import { jobsCronjobs } from "./jobs-cronjobs"
 import { rbacTokens } from "./rbac-tokens"
+import { falcoAlerts } from "./falco-alerts"
 
 export const LESSONS: Lesson[] = [
   deployAnApp,
@@ -53,6 +54,7 @@ export const LESSONS: Lesson[] = [
   statefulsetStorage,
   jobsCronjobs,
   rbacTokens,
+  falcoAlerts,
 ]
 
 export const lessonById = (id: string) => LESSONS.find((l) => l.id === id)
