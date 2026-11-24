@@ -467,7 +467,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .floor-name { fill: var(--faint); font-family: var(--mono); font-weight: 500; }
 .hero-art .cable-on { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; opacity: .9; }
 .hero-packet { stroke: var(--bg); stroke-width: 2; }
-.hero-art .bar { fill: none; stroke: var(--iso-detail); stroke-width: .8; vector-effect: non-scaling-stroke; opacity: .75; }
+.hero-art .bar, .layer-art .bar { fill: none; stroke: var(--iso-detail); stroke-width: .8; vector-effect: non-scaling-stroke; opacity: .75; }
 .thing[data-live] .slot-v1 polygon { stroke: var(--l-node); }
 .tag-n { fill: var(--text); font-family: var(--sans); font-size: 13px; font-weight: 500; }
 .tag-s { fill: var(--faint); font-family: var(--mono); font-size: 11px; }
@@ -544,12 +544,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .layer-art { display: block; width: 224px; height: auto; margin-top: 8px; overflow: visible; }
 .layer-art .slab .f-t { fill: var(--plate); stroke: var(--line-strong); }
 .layer-art .slab .f-l, .layer-art .slab .f-r { fill: var(--floor-edge); stroke: var(--line-strong); }
-.iso .layer-grid { fill: none; stroke: var(--grid); stroke-width: 1; }
-.layer-bay { fill: var(--display); stroke: var(--iso-line); stroke-width: .8; vector-effect: non-scaling-stroke; }
-.layer-tint .f-t { fill: color-mix(in srgb, var(--l-net) var(--tint), var(--iso-top)); }
-.layer-tint .f-l { fill: color-mix(in srgb, var(--l-net) var(--tint), var(--iso-left)); }
-.layer-tint .f-r { fill: color-mix(in srgb, var(--l-net) var(--tint), var(--iso-right)); }
-.layer-art .glass .f-t, .layer-art .glass .f-l, .layer-art .glass .f-r { fill-opacity: .2; }
+.layer-art .res { animation: none; }
 /* the list reads down the first column, then the second */
 .lesson-list { display: grid; grid-auto-flow: column; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), auto); align-content: start; gap: 0 48px; }
 .lesson-item { min-width: 0; padding: 4px 0; border-bottom: 1px solid var(--line); }

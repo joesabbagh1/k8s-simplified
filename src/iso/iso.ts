@@ -10,11 +10,11 @@ export const iso = (x: number, y: number, z: number, s: number): Point => [(x - 
 const pts = (a: Point[]) => a.map((p) => `${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(" ")
 const mtx = (...n: number[]) => `matrix(${n.map((v) => +v.toFixed(3)).join(" ")})`
 
-export const faceY = (x: number, y: number, z: number, s: number) => {
+const faceY = (x: number, y: number, z: number, s: number) => {
   const o = iso(x, y, z, s)
   return mtx(C30 * s, 0.5 * s, 0, s, o[0], o[1])
 }
-export const faceX = (x: number, y: number, z: number, s: number) => {
+const faceX = (x: number, y: number, z: number, s: number) => {
   const o = iso(x, y, z, s)
   return mtx(C30 * s, -0.5 * s, 0, s, o[0], o[1])
 }
