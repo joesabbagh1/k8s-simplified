@@ -3,11 +3,7 @@ import { ev, sec } from "./helpers"
 
 const API = "kube-apiserver"
 const SCHED = "kube-scheduler"
-const RC = "replicaset ctrl"
-const DC = "deployment ctrl"
 const K2 = "kubelet · node-2"
-const OLD = "search-…-tjwq6"
-const NEW = "search-…-59nsf"
 
 export const pendingPod: Lesson = {
   id: "pending-pod",
@@ -18,7 +14,7 @@ export const pendingPod: Lesson = {
     title: "Kubernetes Pod stuck in Pending: why and fixes",
     description: "Debug a Kubernetes Pod stuck in Pending: read the FailedScheduling message, match each reason to its node, and fix taints, affinity and CPU requests.",
   },
-  actors: ["you", "cp", "node1", "node2", "search-pod", "search-pod2"],
+  actors: ["you", "cp", "node1", "node2", "search-pod"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: { [K2]: "node-2" },
   overview: {
@@ -34,32 +30,32 @@ export const pendingPod: Lesson = {
     {
       title: "A POD WITH NO NODE",
       subtitle: "created, saved, not running",
-      body: `You apply a Deployment called search: one replica, 3 CPU requested, and a nodeSelector that only accepts nodes labelled disk=ssd. The API server saves it and the controllers create a Pod, all without complaint. But ${OLD} has an empty spec.nodeName, so no kubelet owns it and nothing will start it. kubectl get pods says Pending.`,
+      body: "You apply a Pod called search: 3 CPU requested, and a nodeSelector that only accepts nodes labelled disk=ssd. The API server accepts it and saves it in etcd, without complaint. But its spec.nodeName is empty, so no kubelet owns it and nothing will start it. kubectl get pods says Pending.",
       facts: [
-        ["POD", `${OLD} · Pending`],
+        ["POD", "search · Pending"],
         ["REQUESTS", "cpu 3 · memory 2Gi"],
         ["NODE SELECTOR", "disk=ssd"],
         ["SPEC.NODENAME", "empty"],
       ],
       view: "cluster",
-      focus: ["you", "api", "kcm", "search-pod"],
+      focus: ["you", "api", "etcd", "search-pod"],
       events: [
         ev({
-          id: "pp1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.6 KB", title: "APPLY SEARCH", path: ["you", "api"],
-          says: "You apply the search Deployment. The API server accepts it.",
-          info: "POST /apis/apps/v1/namespaces/default/deployments",
+          id: "pp1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.5 KB", title: "APPLY SEARCH", path: ["you", "api"],
+          says: "You apply the search Pod. The API server accepts it.",
+          info: "POST /api/v1/namespaces/default/pods",
           decoded: [
-            sec("HTTP/2 REQUEST", [["method", "POST"], ["path", "/apis/apps/v1/namespaces/default/deployments"], ["response", "201 Created"]]),
-            sec("BODY · DEPLOYMENT", [["spec.replicas", "1"], ["…nodeSelector", "disk: ssd", true], ["…requests.cpu", "3", true], ["…requests.memory", "2Gi"], ["…tolerations", "none set", true]]),
+            sec("HTTP/2 REQUEST", [["method", "POST"], ["path", "/api/v1/namespaces/default/pods"], ["response", "201 Created"]]),
+            sec("BODY · POD", [["metadata.name", "search"], ["spec.nodeSelector", "disk: ssd", true], ["…requests.cpu", "3", true], ["…requests.memory", "2Gi"], ["spec.tolerations", "none set", true]]),
           ],
           note: "Nothing here checks whether any node could run the Pod. The API server validates the object's shape; whether it fits is the scheduler's question, asked later.",
         }),
         ev({
-          id: "pp2", at: 18, src: RC, dst: API, layer: "api", size: "1.9 KB", title: "CREATE THE POD", path: ["kcm", "api"],
-          says: "The Deployment and ReplicaSet controllers do their part: one Pod, with no node yet.",
-          info: "POST /api/v1/namespaces/default/pods  search-5698d4f47c-tjwq6",
-          res: { "search-pod": { kind: "pod", name: `Pod ${OLD}`, sub: "Pending · no node", state: "creating" } },
-          decoded: [sec("BODY · POD", [["metadata.name", "search-5698d4f47c-tjwq6"], ["spec.nodeName", "(empty)", true], ["status.phase", "Pending"], ["priority", "0"]])],
+          id: "pp2", at: 4, src: API, dst: "etcd", layer: "state", size: "1.6 KB", title: "STORE IN ETCD", path: ["api", "etcd"],
+          says: "It saves the Pod in etcd. So far the Pod is only a record, with no node.",
+          info: "Txn put /registry/pods/default/search",
+          res: { "search-pod": { kind: "pod", name: "Pod search", sub: "Pending · no node", state: "creating" } },
+          decoded: [sec("SAVED POD", [["metadata.name", "search"], ["spec.nodeName", "(empty)", true], ["status.phase", "Pending"], ["spec.priority", "0"]])],
         }),
       ],
     },
@@ -77,20 +73,20 @@ export const pendingPod: Lesson = {
       focus: ["api", "sched", "node1", "node2", "search-pod"],
       events: [
         ev({
-          id: "pp3", at: 20, src: API, dst: SCHED, layer: "control", size: "1.9 KB", title: "UNSCHEDULED POD SEEN", path: ["api", "sched"],
+          id: "pp3", at: 6, src: API, dst: SCHED, layer: "control", size: "1.9 KB", title: "UNSCHEDULED POD SEEN", path: ["api", "sched"],
           says: "The scheduler's watch delivers a Pod with no node.",
-          info: `WATCH ADDED Pod ${OLD} (spec.nodeName "")`,
+          info: `WATCH ADDED Pod search (spec.nodeName "")`,
           decoded: [sec("SCHEDULING QUEUE", [["event", "UnscheduledPodAdd"], ["queue", "active", true], ["priority", "0"]])],
         }),
         ev({
-          id: "pp4", at: 21, src: SCHED, dst: SCHED, layer: "drop", size: " - ", title: "NODE-1: TAINTED", path: ["node1", "node1"],
+          id: "pp4", at: 7, src: SCHED, dst: SCHED, layer: "drop", size: " - ", title: "NODE-1: TAINTED", path: ["node1", "node1"],
           says: "node-1 is out at the first filter: it has a taint this Pod doesn't tolerate.",
           info: "TaintToleration ✗ node-1 · dedicated=batch:NoSchedule",
           decoded: [sec("FILTERS ON NODE-1", [["NodeUnschedulable", "✓ not cordoned"], ["TaintToleration", "✗ dedicated=batch:NoSchedule", true], ["NodeAffinity", "not checked"], ["NodeResourcesFit", "not checked"]])],
           note: "The check runs inside the scheduler, on its cached copy of the node; nothing is sent to node-1. NoSchedule only stops new Pods, so the web Pod already there keeps running.",
         }),
         ev({
-          id: "pp5", at: 21, src: SCHED, dst: SCHED, layer: "drop", size: " - ", title: "NODE-2: NO LABEL", path: ["node2", "node2"],
+          id: "pp5", at: 7, src: SCHED, dst: SCHED, layer: "drop", size: " - ", title: "NODE-2: NO LABEL", path: ["node2", "node2"],
           says: "node-2 has no taint, but it isn't labelled disk=ssd, so it's out too.",
           info: "NodeAffinity ✗ node-2 · disk=ssd not found",
           decoded: [sec("FILTERS ON NODE-2", [["NodeUnschedulable", "✓ not cordoned"], ["TaintToleration", "✓ no taints"], ["NodeAffinity", "✗ no label disk=ssd", true], ["NodeResourcesFit", "not checked", true]])],
@@ -112,23 +108,23 @@ export const pendingPod: Lesson = {
       focus: ["api", "sched", "search-pod"],
       events: [
         ev({
-          id: "pp6", at: 22, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "PREEMPTION WON'T HELP", path: ["sched", "sched"],
+          id: "pp6", at: 8, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "PREEMPTION WON'T HELP", path: ["sched", "sched"],
           says: "Could evicting other Pods make room? Not here: no Pod is in the way.",
           info: "preemption: 0/2 nodes · 2 Preemption is not helpful for scheduling",
           decoded: [sec("PREEMPTION", [["node-1", "not helpful - the taint would stay"], ["node-2", "not helpful - the label would still be missing"], ["candidates", "0", true]])],
         }),
         ev({
-          id: "pp7", at: 24, src: SCHED, dst: API, layer: "api", size: "0.5 KB", title: "PODSCHEDULED=FALSE", path: ["sched", "api"],
+          id: "pp7", at: 10, src: SCHED, dst: API, layer: "api", size: "0.5 KB", title: "PODSCHEDULED=FALSE", path: ["sched", "api"],
           says: "The scheduler writes why onto the Pod itself, as a condition.",
-          info: `PATCH …/pods/${OLD}/status  PodScheduled=False`,
-          res: { "search-pod": { kind: "pod", name: `Pod ${OLD}`, sub: "Pending · Unschedulable", state: "creating" } },
+          info: "PATCH …/pods/search/status  PodScheduled=False",
+          res: { "search-pod": { kind: "pod", name: "Pod search", sub: "Pending · Unschedulable", state: "creating" } },
           decoded: [sec("STATUS PATCH", [["conditions.type", "PodScheduled"], ["status", "False", true], ["reason", "Unschedulable", true], ["message", "0/2 nodes are available: 1 node(s) didn't match Pod's node affinity/selector, 1 node(s) had untolerated taint(s). preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.", true]])],
         }),
         ev({
-          id: "pp8", at: 26, src: SCHED, dst: API, layer: "api", size: "0.7 KB", title: "FAILEDSCHEDULING", path: ["sched", "api"],
+          id: "pp8", at: 12, src: SCHED, dst: API, layer: "api", size: "0.7 KB", title: "FAILEDSCHEDULING", path: ["sched", "api"],
           says: "It records the same sentence as an event, the one kubectl describe will show you.",
           info: "POST /apis/events.k8s.io/v1/…/events  FailedScheduling",
-          decoded: [sec("EVENT", [["type", "Warning"], ["reason", "FailedScheduling", true], ["reportingController", "default-scheduler"], ["regarding", `Pod ${OLD}`], ["note", "same text as the condition"]])],
+          decoded: [sec("EVENT", [["type", "Warning"], ["reason", "FailedScheduling", true], ["reportingController", "default-scheduler"], ["regarding", "Pod search"], ["note", "same text as the condition"]])],
           note: "Events are deleted after an hour by default (the API server's --event-ttl). The condition stays on the Pod, so check it when the events are gone: kubectl get pod <name> -o yaml.",
         }),
       ],
@@ -149,7 +145,7 @@ export const pendingPod: Lesson = {
         ev({
           id: "pp9", at: 60000, src: "kubectl", dst: API, layer: "api", size: "4.1 KB", title: "DESCRIBE THE POD", path: ["you", "api"],
           says: "A minute later you ask. Node is empty, so this is the scheduler's answer to read.",
-          info: `kubectl describe pod ${OLD}`,
+          info: "kubectl describe pod search",
           decoded: [
             sec("WHERE IT'S STUCK", [["Node", "<none>", true], ["PodScheduled", "False"]]),
             sec("EVENTS · FAILEDSCHEDULING", [["nodes that fit", "0/2 nodes are available"], ["node-2", "1 node(s) didn't match Pod's node affinity/selector", true], ["node-1", "1 node(s) had untolerated taint(s)", true], ["preemption", "2 Preemption is not helpful for scheduling"]]),
@@ -206,7 +202,7 @@ export const pendingPod: Lesson = {
           id: "pp15", at: 120009, src: SCHED, dst: API, layer: "api", size: "0.7 KB", title: "A NEW REASON", path: ["sched", "api"],
           says: "Still 0/2, but the sentence is different: the CPU problem is now visible.",
           info: "FailedScheduling · 1 Insufficient cpu, 1 node(s) had untolerated taint(s)",
-          res: { "search-pod": { kind: "pod", name: `Pod ${OLD}`, sub: "Pending · Insufficient cpu", state: "creating" } },
+          res: { "search-pod": { kind: "pod", name: "Pod search", sub: "Pending · Insufficient cpu", state: "creating" } },
           decoded: [sec("EVENT", [["reason", "FailedScheduling"], ["nodes that fit", "0/2 nodes are available"], ["node-2", "1 Insufficient cpu", true], ["node-1", "1 node(s) had untolerated taint(s)"], ["preemption", "1 No preemption victims found for incoming pod, 1 Preemption is not helpful for scheduling"]])],
           note: "Evicting Pods would free CPU on node-2, so this time preemption is tried. It finds no victims: every Pod there has the same priority, 0.",
         }),
@@ -215,7 +211,7 @@ export const pendingPod: Lesson = {
     {
       title: "REQUESTS, NOT USAGE",
       subtitle: "an idle node can be full",
-      body: "node-2 is barely busy: 340m of its 4 CPU are in use. The scheduler doesn't look at usage. It adds up the requests of the Pods on the node, 1.2 CPU, and calls the remaining 2.8 free. Three doesn't fit, whether or not anyone is using it. You measure search, find it peaks at 1.6 CPU, and lower the request to 2. A Deployment's Pods are replaced, not edited, so this creates a new Pod.",
+      body: "node-2 is barely busy: 340m of its 4 CPU are in use. The scheduler doesn't look at usage. It adds up the requests of the Pods on the node, 1.2 CPU, and calls the remaining 2.8 free. Three doesn't fit, whether or not anyone is using it. In your tests search peaked at 1.6 CPU, so you lower its request to 2. A Pod's CPU request can't be changed with a plain edit, so you delete the Pod and apply it again.",
       facts: [
         ["ALLOCATABLE", "4 CPU"],
         ["REQUESTED", "1200m (30%) · free 2.8"],
@@ -223,7 +219,7 @@ export const pendingPod: Lesson = {
         ["REQUEST", "cpu 3 → 2"],
       ],
       view: "cluster",
-      focus: ["you", "api", "kcm", "node2", "search-pod", "search-pod2"],
+      focus: ["you", "api", "etcd", "node2", "search-pod"],
       events: [
         ev({
           id: "pp16", at: 180000, src: "kubectl", dst: API, layer: "api", size: "5.4 KB", title: "DESCRIBE NODE-2", path: ["you", "api"],
@@ -236,80 +232,80 @@ export const pendingPod: Lesson = {
           note: "The requests are two web Pods at 500m each and 200m of system Pods.",
         }),
         ev({
-          id: "pp17", at: 240000, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "LOWER THE REQUEST", path: ["you", "api"],
-          says: "You lower the CPU request from 3 to 2.",
-          info: "kubectl set resources deployment search --requests=cpu=2,memory=2Gi",
-          decoded: [sec("PATCH", [["…requests.cpu", "3 → 2", true], ["metadata.generation", "1 → 2"], ["template hash", "5698d4f47c → 75668fb989", true]])],
+          id: "pp17", at: 236000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DELETE THE POD", path: ["you", "api"],
+          says: "You delete the stuck Pod. It's gone at once, since it never ran anywhere.",
+          info: "kubectl delete pod search",
+          res: { "search-pod": null },
+          decoded: [sec("DELETE", [["path", "/api/v1/namespaces/default/pods/search"], ["spec.nodeName", "(empty) - no kubelet to wait for"], ["grace period", "0", true]])],
+          note: "Applying the new request over the old Pod is refused: pod updates may not change fields other than the image and a few more. Newer clusters can also resize it in place, even while it's Pending: kubectl patch --subresource resize (stable since 1.35). If a Deployment made the Pod, edit its template instead and it replaces the Pod for you.",
         }),
         ev({
-          id: "pp18", at: 240018, src: RC, dst: API, layer: "api", size: "1.9 KB", title: "A REPLACEMENT POD", path: ["kcm", "api"],
-          says: "A new ReplicaSet creates a new Pod. The old one stays Pending for now.",
-          info: "POST /api/v1/namespaces/default/pods  search-75668fb989-59nsf",
-          res: { "search-pod2": { kind: "pod", name: `Pod ${NEW}`, sub: "Pending · no node", state: "creating" } },
-          decoded: [sec("BODY · POD", [["metadata.name", "search-75668fb989-59nsf"], ["…requests.cpu", "2", true], ["spec.nodeName", "(empty)"]])],
-          note: "The default rolling update with one replica may add one Pod (maxSurge 25%, rounded up) and may not remove any (maxUnavailable 25%, rounded down), so the old Pod is kept until the new one is ready.",
+          id: "pp18", at: 240000, src: "kubectl", dst: API, layer: "api", size: "0.5 KB", title: "APPLY IT AGAIN", path: ["you", "api"],
+          says: "You apply it again, asking for 2 CPU instead of 3.",
+          info: "POST /api/v1/namespaces/default/pods  requests cpu=2",
+          decoded: [sec("BODY · POD", [["metadata.name", "search"], ["spec.nodeSelector", "disk: ssd"], ["…requests.cpu", "3 → 2", true]])],
+        }),
+        ev({
+          id: "pp19", at: 240004, src: API, dst: "etcd", layer: "state", size: "1.6 KB", title: "A NEW POD", path: ["api", "etcd"],
+          says: "It's a new Pod with the same name, saved and Pending like the first one was.",
+          info: "Txn put /registry/pods/default/search",
+          res: { "search-pod": { kind: "pod", name: "Pod search", sub: "Pending · no node", state: "creating" } },
+          decoded: [sec("SAVED POD", [["metadata.uid", "a new one", true], ["…requests.cpu", "2", true], ["spec.nodeName", "(empty)"]])],
         }),
       ],
     },
     {
       title: "BOUND",
       subtitle: "one fitting node is enough",
-      body: "Same filters, new answer: node-1 still refuses, node-2 passes all of them, and one is all it takes. The scheduler binds the Pod to node-2. For a moment kubectl get pods still says Pending, but now with a node beside it: the kubelet has it and is starting the container. Once it's Ready, the Deployment scales its old ReplicaSet to zero and the stuck Pod is deleted at once, since it never ran anywhere.",
+      body: "Same filters, new answer: node-1 still refuses, node-2 passes all of them, and one is all it takes. The scheduler binds the Pod to node-2. For a moment kubectl get pods still says Pending, but now with a node beside it: the kubelet has it and is starting the container. Once the container is up, Pending is over.",
       facts: [
         ["FEASIBLE", "1 of 2 · node-2"],
         ["NODE-2 AFTER", "3.2 of 4 CPU requested"],
         ["NODE-1", "taint untouched"],
-        ["OLD POD", "deleted · no grace period"],
+        ["STILL PENDING?", "then it's the node's kubelet"],
       ],
       view: "cluster",
-      focus: ["api", "sched", "kcm", "node2", "search-pod", "search-pod2"],
+      focus: ["api", "sched", "node2", "search-pod"],
       events: [
         ev({
-          id: "pp19", at: 240020, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "NODE-2 FITS", path: ["sched", "sched"],
+          id: "pp20", at: 240006, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "NODE-2 FITS", path: ["sched", "sched"],
           says: "The filters run again: node-1 still refuses, node-2 passes every one.",
           info: "evaluatedNodes=2 feasibleNodes=1",
           decoded: [sec("FILTER RESULTS", [["node-1", "✗ TaintToleration"], ["node-2", "✓ taints ✓ disk=ssd ✓ cpu 2 ≤ 2.8", true], ["scoring", "skipped - only one node left"]])],
         }),
         ev({
-          id: "pp20", at: 240023, src: SCHED, dst: API, layer: "api", size: "0.3 KB", title: "BINDING → NODE-2", path: ["sched", "api"],
+          id: "pp21", at: 240009, src: SCHED, dst: API, layer: "api", size: "0.3 KB", title: "BINDING → NODE-2", path: ["sched", "api"],
           says: "The scheduler binds the new Pod to node-2.",
-          info: `POST …/pods/${NEW}/binding`,
-          res: { "search-pod2": { kind: "pod", name: `Pod ${NEW}`, sub: "Pending · node-2" } },
+          info: "POST …/pods/search/binding",
+          res: { "search-pod": { kind: "pod", name: "Pod search", sub: "Pending · node-2" } },
           decoded: [sec("BODY · BINDING", [["target.name", "node-2", true], ["PodScheduled", "True", true], ["status.phase", "Pending - until its container starts"]])],
           note: "Phase Pending covers everything before the first container starts. Scheduled but still Pending means the image, volumes or network on that node.",
         }),
         ev({
-          id: "pp21", at: 240030, src: API, dst: K2, layer: "control", size: "2.0 KB", title: "KUBELET PICKS IT UP", path: ["api", "node2"],
+          id: "pp22", at: 240017, src: API, dst: K2, layer: "control", size: "2.0 KB", title: "KUBELET PICKS IT UP", path: ["api", "node2"],
           says: "node-2's kubelet sees the Pod on its watch and starts it.",
-          info: `WATCH ADDED Pod ${NEW} (nodeName node-2)`,
+          info: "WATCH ADDED Pod search (nodeName node-2)",
           pods: { node2: ["other", "v1", "v1", "starting"] },
-          res: { "search-pod2": null },
+          res: { "search-pod": null },
           decoded: [sec("WATCH STREAM", [["nodeName", "node-2", true], ["next", "sandbox, network, image, container"]])],
         }),
         ev({
-          id: "pp22", at: 243400, src: K2, dst: API, layer: "api", size: "1.1 KB", title: "READY", path: ["node2", "api"],
+          id: "pp23", at: 243400, src: K2, dst: API, layer: "api", size: "1.1 KB", title: "READY", path: ["node2", "api"],
           says: "The container is up and the Pod is Ready.",
-          info: `PATCH …/pods/${NEW}/status  Running · Ready=True`,
+          info: "PATCH …/pods/search/status  Running · Ready=True",
           pods: { node2: ["other", "v1", "v1", "v2"] },
           decoded: [sec("STATUS PATCH", [["status.phase", "Pending → Running", true], ["Ready", "True", true]])],
-        }),
-        ev({
-          id: "pp23", at: 243430, src: DC, dst: API, layer: "api", size: "0.3 KB", title: "SCALE THE OLD ONE AWAY", path: ["kcm", "api"],
-          says: "The Deployment scales its old ReplicaSet to zero, and the stuck Pod is gone.",
-          info: "PATCH …/replicasets/search-5698d4f47c  replicas 1 → 0",
-          res: { "search-pod": null },
-          decoded: [sec("CLEANUP", [["old ReplicaSet", "replicas 1 → 0", true], [OLD, "deleted by the ReplicaSet controller", true], ["grace period", "0 - it never had a node"]])],
         }),
       ],
     },
   ],
   timing: [
-    { value: "t1", label: "created → unschedulable", layer: "drop", start: 0, duration: 26 },
-    { value: "t2", label: "parked · waiting for a change", layer: "state", start: 26, duration: 119974 },
+    { value: "t1", label: "created → unschedulable", layer: "drop", start: 0, duration: 12 },
+    { value: "t2", label: "parked · waiting for a change", layer: "state", start: 12, duration: 119988 },
     { value: "t3", label: "label added → new reason", layer: "drop", start: 120000, duration: 9 },
-    { value: "t4", label: "parked again · you read the node", layer: "state", start: 120009, duration: 119991 },
-    { value: "t5", label: "request lowered → bound", layer: "control", start: 240000, duration: 23 },
-    { value: "t6", label: "bound → Ready", layer: "node", start: 240023, duration: 3377 },
+    { value: "t4", label: "parked again · you fix the request", layer: "state", start: 120009, duration: 119991 },
+    { value: "t5", label: "applied again → bound", layer: "control", start: 240000, duration: 9 },
+    { value: "t6", label: "bound → Ready", layer: "node", start: 240009, duration: 3391 },
   ],
   timingNote: "The minutes are you, reading and deciding. The scheduler's own answers took milliseconds.",
   summary: {
