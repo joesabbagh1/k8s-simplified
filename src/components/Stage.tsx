@@ -566,9 +566,9 @@ function Breadcrumb() {
   if (path.length < 2 && !override) return null
 
   return (
-    <nav className="crumbs" aria-label="Zoom level">
+    <nav className="zoom-crumbs" aria-label="Zoom level">
       {path.map((level, i) => (
-        <span key={level} className="crumb">
+        <span key={level} className="zoom-crumb">
           {i > 0 && <span className="sep" aria-hidden="true">/</span>}
           {i === path.length - 1 ? (
             <b aria-current="location">{LEVEL_NAME[level]}</b>

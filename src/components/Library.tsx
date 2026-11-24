@@ -5,7 +5,7 @@ import {
   SegmentedControlIndicator,
   SegmentedControlItem,
 } from "@ui-sdk/react/segmented-control"
-import { useEffect, useMemo, useRef } from "react"
+import { type CSSProperties, useEffect, useMemo, useRef } from "react"
 import { CATEGORIES, CATEGORY_NAME } from "../data/layers"
 import { LESSONS } from "../data/lessons"
 import { sentence } from "../data/text"
@@ -13,6 +13,7 @@ import type { Lesson } from "../data/types"
 import { type LibraryFilter, useApp } from "../store"
 import { lessonPath } from "../route"
 import { Icon } from "./Icon"
+import { LayerArt } from "./LayerArt"
 import { Link } from "./Link"
 
 interface Match {
@@ -65,22 +66,22 @@ export function Library() {
       <div className="library-inner">
         <header className="library-head">
           <h1 id="library-title" ref={headingRef} tabIndex={-1} className="library-title">Kubernetes lessons</h1>
-          <p className="sub">{LESSONS.length} lessons on how a cluster works, from packets on the wire up to the app.</p>
+          <p className="library-lead">{LESSONS.length} lessons on how a cluster works, from packets on the wire up to the app</p>
         </header>
 
         <div className="library-filters">
-          <InputGroup className="search">
+          <InputGroup className="library-search">
             <Icon name="search" />
             <Input
               ref={searchRef}
               type="search"
               aria-label="Search lessons and steps"
-              placeholder="Search lessons and steps…"
+              placeholder="Search lessons and steps"
               value={query}
               onValueChange={(value) => setLibraryQuery(value)}
             />
             <InputClear className="ibtn ghost sm" aria-label="Clear search">
-              <Icon name="close" size={14} />
+              <Icon name="close" />
             </InputClear>
           </InputGroup>
           <SegmentedControl
@@ -112,18 +113,19 @@ export function Library() {
             if (!group.length) return null
             return (
               <section key={category} className="library-group" aria-labelledby={`group-${category}`}>
-                <h2 id={`group-${category}`} className="library-group-title">
-                  {CATEGORY_NAME[category]}
-                  <span>{group.length}</span>
-                </h2>
-                <ul className="lesson-grid">
+                <header className="library-group-head">
+                  <h2 id={`group-${category}`} className="library-group-title">{CATEGORY_NAME[category]}</h2>
+                  <p className="library-group-count">{group.length === 1 ? "1 lesson" : `${group.length} lessons`}</p>
+                  {!query && <LayerArt category={category} />}
+                </header>
+                <ul className="lesson-list" style={{ "--rows": Math.ceil(group.length / 2) } as CSSProperties}>
                   {group.map(({ lesson, steps }) => (
-                    <li key={lesson.id} className="lesson-card">
-                      <Link className="lesson-link" to={lessonPath(lesson.id)}>
-                        <span className="lesson-title">{lesson.title}</span>
-                      </Link>
-                      <p className="lesson-sub">{lesson.subtitle}</p>
-                      <div className="lesson-meta">{lesson.steps.length} steps</div>
+                    <li key={lesson.id} className="lesson-item">
+                      <div className="lesson-row">
+                        <Link className="lesson-link" to={lessonPath(lesson.id)}>{lesson.title}</Link>
+                        <p className="lesson-sub">{lesson.subtitle}</p>
+                        <span className="lesson-meta">{lesson.steps.length} steps</span>
+                      </div>
                       {steps.length > 0 && (
                         <ul className="lesson-steps" aria-label={`Matching steps in ${lesson.title}`}>
                           {steps.slice(0, 3).map(([i, title]) => (
