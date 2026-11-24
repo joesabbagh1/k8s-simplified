@@ -541,11 +541,15 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .library-group-head { padding-top: 8px; }
 .library-group-title { font-size: 20px; font-weight: 500; letter-spacing: -.01em; line-height: 24px; }
 .library-group-count { margin-top: 4px; font-size: 13px; line-height: 20px; color: var(--dim); font-variant-numeric: tabular-nums; }
-.layer-art { display: block; width: 200px; height: auto; margin-top: 12px; overflow: visible; }
+.layer-art { display: block; width: 224px; height: auto; margin-top: 8px; overflow: visible; }
 .layer-art .slab .f-t { fill: var(--plate); stroke: var(--line-strong); }
 .layer-art .slab .f-l, .layer-art .slab .f-r { fill: var(--floor-edge); stroke: var(--line-strong); }
 .iso .layer-grid { fill: none; stroke: var(--grid); stroke-width: 1; }
-.iso .layer-cable { fill: none; stroke-width: 2; stroke-linecap: round; }
+.layer-bay { fill: var(--display); stroke: var(--iso-line); stroke-width: .8; vector-effect: non-scaling-stroke; }
+.layer-tint .f-t { fill: color-mix(in srgb, var(--l-net) var(--tint), var(--iso-top)); }
+.layer-tint .f-l { fill: color-mix(in srgb, var(--l-net) var(--tint), var(--iso-left)); }
+.layer-tint .f-r { fill: color-mix(in srgb, var(--l-net) var(--tint), var(--iso-right)); }
+.layer-art .glass .f-t, .layer-art .glass .f-l, .layer-art .glass .f-r { fill-opacity: .2; }
 /* the list reads down the first column, then the second */
 .lesson-list { display: grid; grid-auto-flow: column; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), auto); align-content: start; gap: 0 48px; }
 .lesson-item { min-width: 0; padding: 4px 0; border-bottom: 1px solid var(--line); }
@@ -574,7 +578,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .hero { grid-template-columns: minmax(0, 1fr); padding-top: 32px; }
   .topics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cluster-facts { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .library-group { grid-template-columns: 200px minmax(0, 1fr); gap: 0 32px; }
+  .library-group { gap: 0 32px; }
   .lesson-list { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
 }
 @media (max-width: 900px) {
