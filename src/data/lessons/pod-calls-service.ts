@@ -10,6 +10,10 @@ export const podCallsService: Lesson = {
   title: "Pod calls a Service",
   subtitle: "ClusterIP and kube-proxy",
   category: "network",
+  seo: {
+    title: "How a Kubernetes ClusterIP Service works",
+    description: "A Kubernetes ClusterIP isn't on any interface. Watch kube-proxy's iptables rules rewrite it to a real Pod IP, and conntrack undo it on the way back.",
+  },
   actors: ["node1", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

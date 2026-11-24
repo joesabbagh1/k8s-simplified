@@ -10,6 +10,10 @@ export const rollingUpdate: Lesson = {
   title: "Rolling update",
   subtitle: "New version, zero downtime",
   category: "app",
+  seo: {
+    title: "Kubernetes rolling update, step by step",
+    description: "Watch a Kubernetes Deployment swap its Pods one at a time: two ReplicaSets, maxSurge, maxUnavailable, and why capacity never dips below three.",
+  },
   actors: ["you", "cp", "node1", "node2", "web-deploy", "web-rs", "web-rs2", "web-svc"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   res: {

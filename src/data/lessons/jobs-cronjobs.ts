@@ -14,6 +14,10 @@ export const jobsCronjobs: Lesson = {
   title: "Jobs and CronJobs",
   subtitle: "Run to completion",
   category: "app",
+  seo: {
+    title: "Kubernetes Jobs and CronJobs",
+    description: "How Kubernetes runs Pods that are meant to exit: Job completions, retries with backoffLimit, and the CronJobs that create Jobs on a schedule.",
+  },
   actors: ["you", "cp", "node1", "backup-job", "nightly-job", "backup-cj"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

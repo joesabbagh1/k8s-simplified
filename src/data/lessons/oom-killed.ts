@@ -12,6 +12,10 @@ export const oomKilled: Lesson = {
   title: "OOMKilled",
   subtitle: "Memory limits in practice",
   category: "node",
+  seo: {
+    title: "OOMKilled (exit code 137) in Kubernetes",
+    description: "What happens when a Kubernetes container passes its memory limit: the cgroup that holds it, the kernel that sends SIGKILL, and exit code 137.",
+  },
   actors: ["you", "cp", "node2"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

@@ -10,6 +10,10 @@ export const rbacTokens: Lesson = {
   title: "RBAC and ServiceAccounts",
   subtitle: "Who can do what",
   category: "app",
+  seo: {
+    title: "Kubernetes RBAC and ServiceAccount tokens",
+    description: "How a Kubernetes Pod proves who it is with a projected ServiceAccount token, and how Roles and RoleBindings decide each API request.",
+  },
   actors: ["you", "cp", "etcd", "node1"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

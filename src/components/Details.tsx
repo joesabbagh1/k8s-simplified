@@ -1,12 +1,15 @@
 import { Button } from "@ui-sdk/react/button"
 import { Listbox, ListboxItem } from "@ui-sdk/react/listbox"
+import { useEffect, useRef } from "react"
 import { CATEGORY_NAME } from "../data/layers"
 import { LESSONS } from "../data/lessons"
 import { sentence } from "../data/text"
 import type { Fact } from "../data/types"
 import { stats } from "../playback"
+import { lessonPath } from "../route"
 import { useApp, useLesson } from "../store"
 import { Icon } from "./Icon"
+import { Link } from "./Link"
 
 function Facts({ facts }: { facts: readonly Fact[] }) {
   if (!facts.length) return null
@@ -40,7 +43,7 @@ function Summary() {
   return (
     <>
       <div className="kicker ok">Lesson complete</div>
-      <h3 className="display">{lesson.summary ? sentence(lesson.summary.title) : lesson.title}</h3>
+      <h1 className="display">{lesson.summary ? sentence(lesson.summary.title) : lesson.title}</h1>
       <p className="sub">{lesson.title}</p>
       {lesson.summary && <Prose text={lesson.summary.body} />}
       <dl className="stats">
@@ -95,6 +98,37 @@ function Steps() {
   )
 }
 
+/** The whole lesson as text, for reading straight through and for search engines, which don't press Play. */
+function Transcript() {
+  const lesson = useLesson()
+  const next = LESSONS[(LESSONS.indexOf(lesson) + 1) % LESSONS.length]
+
+  return (
+    <details className="transcript">
+      {/* Space opens it, rather than reaching the Play shortcut */}
+      <summary onKeyDown={(e) => e.key === " " && e.stopPropagation()}>Read the whole lesson as text</summary>
+      {lesson.steps.map((step, i) => (
+        <section key={String(i)}>
+          <h2>{i + 1}. {sentence(step.title)}</h2>
+          <Prose text={step.body} />
+          <ul>
+            {step.events.map((e) => e.says && <li key={e.id}>{e.says}</li>)}
+          </ul>
+        </section>
+      ))}
+      {lesson.summary && (
+        <section>
+          <h2>Summary</h2>
+          <Prose text={lesson.summary.body} />
+        </section>
+      )}
+      <p>
+        Next lesson: <Link to={lessonPath(next.id)}>{next.title}</Link>
+      </p>
+    </details>
+  )
+}
+
 export function Details() {
   const lesson = useLesson()
   const step = useApp((s) => s.step)
@@ -102,9 +136,15 @@ export function Details() {
   const goToStep = useApp((s) => s.goToStep)
   const togglePlay = useApp((s) => s.togglePlay)
   const current = step >= 0 && !finished ? lesson.steps[step] : undefined
+  const storyRef = useRef<HTMLElement>(null)
+
+  // a new lesson starts at its top, also from the "Next lesson" link at the bottom of the last one
+  useEffect(() => {
+    if (storyRef.current) storyRef.current.scrollTop = 0
+  }, [lesson.id])
 
   return (
-    <aside className="story" aria-label="Details">
+    <aside ref={storyRef} className="story" aria-label="Details">
       <div className="story-body" aria-live="polite">
         {finished ? (
           <Summary />
@@ -120,7 +160,7 @@ export function Details() {
                 Overview
               </Button>
             </div>
-            <h3 className="display">{sentence(current.title)}</h3>
+            <h1 className="display">{sentence(current.title)}</h1>
             <p className="sub">{current.subtitle}</p>
             <Prose text={current.body} />
             <Facts facts={current.facts} />
@@ -128,7 +168,7 @@ export function Details() {
         ) : (
           <>
             <div className="kicker">{CATEGORY_NAME[lesson.category]}</div>
-            <h3 className="display">{lesson.title}</h3>
+            <h1 className="display">{lesson.title}</h1>
             <p className="sub">{lesson.subtitle}</p>
             <Prose text={lesson.overview.body} />
             <Facts facts={lesson.overview.facts} />
@@ -140,6 +180,7 @@ export function Details() {
         )}
       </div>
       <Steps />
+      {!finished && !current && <Transcript key={lesson.id} />}
     </aside>
   )
 }

@@ -1,11 +1,13 @@
 import { act, render, screen, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { createAgent } from "@ui-sdk/react/agent"
-import { beforeEach, expect, test } from "vitest"
+import { beforeEach, expect, test, vi } from "vitest"
 import App from "./App"
 import { useApp } from "./store"
 
 const agent = createAgent()
+
+vi.spyOn(window, "scrollTo").mockImplementation(() => {}) // jsdom has none
 
 beforeEach(() => {
   window.history.replaceState(null, "", "/deploy-an-app")
@@ -26,7 +28,7 @@ test("choosing a step shows its details, its events and a shareable link", async
   expect(within(details()).getByRole("heading", { name: "Scheduling" })).toBeTruthy()
   expect(within(details()).getByText("Step 5 of 7")).toBeTruthy()
   expect(window.location.pathname).toBe("/deploy-an-app/5")
-  expect(document.title).toBe("Deploy an app · Step 5 of 7 · K8s Simplified")
+  expect(document.title).toBe("Deploy an app · Step 5 of 7 · KubeLearn")
 
   await user.click(screen.getByRole("button", { name: /^Events/ }))
   const flow = screen.getByRole("region", { name: "Event flow" })
@@ -80,7 +82,7 @@ test("the Lessons link opens a page that searches and filters every lesson", asy
   render(<App />)
   await user.click(screen.getByRole("link", { name: /^Lessons/ }))
   expect(window.location.pathname).toBe("/lessons")
-  const page = screen.getByRole("main", { name: "Lessons" })
+  const page = screen.getByRole("main", { name: "Kubernetes lessons" })
   const lessonLinks = () => within(page).queryAllByRole("link").filter((a) => /^\/[^/]+$/.test(a.getAttribute("href")!))
   expect(lessonLinks()).toHaveLength(25)
 
@@ -101,7 +103,7 @@ test("a search that matches nothing offers to clear the filters", async () => {
   const user = userEvent.setup()
   window.history.replaceState(null, "", "/lessons")
   render(<App />)
-  const page = screen.getByRole("main", { name: "Lessons" })
+  const page = screen.getByRole("main", { name: "Kubernetes lessons" })
   await user.type(within(page).getByRole("searchbox"), "zzzz")
   expect(within(page).getByText(/No lesson matches/)).toBeTruthy()
   await user.click(within(page).getByRole("button", { name: "Clear filters" }))
@@ -112,7 +114,7 @@ test("a search shows the matching steps, and a step link opens that step", async
   const user = userEvent.setup()
   window.history.replaceState(null, "", "/lessons")
   render(<App />)
-  const page = screen.getByRole("main", { name: "Lessons" })
+  const page = screen.getByRole("main", { name: "Kubernetes lessons" })
   await user.type(within(page).getByRole("searchbox"), "scheduling")
   const steps = within(page).getByRole("list", { name: "Matching steps in Deploy an app" })
   await user.click(within(steps).getByRole("link", { name: /Scheduling/ }))
@@ -184,7 +186,7 @@ test("with no lesson in the address the homepage opens, and its links lead into 
 test("the logo goes home from a lesson", async () => {
   const user = userEvent.setup()
   render(<App />)
-  await user.click(screen.getByRole("link", { name: "K8s Simplified, home" }))
+  await user.click(screen.getByRole("link", { name: "KubeLearn, home" }))
   expect(await screen.findByRole("main", { name: /Watch a Kubernetes cluster work/ })).toBeTruthy()
   expect(useApp.getState().page).toBe("home")
   expect(window.location.pathname).toBe("/")
@@ -195,7 +197,7 @@ test("a category on the homepage opens the lessons page filtered to it", async (
   window.history.replaceState(null, "", "/")
   render(<App />)
   await user.click(screen.getByRole("link", { name: /All network lessons/ }))
-  const page = await screen.findByRole("main", { name: "Lessons" })
+  const page = await screen.findByRole("main", { name: "Kubernetes lessons" })
   expect(within(page).getByRole("radio", { name: /^Network/ }).getAttribute("aria-checked")).toBe("true")
   expect(within(page).queryByRole("heading", { name: /^Node/ })).toBeNull()
 })
@@ -215,5 +217,43 @@ test("Back returns to the page before, without reloading", async () => {
   await user.click(screen.getByRole("link", { name: "DNS in the cluster" }))
   expect(window.location.pathname).toBe("/dns-in-cluster")
   act(() => window.history.back())
-  expect(await screen.findByRole("main", { name: "Lessons" })).toBeTruthy()
+  expect(await screen.findByRole("main", { name: "Kubernetes lessons" })).toBeTruthy()
+})
+
+test("an address with no page says so, and its links lead back", async () => {
+  const user = userEvent.setup()
+  window.history.replaceState(null, "", "/deploy-an-app/99")
+  render(<App />)
+  const page = screen.getByRole("main", { name: "Page not found" })
+  expect(window.location.pathname).toBe("/deploy-an-app/99")
+  await user.click(within(page).getByRole("link", { name: "Browse the lessons" }))
+  expect(window.location.pathname).toBe("/lessons")
+})
+
+test("the overview holds the whole lesson as text, with a link to the next one", async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.click(within(details()).getByText("Read the whole lesson as text"))
+  expect(within(details()).getByRole("heading", { name: "5. Scheduling" })).toBeTruthy()
+  await user.click(within(details()).getByRole("link", { name: "A request finds your Pod" }))
+  expect(window.location.pathname).toBe("/request-finds-pod")
+})
+
+test("Space on the lesson text's toggle doesn't start playback", async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  within(details()).getByText("Read the whole lesson as text").focus()
+  await user.keyboard(" ")
+  expect(useApp.getState().mode).toBeNull()
+})
+
+test("a link to another page starts at its top", async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  details().scrollTop = 100
+  vi.mocked(window.scrollTo).mockClear()
+  await user.click(within(details()).getByText("Read the whole lesson as text"))
+  await user.click(within(details()).getByRole("link", { name: "A request finds your Pod" }))
+  expect(window.scrollTo).toHaveBeenCalledWith(0, 0)
+  expect(details().scrollTop).toBe(0)
 })

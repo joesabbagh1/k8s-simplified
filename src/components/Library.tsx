@@ -64,7 +64,7 @@ export function Library() {
     <main className="library" aria-labelledby="library-title">
       <div className="library-inner">
         <header className="library-head">
-          <h1 id="library-title" ref={headingRef} tabIndex={-1} className="library-title">Lessons</h1>
+          <h1 id="library-title" ref={headingRef} tabIndex={-1} className="library-title">Kubernetes lessons</h1>
           <p className="sub">{LESSONS.length} lessons on how a cluster works, from packets on the wire up to the app.</p>
         </header>
 

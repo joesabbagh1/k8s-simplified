@@ -10,6 +10,10 @@ export const ciliumEbpf: Lesson = {
   title: "Cilium and eBPF",
   subtitle: "Identity instead of IPs",
   category: "network",
+  seo: {
+    title: "Cilium and eBPF in Kubernetes",
+    description: "How Cilium replaces flannel, Calico and kube-proxy in a Kubernetes cluster with eBPF programs in each node's kernel, and identities instead of IPs.",
+  },
   actors: ["you", "cp", "etcd", "node1", "node2"],
   pods: { node1: ["other", "other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

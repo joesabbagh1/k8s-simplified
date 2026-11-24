@@ -27,6 +27,12 @@ test("every lesson is written", () => {
 describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
   const { events } = timeline(lesson)
 
+  test("has a title and description that fit a search result", () => {
+    expect(lesson.seo.title.length).toBeLessThanOrEqual(48)
+    expect(lesson.seo.description.length).toBeGreaterThanOrEqual(110)
+    expect(lesson.seo.description.length).toBeLessThanOrEqual(160)
+  })
+
   test("event ids are unique", () => {
     expect(new Set(events.map((e) => e.id)).size).toBe(events.length)
   })

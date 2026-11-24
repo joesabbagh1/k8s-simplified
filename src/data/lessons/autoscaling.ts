@@ -11,6 +11,10 @@ export const autoscaling: Lesson = {
   title: "Autoscaling",
   subtitle: "HPA and metrics-server",
   category: "app",
+  seo: {
+    title: "How the Kubernetes HPA works",
+    description: "How the Kubernetes Horizontal Pod Autoscaler decides to add Pods: CPU from cAdvisor to metrics-server, one divide, and a new replica count.",
+  },
   actors: ["you", "cp", "node1", "node2", "web-hpa", "web-deploy", "web-rs"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   res: {

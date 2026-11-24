@@ -10,6 +10,10 @@ export const configmapsSecrets: Lesson = {
   title: "ConfigMaps and Secrets",
   subtitle: "Getting config into a Pod",
   category: "app",
+  seo: {
+    title: "Kubernetes ConfigMaps and Secrets",
+    description: "Environment variables or mounted files: how ConfigMaps and Secrets get into a Kubernetes Pod, and what actually happens when you update one.",
+  },
   actors: ["you", "cp", "node2", "app-cm", "app-secret"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {

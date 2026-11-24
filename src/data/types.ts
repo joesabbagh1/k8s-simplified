@@ -113,6 +113,8 @@ export interface Lesson {
   title: string
   subtitle: string
   category: Category
+  /** the search result: a title of up to 48 characters (the site name is added) and a description of 110 to 160 */
+  seo: { title: string; description: string }
   overview: { body: string; facts: Fact[] }
   /** cluster-level actors this lesson uses; the overview camera frames them */
   actors: ActorId[]

@@ -13,6 +13,10 @@ export const mountingVolume: Lesson = {
   title: "Mounting a volume",
   subtitle: "CSI attach and mount",
   category: "node",
+  seo: {
+    title: "How Kubernetes mounts a volume with CSI",
+    description: "From a PersistentVolumeClaim to a directory inside the container: how a Kubernetes CSI driver provisions, attaches, stages and publishes a volume.",
+  },
   actors: ["you", "cp", "node1", "node2", "uploads-pvc", "uploads-pv"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {
