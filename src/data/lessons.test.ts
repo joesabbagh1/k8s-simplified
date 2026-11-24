@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { lanesOf, timeline } from "../playback"
+import { createdBy, lanesOf, timeline } from "../playback"
 import { actorById, expand, FLOORS, GROUPS, groundRoute } from "../scene/world"
-import { LESSONS } from "./lessons"
+import { surfaceAfter, transitionAfter } from "../scene/transition"
+import { LESSONS, lessonById } from "./lessons"
 
 const playable = LESSONS.filter((l) => l.steps.length)
 
@@ -97,4 +98,25 @@ test("every group stands inside its level's floor, with its members on its plate
       expect(x > floor.x0 && x < floor.x1 && y > floor.y0 && y < floor.y1, id).toBe(true)
     }
   }
+})
+
+describe("the Kyverno lesson", () => {
+  const lesson = lessonById("kyverno-policies")!
+
+  test("dives into the API server and comes back out of it", () => {
+    const changes = lesson.steps.flatMap((step, i) => {
+      const next = lesson.steps[i + 1]
+      return next && next.view !== step.view ? [{ i, into: next.view === "admission" }] : []
+    })
+    expect(changes.some((c) => c.into) && changes.some((c) => !c.into)).toBe(true)
+    for (const { i, into } of changes) {
+      expect((into ? transitionAfter : surfaceAfter)(lesson, i)?.to, `after step ${i + 1}`).toBe("api")
+    }
+  })
+
+  test("every card is created by an event that lands on the API server", () => {
+    const { events } = timeline(lesson)
+    const born = events.flatMap((e) => createdBy(lesson, e).map((id) => [id, e.path?.[1]]))
+    expect(Object.fromEntries(born)).toEqual({ "kyv-vpol": "api", "kyv-report": "api", "kyv-mpol": "api", "kyv-gpol": "api", "kyv-netpol": "api" })
+  })
 })

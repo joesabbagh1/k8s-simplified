@@ -123,6 +123,8 @@ export interface Lesson {
   overview: { body: string; facts: Fact[] }
   /** cluster-level actors this lesson uses, with "cp" for the whole control plane; the overview camera frames them */
   actors: ActorId[]
+  /** actors that open a level in this lesson only, besides the nodes and Pods that always do */
+  opens?: Record<ActorId, Level>
   /** Pods on each node before step 1 */
   pods?: PodLayout
   /** resource cards on screen before step 1 */

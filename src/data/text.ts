@@ -18,6 +18,7 @@ const PROPER: Record<string, string> = {
   DNSCONFIG: "dnsConfig",
   ENVOY: "Envoy",
   ENDPOINTSLICE: "EndpointSlice",
+  GENERATINGPOLICY: "GeneratingPolicy",
   "HTTP/2": "HTTP/2",
   IPV4: "IPv4",
   IPS: "IPs",

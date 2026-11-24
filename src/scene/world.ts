@@ -391,9 +391,9 @@ const RESOURCES: Actor[] = [
   resource("backup-job", "job", "Job backup-28471", "completions 1/1", "Runs Pods until the completions count is reached, retrying failures up to backoffLimit.", [60, -68], [0, -52, "middle"]),
   resource("kyv-vpol", "policy", "disallow-latest-tag", "ValidatingPolicy", "A ValidatingPolicy: an expression that must be true for every Pod, and for everything that makes Pods.", [28, -68]),
   resource("kyv-mpol", "policy", "default-seccomp", "MutatingPolicy", "A MutatingPolicy: sets the seccomp profile on Pods on their way in.", [60, -68], [0, -52, "middle"]),
-  resource("kyv-gpol", "policy", "default-deny", "GeneratingPolicy", "A GeneratingPolicy: puts a NetworkPolicy in every new namespace.", [-6, -68], [0, -52, "middle"]),
-  resource("kyv-report", "policyreport", "PolicyReport tools", "results", "What the policies say about one object as it is now. Kyverno writes it; you read it with kubectl.", [60, -68], [0, -52, "middle"]),
-  resource("kyv-netpol", "networkpolicy", "NetworkPolicy", "team-a/default-deny", "Created by Kyverno, not by you: blocks incoming traffic to every Pod in team-a until something allows it.", [44, 56]),
+  resource("kyv-gpol", "policy", "default-deny", "GeneratingPolicy", "A GeneratingPolicy: puts a NetworkPolicy in every new namespace.", [-4, -68], [0, -52, "middle"]),
+  resource("kyv-report", "policyreport", "PolicyReport tools", "results", "What the policies say about one object as it is now. Kyverno writes it; you read it with kubectl.", [28, -100], [0, -52, "middle"]),
+  resource("kyv-netpol", "networkpolicy", "NetworkPolicy", "team-a/default-deny", "Created by Kyverno, not by you: blocks incoming traffic to every Pod in team-a until something allows it.", [-4, -100], [0, -52, "middle"]),
   resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
 ]
 
@@ -698,13 +698,14 @@ export function screenRoute(level: Level, route: Point[], from?: Actor, to?: Act
   return out
 }
 
-/** Card-to-card ownership edges, drawn while both endpoints are on screen. */
+/** Card-to-card edges from an object to what it owns or makes, drawn while both endpoints are on screen. */
 export const RESOURCE_LINKS: [ActorId, ActorId][] = [
   ["web-deploy", "web-rs"], ["web-deploy", "web-rs2"],
   ["web-hpa", "web-deploy"],
   ["shop-ing", "web-svc"],
   ["backup-cj", "backup-job"], ["backup-cj", "nightly-job"],
   ["uploads-pvc", "uploads-pv"],
+  ["kyv-vpol", "kyv-report"], ["kyv-gpol", "kyv-netpol"],
 ]
 
 /** Which worker nodes each workload card's Pods currently sit on, derived from the Pod-slot layout.
