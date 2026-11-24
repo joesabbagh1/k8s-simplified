@@ -1,10 +1,12 @@
 const UPPER = new Set([
-  "ACK", "API", "ARP", "BPF", "CA", "CNI", "CPU", "CRI", "DNAT", "DNS", "FDB", "GET", "HPA", "HTTP", "ID", "IP", "JWT",
-  "MAC", "MTU", "NAT", "NXDOMAIN", "OK", "OOM", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
+  "ACK", "API", "ARP", "BPF", "CA", "CNI", "CPU", "CRI", "DNAT", "DNS", "EDS", "FDB", "GET", "HBONE", "HPA", "HTTP", "ID", "IP", "JWT",
+  "MAC", "MTU", "RSA", "SPIFFE", "NAT", "NXDOMAIN", "OK", "OOM", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
   "TTL", "UDP", "URL", "VIP", "VM", "VTEP", "VXLAN",
 ])
 
 const PROPER: Record<string, string> = {
+  ADMISSIONREVIEW: "AdmissionReview",
+  AUTHORIZATIONPOLICY: "AuthorizationPolicy",
   CILIUM: "Cilium",
   CLIENTHELLO: "ClientHello",
   CLUSTERIP: "ClusterIP",
@@ -13,15 +15,19 @@ const PROPER: Record<string, string> = {
   CRASHLOOPBACKOFF: "CrashLoopBackOff",
   DEPLOYMENT: "Deployment",
   DNSCONFIG: "dnsConfig",
+  ENVOY: "Envoy",
   ENDPOINTSLICE: "EndpointSlice",
   "HTTP/2": "HTTP/2",
   IPV4: "IPv4",
   IPS: "IPs",
+  ISTIO: "Istio",
   JOB: "Job",
   MI: "Mi",
+  MTLS: "mTLS",
   NETWORKPOLICY: "NetworkPolicy",
   NODEPORT: "NodePort",
   OOMKILLED: "OOMKilled",
+  PEERAUTHENTICATION: "PeerAuthentication",
   PERSISTENTVOLUMECLAIM: "PersistentVolumeClaim",
   POD: "Pod",
   PODS: "Pods",
@@ -30,10 +36,12 @@ const PROPER: Record<string, string> = {
   REPLICASET: "ReplicaSet",
   SERVICES: "Services",
   STATEFULSET: "StatefulSet",
+  VIRTUALSERVICE: "VirtualService",
+  XDS: "xDS",
 }
 
 /** Words that are names written in lower case, so they never get a capital, even first. */
-const lowerName = (word: string) => /\d|[()_.]|:\S|^(etcd|kubelet|kube-|eth|veth|cni|cali|runc|iptables|ndots|overlayfs|cgroups|clone|pivot|\/)/.test(word)
+const lowerName = (word: string) => /\d|[()_.]|:\S|^(etcd|istiod|ztunnel|mTLS|xDS|kubelet|kube-|eth|veth|cni|cali|runc|iptables|ndots|overlayfs|cgroups|clone|pivot|\/)/.test(word)
 
 /**
  * The lessons write step and event titles in capitals. This turns them into sentence case

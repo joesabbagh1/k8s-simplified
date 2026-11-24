@@ -14,7 +14,7 @@ test("every lesson is written", () => {
   expect(LESSONS.map((l) => l.id)).toEqual([
     "deploy-an-app", "request-finds-pod", "rolling-update",
     "pod-to-pod-same-node", "pod-to-pod-across-nodes", "pod-calls-service",
-    "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf",
+    "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf", "service-mesh-istio",
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "list-and-watch",
     "the-scheduler", "reconcile-loops", "node-goes-dark",

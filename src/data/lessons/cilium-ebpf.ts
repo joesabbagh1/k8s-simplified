@@ -427,7 +427,7 @@ export const ciliumEbpf: Lesson = {
       ["AGENT", "watches · compiles · writes maps"],
       ["KERNEL", "verdicts · tunnels · rewrites · drops"],
       ["THE PACKET", "carries its labels · identity 15361"],
-      ["NEXT", "Starting a container"],
+      ["NEXT", "Service mesh with Istio"],
     ],
   },
 }

@@ -2,8 +2,9 @@ export type Layer = "api" | "state" | "control" | "node" | "net" | "drop"
 
 export type Category = "network" | "node" | "control" | "app"
 
-/** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod. */
-export type Level = "cluster" | "node1" | "node2" | "pod"
+/** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod,
+ *  and two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"). */
+export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient"
 
 /** An actor id from src/scene/world.ts, such as "api", "node2" or "n2.kubelet". */
 export type ActorId = string
