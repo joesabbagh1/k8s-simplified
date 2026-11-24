@@ -1,24 +1,15 @@
-import { type CSSProperties, useEffect, useRef } from "react"
-import { CATEGORY_NAME } from "../data/layers"
+import { useEffect, useRef } from "react"
+import { CATEGORIES, CATEGORY_NAME } from "../data/layers"
 import { LESSONS } from "../data/lessons"
 import type { Category } from "../data/types"
 import { LIBRARY_PATH, lessonPath, REPO_URL } from "../route"
 import { useApp } from "../store"
 import { HeroScene } from "./HeroScene"
 import { Icon } from "./Icon"
-import { LayerArt } from "./LayerArt"
 import { Link } from "./Link"
+import { Questions } from "./Questions"
 
 const FIRST = "deploy-an-app"
-
-/** The floors of the stack, top to bottom, then security, which belongs to all of them. */
-const FLOORS: Record<Category, string> = {
-  app: "The workloads you write YAML for",
-  control: "The API server, etcd and the controllers",
-  node: "The kubelet and containerd on one machine",
-  network: "Packets on the wire",
-  security: "Who may do what, and alerts on the rest",
-}
 
 const HOW: [string, string][] = [
   ["Watch it move", "Each event travels between the real parts of a cluster: your laptop, the API server, etcd, a kubelet, a veth pair."],
@@ -89,35 +80,17 @@ export function Home() {
           </ol>
         </section>
 
-        <section className="home-section" aria-labelledby="topics-title">
-          <h2 id="topics-title" className="home-h2">{LESSONS.length} lessons, from the app down to the wire</h2>
-          <ul className="floors">
-            {(Object.entries(FLOORS) as [Category, string][]).map(([category, about]) => {
-              const lessons = LESSONS.filter((l) => l.category === category)
-              return (
-                <li key={category} className="floor-row">
-                  <LayerArt category={category} />
-                  <div className="floor-body">
-                    <div className="floor-label">
-                      <h3>
-                        <Link to={LIBRARY_PATH} onClick={browse(category)}>
-                          {CATEGORY_NAME[category]} <span className="sr-only">lessons</span>
-                          <Icon name="right" size={13} />
-                        </Link>
-                      </h3>
-                      <p>{about}</p>
-                    </div>
-                    <ul className="floor-lessons" style={{ "--rows": Math.ceil(lessons.length / 3) } as CSSProperties}>
-                      {lessons.map((l) => (
-                        <li key={l.id}>
-                          <Link to={lessonPath(l.id)}>{l.title}</Link>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </li>
-              )
-            })}
+        <section className="home-section" aria-labelledby="questions-title">
+          <h2 id="questions-title" className="home-h2">Questions the lessons answer</h2>
+          <Questions />
+          <ul className="browse">
+            {CATEGORIES.map((category) => (
+              <li key={category}>
+                <Link to={LIBRARY_PATH} onClick={browse(category)}>
+                  {CATEGORY_NAME[category]} <span>{LESSONS.filter((l) => l.category === category).length} lessons</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
 

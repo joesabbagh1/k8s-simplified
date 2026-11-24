@@ -3,7 +3,6 @@ import userEvent from "@testing-library/user-event"
 import { createAgent } from "@ui-sdk/react/agent"
 import { beforeEach, expect, test, vi } from "vitest"
 import App from "./App"
-import { LESSONS } from "./data/lessons"
 import { useApp } from "./store"
 
 const agent = createAgent()
@@ -200,19 +199,22 @@ test("the homepage scene draws the cluster's plates and no other level's", () =>
   expect(names).toEqual(["cluster", "control plane"])
 })
 
-test("the homepage links to every lesson", () => {
+test("a question on the homepage opens the event that answers it, linked to its step", async () => {
+  const user = userEvent.setup()
   window.history.replaceState(null, "", "/")
   render(<App />)
-  const section = screen.getByRole("region", { name: /lessons, from the app down to the wire/ })
-  const links = within(section).getAllByRole("link").map((a) => a.getAttribute("href"))
-  expect(links).toEqual(expect.arrayContaining(LESSONS.map((l) => `/${l.id}`)))
+  const section = screen.getByRole("region", { name: "Questions the lessons answer" })
+  await user.click(within(section).getByRole("button", { name: "Where does exit code 137 come from?" }))
+  expect(within(section).getByText("137 (128 + SIGKILL 9)")).toBeTruthy()
+  await user.click(within(section).getByRole("link", { name: "Watch it in OOMKilled, step 4" }))
+  expect(window.location.pathname).toBe("/oom-killed/4")
 })
 
 test("a category on the homepage opens the lessons page filtered to it", async () => {
   const user = userEvent.setup()
   window.history.replaceState(null, "", "/")
   render(<App />)
-  await user.click(screen.getByRole("link", { name: "Network lessons" }))
+  await user.click(screen.getByRole("link", { name: "Network 9 lessons" }))
   const page = await screen.findByRole("main", { name: "Kubernetes lessons" })
   expect(within(page).getByRole("radio", { name: /^Network/ }).getAttribute("aria-checked")).toBe("true")
   expect(within(page).queryByRole("heading", { name: /^Node/ })).toBeNull()

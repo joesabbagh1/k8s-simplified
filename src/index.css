@@ -495,33 +495,36 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .how-n { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .how h3 { margin-top: 8px; font-size: 15px; font-weight: 500; }
 .how p { margin-top: 4px; color: var(--dim); }
-/* The stack, taken apart: each floor is level with the rule that starts at its right corner, and dashed
-   guides join it to the floor below. --w sizes it all; the numbers come from LayerArt's viewBox (226 × 168,
-   with the floor's corners 92 below its top). */
-.floors { --w: 192px; --up: calc(var(--w) * 92 / 226); padding-top: var(--up); }
-.floor-row { position: relative; min-height: calc(var(--w) * .74); padding-left: var(--w); }
-.floor-row:last-child { min-height: calc(var(--w) * .34); margin-top: 32px; }
-.floor-row .layer-art { position: absolute; left: 0; top: calc(var(--up) * -1); width: var(--w); margin: 0; }
-.floor-row .slab polygon { transition: fill .15s, stroke .15s; }
-.floor-row:is(:hover, :focus-within) .slab polygon { stroke: var(--accent-text); }
-.floor-row:is(:hover, :focus-within) .slab .f-t { fill: var(--iso-hot-right); }
-/* security sits apart, so the last guides end at the wire */
-.floor-row:nth-last-child(n + 3)::before, .floor-row:nth-last-child(n + 3)::after { content: ""; position: absolute; top: 6px; height: calc(100% - 6px); border-left: 1px dashed var(--line-strong); }
-.floor-row::before { left: 1px; }
-.floor-row::after { left: calc(var(--w) - 2px); }
-.floor-body { display: grid; grid-template-columns: 192px minmax(0, 1fr); gap: 0 32px; padding: 12px 0 24px 32px; border-top: 1px solid var(--line); }
-.floor-label h3 { font-size: 15px; font-weight: 500; line-height: 24px; }
-.floor-label a { display: inline-flex; align-items: center; gap: 4px; color: var(--text); text-decoration: none; transition: color .15s; }
-.floor-label .ico { color: var(--dim); }
-.floor-label a:hover .ico { color: inherit; }
-/* the drawing is part of its floor's link */
-.floor-label a::after { content: ""; position: absolute; left: 0; top: calc(var(--up) * -1); width: var(--w); height: calc(var(--w) * .74); }
-.floor-label a:hover { color: var(--accent-text); }
-.floor-label p { font-size: 13px; line-height: 20px; color: var(--dim); text-wrap: balance; }
-/* reads down each column, like the lessons page */
-.floor-lessons { display: grid; grid-auto-flow: column; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), auto); align-content: start; gap: 4px 16px; margin-top: -2px; }
-.floor-lessons a { display: block; padding: 2px 8px; margin: 0 -8px; border-radius: 4px; line-height: 24px; color: var(--text); text-decoration: none; transition: background-color .15s; }
-.floor-lessons a:hover { background: var(--raised); }
+/* An accordion whose open answer stands beside the questions; on narrow screens it opens under its own. */
+.questions { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); grid-template-rows: repeat(var(--n), auto) 1fr; column-gap: 32px; }
+.question { display: contents; }
+.question-head { grid-column: 1; }
+.question-trigger { width: 100%; height: auto; min-height: 52px; padding: 12px 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; text-align: left; border-bottom: 1px solid var(--line); font-size: 16px; line-height: 24px; font-weight: 400; color: var(--dim); transition: color .15s; }
+.question-trigger:is(:hover, [aria-expanded="true"]) { color: var(--text); }
+.question-trigger .ico { opacity: 0; color: var(--accent-text); transition: opacity .15s; }
+.question-trigger[aria-expanded="true"] .ico { opacity: 1; }
+.answer { grid-column: 2; grid-row: 1 / -1; min-height: 416px; }
+.answer-in { height: 100%; display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+.answer-route { margin-top: 20px; display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; line-height: 20px; color: var(--dim); }
+.answer-route::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); flex: none; }
+/* the answer, then the event that shows it */
+.answer-says { font-size: 18px; line-height: 28px; text-wrap: pretty; }
+.answer-info { margin: 4px 0 12px; font-family: var(--mono); font-size: 12px; line-height: 20px; color: var(--accent-text); overflow-wrap: anywhere; }
+.answer .frame { margin: 0; font-family: var(--mono); }
+.answer .frame .fl { min-width: max-content; }
+.answer-fields { border: 1px solid var(--line); border-radius: 4px; overflow: hidden; font-family: var(--mono); font-size: 12px; line-height: 20px; }
+.answer-fields dl { padding: 4px 0; }
+.answer-fields .kv { padding: 2px 12px; }
+.answer-fields .kv em { display: none; } /* "changed" needs the event before it */
+.answer-link { align-self: flex-start; margin-top: auto; padding-top: 16px; display: inline-flex; align-items: center; gap: 4px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--text); text-decoration: none; transition: color .15s; }
+.answer-link:hover { color: var(--accent-text); }
+.browse { margin-top: 24px; display: flex; flex-wrap: wrap; gap: 8px 32px; }
+.browse a { font-size: 14px; line-height: 24px; color: var(--text); text-decoration: none; transition: color .15s; }
+.browse a:hover { color: var(--accent-text); }
+.browse span { margin-left: 4px; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+@media (prefers-reduced-motion: no-preference) {
+  .answer-in > * { animation: cap-in .24s var(--ease-out); }
+}
 .cluster-facts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; }
 .cluster-facts .sub { color: var(--dim); }
 .facts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
@@ -589,9 +592,6 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 }
 @media (max-width: 1000px) {
   .hero { grid-template-columns: minmax(0, 1fr); padding-top: 32px; }
-  .floors { --w: 160px; }
-  .floor-body { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-left: 24px; }
-  .floor-lessons { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
   .cluster-facts { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .library-group { gap: 0 32px; }
   .lesson-list { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
@@ -608,7 +608,16 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .caption { width: calc(100% - 24px); bottom: 64px; font-size: 13px; }
   .zoom-ui { display: none; }
 }
+@media (max-width: 800px) {
+  .questions { display: block; }
+  .question { display: block; }
+  .question-trigger .ico { opacity: 1; color: var(--dim); transform: rotate(90deg); transition: transform .18s var(--ease-out); }
+  .question-trigger[aria-expanded="true"] .ico { transform: rotate(-90deg); }
+  .question-trigger[aria-expanded="true"] { border-bottom-color: transparent; }
+  .answer { min-height: 0; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+}
 @media (max-width: 600px) {
+  .answer-in { padding: 16px; }
   .wordmark, .brand + .topbar-sep { display: none; }
   .library-inner { padding: 24px 16px 40px; }
   .library-title { font-size: 28px; line-height: 36px; }
@@ -621,10 +630,6 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .lesson-item { padding: 0; }
   .hero { padding: 24px 16px; gap: 20px; }
   .home-inner { padding: 0 16px 40px; }
-  .floors { --w: 96px; }
-  .floor-body { padding-left: 16px; }
-  .floor-lessons { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
-  .floor-lessons a { padding: 6px 8px; }
   .how, .facts-grid { grid-template-columns: minmax(0, 1fr); }
   .hero-actions .btn { flex: 1 1 100%; }
   /* the scene draws at about half size here: drop the addresses and grow the names so they stay readable */
