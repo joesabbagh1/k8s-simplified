@@ -1,11 +1,12 @@
 const UPPER = new Set([
-  "ACK", "API", "ARP", "BPF", "CA", "CNI", "CPU", "CRI", "DNAT", "DNS", "EDS", "FDB", "GET", "HBONE", "HPA", "HTTP", "ID", "IP", "JWT",
+  "ACK", "API", "ARP", "BPF", "CA", "CEL", "CNI", "CPU", "CRI", "DNAT", "DNS", "EDS", "FDB", "GET", "HBONE", "HPA", "HTTP", "ID", "IP", "JWT",
   "MAC", "MTU", "RSA", "SPIFFE", "NAT", "NXDOMAIN", "OK", "OOM", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
   "TTL", "UDP", "URL", "VIP", "VM", "VTEP", "VXLAN",
 ])
 
 const PROPER: Record<string, string> = {
   ADMISSIONREVIEW: "AdmissionReview",
+  APPLYCONFIGURATION: "applyConfiguration",
   AUTHORIZATIONPOLICY: "AuthorizationPolicy",
   CILIUM: "Cilium",
   CLIENTHELLO: "ClientHello",
@@ -22,8 +23,12 @@ const PROPER: Record<string, string> = {
   IPS: "IPs",
   ISTIO: "Istio",
   JOB: "Job",
+  JSONPATCH: "JSONPatch",
+  KYVERNO: "Kyverno",
   MI: "Mi",
   MTLS: "mTLS",
+  MUTATINGPOLICY: "MutatingPolicy",
+  NAMESPACE: "Namespace",
   NETWORKPOLICY: "NetworkPolicy",
   NODEPORT: "NodePort",
   OOMKILLED: "OOMKilled",
@@ -31,11 +36,14 @@ const PROPER: Record<string, string> = {
   PERSISTENTVOLUMECLAIM: "PersistentVolumeClaim",
   POD: "Pod",
   PODS: "Pods",
+  POLICYREPORT: "PolicyReport",
   POSTGRES: "Postgres",
   PRESTOP: "preStop",
   REPLICASET: "ReplicaSet",
   SERVICES: "Services",
   STATEFULSET: "StatefulSet",
+  UPDATEREQUEST: "UpdateRequest",
+  VALIDATINGPOLICY: "ValidatingPolicy",
   VIRTUALSERVICE: "VirtualService",
   XDS: "xDS",
 }

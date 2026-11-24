@@ -233,11 +233,11 @@ export const rbacTokens: Lesson = {
   ],
   summary: {
     title: "PROVEN AND CHECKED",
-    body: "Identity and permission only meet at request time. The Pod's whole identity is a JWT the kubelet mints, projects and refreshes - it expires, and it is bound to one Pod. The API server verifies it, then asks RBAC whether the union of the subject's bindings grants this verb on this resource; when no rule matches, the default deny answers 403. That was the last mechanism in the box: every lesson in this series has been some component watching, asking or answering through this one server.",
+    body: "Identity and permission only meet at request time. The Pod's whole identity is a JWT the kubelet mints, projects and refreshes - it expires, and it is bound to one Pod. The API server verifies it, then asks RBAC whether the union of the subject's bindings grants this verb on this resource; when no rule matches, the default deny answers 403. RBAC never looks inside the object, though. What a Deployment may contain is a separate question, asked at a later stop on the same road.",
     facts: [
       ["IDENTITY", "projected JWT · 3607 s · refreshed at 80 %"],
       ["AUTHZ", "allow-only · union of bindings · default deny"],
-      ["WRAP-UP", "every lesson, done"],
+      ["NEXT", "Kyverno policies"],
     ],
   },
 }
