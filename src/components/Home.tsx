@@ -7,16 +7,9 @@ import { useApp } from "../store"
 import { HeroScene } from "./HeroScene"
 import { Icon } from "./Icon"
 import { Link } from "./Link"
+import { Questions } from "./Questions"
 
 const FIRST = "deploy-an-app"
-
-const ABOUT: Record<Category, string> = {
-  network: "Packets on the wire: veth pairs, the VXLAN overlay, Services, DNS, Ingress, NetworkPolicy and service meshes.",
-  node: "What the kubelet and containerd do on one machine: images, namespaces, cgroups, probes and volumes.",
-  control: "The API server, etcd, watches, the scheduler and the controllers that keep reconciling.",
-  app: "The workloads you write YAML for: rollouts, autoscaling, config, StatefulSets and Jobs.",
-  security: "Who may do what, and how you find out when someone does something else: RBAC, ServiceAccounts and Falco's alerts.",
-}
 
 const HOW: [string, string][] = [
   ["Watch it move", "Each event travels between the real parts of a cluster: your laptop, the API server, etcd, a kubelet, a veth pair."],
@@ -87,32 +80,17 @@ export function Home() {
           </ol>
         </section>
 
-        <section className="home-section" aria-labelledby="topics-title">
-          <h2 id="topics-title" className="home-h2">What the lessons cover</h2>
-          <ul className="topics">
-            {CATEGORIES.map((category) => {
-              const lessons = LESSONS.filter((l) => l.category === category)
-              return (
-                <li key={category} className="topic">
-                  <div className="topic-head">
-                    <h3>{CATEGORY_NAME[category]}</h3>
-                    <span className="topic-count">{lessons.length} lessons</span>
-                  </div>
-                  <p>{ABOUT[category]}</p>
-                  <ul className="topic-lessons">
-                    {lessons.slice(0, 3).map((l) => (
-                      <li key={l.id}>
-                        <Link to={lessonPath(l.id)}>{l.title}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link className="topic-all" to={LIBRARY_PATH} onClick={browse(category)}>
-                    All {CATEGORY_NAME[category].toLowerCase()} lessons
-                    <Icon name="right" size={13} />
-                  </Link>
-                </li>
-              )
-            })}
+        <section className="home-section" aria-labelledby="questions-title">
+          <h2 id="questions-title" className="home-h2">Questions the lessons answer</h2>
+          <Questions />
+          <ul className="browse">
+            {CATEGORIES.map((category) => (
+              <li key={category}>
+                <Link to={LIBRARY_PATH} onClick={browse(category)}>
+                  {CATEGORY_NAME[category]} <span>{LESSONS.filter((l) => l.category === category).length} lessons</span>
+                </Link>
+              </li>
+            ))}
           </ul>
         </section>
 
