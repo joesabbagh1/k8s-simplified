@@ -78,7 +78,7 @@ function plate({ x0, x1, y0, y1, text, at }: Floor, cls = "") {
   return `<g class="floor ${cls}">${slab}${top}<g class="floor-grid">${lines}</g>${name}</g>`
 }
 
-const floor = () => [plate(FLOORS.cluster), ...GROUPS.map((g) => plate(g.floor, "plate"))].join("")
+const floor = () => [plate(FLOORS.cluster), ...GROUPS.filter((g) => g.level === "cluster").map((g) => plate(g.floor, "plate"))].join("")
 
 const pathOf = (route: Point[]) => route.map(([x, y], i) => `${i ? "L" : "M"}${P(x, y).map((v) => v.toFixed(1)).join(" ")}`).join(" ")
 

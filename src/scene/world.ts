@@ -44,6 +44,7 @@ const GEOMETRY: Record<Level, { origin: Point; k: number }> = {
   mesh: { origin: [500, 320], k: 0.78 },
   ambient: { origin: [500, 320], k: 0.78 },
   admission: { origin: [500, 320], k: 0.78 },
+  falco: { origin: [500, 320], k: 0.78 },
 }
 
 export const toScreen = (level: Level, [x, y]: Point): Point => {
@@ -346,6 +347,70 @@ const ADMISSION: Def[] = [
   },
 ]
 
+/** node-2 as Falco watches it: a Pod and the kernel under it, Falco's parts, and where its alerts go. */
+const FALCO: Def[] = [
+  {
+    id: "f.web", level: "falco", g: [-88, -28], foot: [20, 20], name: "web-…-x2kqp", sub: "10.244.2.17",
+    about: "An ordinary web Pod. Its processes run on the node's kernel, so every program they start goes through that kernel.",
+    label: [-38, -8, "end"], box: [-140, -65, 60, 45], art: memo(pod(S * 0.85)),
+  },
+  {
+    id: "f.containerd", level: "falco", g: [-44, -28], foot: [21, 14], name: "containerd", sub: "container runtime",
+    about: "The container runtime. Falco asks it which image and which Pod a container ID belongs to.",
+    label: [0, -42, "middle"], box: [-80, -70, 80, 30], art: memo(chip(S, 9, 6, 2.6, "containerd")),
+  },
+  {
+    id: "f.sys", level: "falco", g: [-88, 40], foot: [21, 14], name: "Tracepoints", sub: "hooks to attach to",
+    about: "Places in the Linux kernel made for tools to attach to. One of them, sched_process_exec, fires each time a process has started a program.",
+    label: below(34), box: [-80, -40, 80, 60], art: memo(chip(S, 9, 6, 2, "tracepoint")),
+  },
+  {
+    id: "f.probe", level: "falco", g: [-44, 40], foot: [21, 14], name: "eBPF probe", sub: "Falco's own code",
+    about: "Small programs Falco loaded into the kernel. They copy the details of an event and never change or stop it.",
+    label: below(34), box: [-80, -40, 80, 60], art: memo(chip(S, 9, 6, 2.6, "eBPF probe", "hot")),
+  },
+  {
+    id: "f.ring", level: "falco", g: [0, 40], foot: [21, 14], name: "Ring buffers", sub: "8 MB per 2 CPUs",
+    about: "Memory shared between the kernel and Falco. The probe writes events at one end and Falco reads them at the other.",
+    label: below(34), box: [-80, -40, 80, 60], art: memo(chip(S, 9, 6, 2, "ring buffer")),
+  },
+  {
+    id: "f.libs", level: "falco", g: [0, 4], foot: [18, 14], name: "libs", sub: "process table",
+    about: "libscap and libsinsp. They read raw events and keep a table of the node's processes, so each event comes with its parent, user and terminal.",
+    label: below(32), box: [-70, -40, 70, 55], art: memo(chip(S, 8, 6, 2.6, "libs")),
+  },
+  {
+    id: "f.meta", level: "falco", g: [0, -28], foot: [18, 14], name: "container plugin", sub: "container ID → Pod",
+    about: "A Falco plugin that keeps a cache of the node's containers: name, image, Pod and namespace.",
+    label: [0, -42, "middle"], box: [-70, -70, 70, 30], art: memo(chip(S, 8, 6, 2.6, "plugin")),
+  },
+  {
+    id: "f.rules", level: "falco", g: [40, 4], foot: [21, 16], name: "Rule engine", sub: "25 default rules",
+    about: "Compares each event with the conditions of the loaded rules. A match becomes an alert.",
+    label: [36, 0, "start"], box: [-40, -45, 170, 40], art: memo(chip(S, 9, 7, 4, "rules", "hot")),
+  },
+  {
+    id: "f.out", level: "falco", g: [40, -28], foot: [18, 14], name: "Outputs", sub: "stdout · syslog · HTTP",
+    about: "Where alerts leave Falco. Each one goes to every output that is turned on.",
+    label: [0, -42, "middle"], box: [-70, -70, 70, 30], art: memo(chip(S, 8, 6, 2.6, "outputs")),
+  },
+  {
+    id: "f.sidekick", level: "falco", g: [92, -28], foot: [23, 16], name: "Falcosidekick", sub: "Service :2801",
+    about: "A small Deployment that receives every node's alerts and forwards them to chat, paging, storage or a response engine, each with its own minimum priority.",
+    label: below(36), box: [-80, -45, 80, 60], art: memo(chip(S, 10, 7, 4, "sidekick", "hot")),
+  },
+  {
+    id: "f.slack", level: "falco", g: [132, -28], foot: [18, 14], name: "Slack", sub: "hooks.slack.com",
+    about: "Where people see the alert. It could be PagerDuty, Alertmanager, Loki or an email just as well.",
+    label: below(32), box: [-70, -40, 70, 55], art: memo(chip(S, 8, 6, 2.6, "Slack")),
+  },
+  {
+    id: "f.talon", level: "falco", g: [92, 14], foot: [18, 14], name: "Falco Talon", sub: "response engine · :2803",
+    about: "Matches alerts with actions, such as labeling a Pod, cutting its network or deleting it. Falco itself never acts.",
+    label: below(32), box: [-80, -40, 80, 55], art: memo(chip(S, 8, 6, 2.6, "Talon")),
+  },
+]
+
 const place = (d: Def): Actor => ({ ...d, pos: toScreen(d.level, d.g) })
 
 export const ACTORS: Actor[] = [
@@ -356,12 +421,13 @@ export const ACTORS: Actor[] = [
   ...MESH,
   ...AMBIENT,
   ...ADMISSION,
+  ...FALCO,
 ].map(place)
 
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV", policy: "POL", policyreport: "REP", networkpolicy: "NP",
+  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -382,6 +448,7 @@ const RESOURCES: Actor[] = [
   resource("web-svc", "service", "Service web", "10.96.120.15:80", "A stable virtual IP and DNS name. Its EndpointSlices list the Pod IPs that currently answer.", [44, 56]),
   resource("shop-ing", "ingress", "Ingress shop", "shop.example.com", "Layer-7 routing rules: hosts and paths to Services, served by an ingress controller behind a load balancer.", [44, 84]),
   // everything else: a row behind node-2, one lesson at a time
+  resource("falco-ds", "daemonset", "DaemonSet falco", "ns falco", "Runs one Falco Pod on every node it may run on, and adds one when a node joins.", [28, -68]),
   resource("db-sts", "statefulset", "StatefulSet db", "replicas 3", "Like a Deployment, but with stable identities: db-0, db-1, db-2 start one at a time and keep their volumes.", [28, -68]),
   resource("uploads-pvc", "pvc", "PVC uploads", "10Gi · fast-nvme", "A PersistentVolumeClaim: the app's ask for storage. The provisioner fulfils it with a volume that outlives the Pod.", [28, -68]),
   resource("uploads-pv", "pv", "PV pvc-3f8a91c2…", "10 Gi · nvme", "The PersistentVolume the driver carved out for the claim: a real disk, attachable to one node at a time.", [60, -68], [0, -52, "middle"]),
@@ -481,6 +548,20 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("g.validate", "g.kyverno", [52, 14], [52, -9], [16, -9], [16, -30]),
     cable("g.kyverno", "g.engine", [16, -30], [52, -30]),
   ],
+  falco: [
+    cable("f.web", "f.sys", [-88, -28], [-88, 40]),
+    cable("f.sys", "f.probe", [-88, 40], [-44, 40]),
+    cable("f.probe", "f.ring", [-44, 40], [0, 40]),
+    cable("f.ring", "f.libs", [0, 40], [0, 4]),
+    cable("f.containerd", "f.web", [-44, -28], [-88, -28]),
+    cable("f.containerd", "f.meta", [-44, -28], [0, -28]),
+    cable("f.meta", "f.libs", [0, -28], [0, 4]),
+    cable("f.libs", "f.rules", [0, 4], [40, 4]),
+    cable("f.rules", "f.out", [40, 4], [40, -28]),
+    cable("f.out", "f.sidekick", [40, -28], [92, -28]),
+    cable("f.sidekick", "f.slack", [92, -28], [132, -28]),
+    cable("f.sidekick", "f.talon", [92, -28], [92, 14]),
+  ],
 }
 
 /** Where a bus splits: drawn as a small ring. */
@@ -492,6 +573,7 @@ export const JOINTS: Record<Level, Point[]> = {
   mesh: [[0, 16], [0, 38], [20, 38]],
   ambient: [],
   admission: [],
+  falco: [],
 }
 
 /** The plate each level stands on, in ground units, and what is written on it (one line per \\n). */
@@ -503,6 +585,7 @@ export const FLOORS: Record<Level, { x0: number; x1: number; y0: number; y1: num
   mesh: { x0: -80, x1: 80, y0: -68, y1: 70, text: "the mesh · namespace default", at: [-22, 66.6] },
   ambient: { x0: -78, x1: 78, y0: -58, y1: 46, text: "the mesh · namespace default", at: [-74, 42.6] },
   admission: { x0: -84, x1: 106, y0: -55, y1: 44, text: "cluster", at: [84, 40.6] },
+  falco: { x0: -110, x1: 66, y0: -52, y1: 66, text: "node-2 · 10.0.1.12", at: [18, 62.6] },
 }
 
 export type Floor = (typeof FLOORS)[Level]
@@ -568,6 +651,20 @@ export const GROUPS: Group[] = [
     members: ["g.kyverno", "g.engine"],
     hub: "g.kyverno",
     floor: { x0: 2, x1: 68, y0: -47, y1: -14, text: "kyverno namespace", at: [26, -16.5] },
+  },
+  {
+    id: "f.kernel", level: "falco", name: "The kernel",
+    about: "The one Linux kernel every container on node-2 shares. That is why a single probe sees all of them.",
+    members: ["f.sys", "f.probe", "f.ring"],
+    hub: "f.ring",
+    floor: { x0: -104, x1: 16, y0: 28, y1: 58, text: "kernel", at: [-102, 55.6] },
+  },
+  {
+    id: "f.falco", level: "falco", name: "The Falco Pod",
+    about: "One privileged Pod per node. It runs beside the Pods it watches and adds nothing to them.",
+    members: ["f.libs", "f.meta", "f.rules", "f.out"],
+    hub: "f.libs",
+    floor: { x0: -14, x1: 58, y0: -44, y1: 22, text: "Pod falco-x9k2v", at: [22, 19.6] },
   },
 ]
 
@@ -723,6 +820,7 @@ export function workloadNodes(resources: Record<string, Resource>, pods: Partial
     for (const [id, r] of Object.entries(resources)) {
       if (r.kind === "replicaset" && (twoRs ? (id === "web-rs" ? v1 : v2) : any)) edges.push([id, node])
       else if ((r.kind === "statefulset" || r.kind === "job") && v2) edges.push([id, node])
+      else if (r.kind === "daemonset" && r.state !== "creating") edges.push([id, node])
       else if (r.kind === "service" && ready) edges.push([id, node])
     }
   }
@@ -737,6 +835,7 @@ export const LEVEL_NAME: Record<Level, string> = {
   mesh: "Mesh, with sidecars",
   ambient: "Mesh, ambient mode",
   admission: "Inside the API server",
+  falco: "node-2, with Falco",
 }
 
 /** The chain of levels above and including this one, for the breadcrumb. */

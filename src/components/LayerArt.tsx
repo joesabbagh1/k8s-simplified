@@ -3,7 +3,7 @@ import { box, iso } from "../iso/iso"
 import { actorById } from "../scene/world"
 
 /* What each lesson category is about: the actors its lessons play out on, with the lessons' own art,
-   on a square of the cluster floor. All four share one scale and one viewBox, so they line up and
+   on a square of the cluster floor. They all share one scale and one viewBox, so they line up and
    need no measuring. */
 
 /** the cluster view's scale */
@@ -32,6 +32,7 @@ const CAST: Record<Category, Placed[]> = {
   node: [["node2", 0, 0, ["other", "v1", "v1"], 1.3]],
   control: [["api", -6.5, -6.5], ["etcd", 7, -7], ["sched", -7, 7], ["kcm", 6.5, 6.5]],
   app: [["n2.podA", -6.5, -6.5], ["n2.podB", 7, -6.5], ["web-deploy", -6.5, 7], ["web-svc", 7, 7]],
+  security: [["f.web", -6.5, -6.5], ["f.rules", 7, -6.5], ["f.probe", -6.5, 7], ["f.sidekick", 7, 7]],
 }
 
 const FLOOR = floor()

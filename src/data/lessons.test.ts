@@ -20,7 +20,7 @@ test("every lesson is written", () => {
     "oom-killed", "mounting-volume", "list-and-watch",
     "the-scheduler", "reconcile-loops", "node-goes-dark",
     "graceful-shutdown", "autoscaling", "configmaps-secrets",
-    "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies",
+    "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies", "falco-alerts",
   ])
   expect(playable).toHaveLength(LESSONS.length)
 })

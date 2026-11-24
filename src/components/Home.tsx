@@ -14,7 +14,8 @@ const ABOUT: Record<Category, string> = {
   network: "Packets on the wire: veth pairs, the VXLAN overlay, Services, DNS, Ingress, NetworkPolicy and service meshes.",
   node: "What the kubelet and containerd do on one machine: images, namespaces, cgroups, probes and volumes.",
   control: "The API server, etcd, watches, the scheduler and the controllers that keep reconciling.",
-  app: "The workloads you write YAML for: rollouts, autoscaling, config, StatefulSets, Jobs and RBAC.",
+  app: "The workloads you write YAML for: rollouts, autoscaling, config, StatefulSets and Jobs.",
+  security: "Who may do what, and how you find out when someone does something else: RBAC, ServiceAccounts and Falco's alerts.",
 }
 
 const HOW: [string, string][] = [
@@ -87,7 +88,7 @@ export function Home() {
         </section>
 
         <section className="home-section" aria-labelledby="topics-title">
-          <h2 id="topics-title" className="home-h2">Four layers of the stack</h2>
+          <h2 id="topics-title" className="home-h2">What the lessons cover</h2>
           <ul className="topics">
             {CATEGORIES.map((category) => {
               const lessons = LESSONS.filter((l) => l.category === category)

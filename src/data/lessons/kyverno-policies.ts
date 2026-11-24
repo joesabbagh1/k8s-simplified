@@ -679,11 +679,12 @@ export const kyvernoPolicies: Lesson = {
   ],
   summary: {
     title: "ASKED BEFORE IT'S SAVED",
-    body: "Kyverno is a set of ordinary Pods that the API server consults on the way to etcd. Mutating policies change an object first, validating policies judge the result, and generating policies follow up with objects of their own. Because the check sits in the API server's path, it holds for people and controllers alike. The price is the same fact seen from the other side: if Kyverno can't answer, the request can't go through. Start with Audit, read the reports, then Deny, and run three replicas.",
+    body: "Kyverno is a set of ordinary Pods that the API server consults on the way to etcd. Mutating policies change an object first, validating policies judge the result, and generating policies follow up with objects of their own. Because the check sits in the API server's path, it holds for people and controllers alike. The price is the same fact seen from the other side: if Kyverno can't answer, the request can't go through. Start with Audit, read the reports, then Deny, and run three replicas. But all of this sees only API requests: what a program does inside its container is out of its sight, and that is where the next lesson goes.",
     facts: [
       ["ORDER", "mutate → schema → validate → etcd"],
       ["ROLLOUT", "Audit → fix → Deny"],
       ["ON FAILURE", "Fail refuses · Ignore lets through"],
+      ["NEXT", "Runtime alerts with Falco"],
     ],
   },
 }

@@ -1,11 +1,11 @@
 export type Layer = "api" | "state" | "control" | "node" | "net" | "drop"
 
-export type Category = "network" | "node" | "control" | "app"
+export type Category = "network" | "node" | "control" | "app" | "security"
 
 /** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod,
- *  two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"), and the
- *  stops a write makes inside the API server ("admission"). */
-export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "admission"
+ *  two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"), the stops a
+ *  write makes inside the API server ("admission"), and a node as Falco watches it. */
+export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "admission" | "falco"
 
 /** An actor id from src/scene/world.ts, such as "api", "node2" or "n2.kubelet". */
 export type ActorId = string
@@ -67,6 +67,7 @@ export type ResourceKind =
   | "service"
   | "hpa"
   | "statefulset"
+  | "daemonset"
   | "job"
   | "cronjob"
   | "configmap"

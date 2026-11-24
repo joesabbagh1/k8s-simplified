@@ -2,7 +2,7 @@ import type { ActorId, Lesson, Level } from "../data/types"
 import { timeline } from "../playback"
 import { actorById, ACTORS, levelPath, type Actor } from "./world"
 
-export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2, mesh: 1, ambient: 1, admission: 1 }
+export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2, mesh: 1, ambient: 1, admission: 1, falco: 1 }
 
 /** The level an actor opens in this lesson, if any. */
 export const opensIn = (lesson: Lesson, actor: Actor): Level | undefined => lesson.opens?.[actor.id] ?? actor.opens

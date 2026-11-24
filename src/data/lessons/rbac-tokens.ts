@@ -9,7 +9,7 @@ export const rbacTokens: Lesson = {
   id: "rbac-tokens",
   title: "RBAC and ServiceAccounts",
   subtitle: "Who can do what",
-  category: "app",
+  category: "security",
   seo: {
     title: "Kubernetes RBAC and ServiceAccount tokens",
     description: "How a Kubernetes Pod proves who it is with a projected ServiceAccount token, and how Roles and RoleBindings decide each API request.",
