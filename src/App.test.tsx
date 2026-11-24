@@ -192,6 +192,13 @@ test("the logo goes home from a lesson", async () => {
   expect(window.location.pathname).toBe("/")
 })
 
+test("the homepage scene draws the cluster's plates and no other level's", () => {
+  window.history.replaceState(null, "", "/")
+  const { container } = render(<App />)
+  const names = [...container.querySelectorAll(".hero-art .floor-name")].map((n) => n.textContent)
+  expect(names).toEqual(["cluster", "control plane"])
+})
+
 test("a category on the homepage opens the lessons page filtered to it", async () => {
   const user = userEvent.setup()
   window.history.replaceState(null, "", "/")
