@@ -25,6 +25,7 @@ import { configmapsSecrets } from "./configmaps-secrets"
 import { statefulsetStorage } from "./statefulset-storage"
 import { jobsCronjobs } from "./jobs-cronjobs"
 import { rbacTokens } from "./rbac-tokens"
+import { kyvernoPolicies } from "./kyverno-policies"
 import { falcoAlerts } from "./falco-alerts"
 
 export const LESSONS: Lesson[] = [
@@ -54,6 +55,7 @@ export const LESSONS: Lesson[] = [
   statefulsetStorage,
   jobsCronjobs,
   rbacTokens,
+  kyvernoPolicies,
   falcoAlerts,
 ]
 

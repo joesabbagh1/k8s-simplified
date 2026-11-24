@@ -11,7 +11,7 @@ import type { Point } from "../iso/iso"
 import { useReducedMotion } from "../hooks"
 import { CREATE_MS, createdBy, podsAt, resourcesAt, timeline } from "../playback"
 import { useExploreCamera } from "../scene/camera"
-import { CARRY_MS, DEPTH } from "../scene/transition"
+import { CARRY_MS, DEPTH, opensIn } from "../scene/transition"
 import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
 import { useApp, useLesson, type Flight, type StageView } from "../store"
 import { sentence } from "../data/text"
@@ -205,18 +205,22 @@ function Marker({ flight, event }: { flight: Pick<Flight, "duration"> & { key: s
   )
 }
 
-function ActorNode({ actor, focused, dimmed, slots, onHover }: {
+function ActorNode({ actor, opens, focused, dimmed, slots, onHover }: {
   actor: Actor
+  /** the level this actor opens when clicked */
+  opens?: Level
   focused: boolean
   dimmed: boolean
   slots?: PodSlot[]
-  onHover: (a: Actor | null) => void
+  onHover: (a: Described | null) => void
 }) {
   const drill = useApp((s) => s.drill)
   const art = useMemo(() => actor.art(slots), [actor, slots])
   const [anchorX, anchorY, anchor] = actor.label
-  const interactive = !!actor.opens
-  const open = () => actor.opens && drill(actor.opens)
+  const interactive = !!opens
+  const open = () => opens && drill(opens)
+  const hint = " Click to look inside."
+  const described = opens && !actor.about.endsWith(hint) ? { ...actor, about: actor.about + hint } : actor
 
   return (
     <g
@@ -229,9 +233,9 @@ function ActorNode({ actor, focused, dimmed, slots, onHover }: {
       aria-label={interactive ? `Look inside ${actor.name}` : undefined}
       onClick={interactive ? open : undefined}
       onKeyDown={interactive ? (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), open()) : undefined}
-      onPointerEnter={() => onHover(actor)}
+      onPointerEnter={() => onHover(described)}
       onPointerLeave={() => onHover(null)}
-      onFocus={() => onHover(actor)}
+      onFocus={() => onHover(described)}
       onBlur={() => onHover(null)}
     >
       <g transform={`translate(${actor.pos[0]} ${actor.pos[1]})`} dangerouslySetInnerHTML={{ __html: art }} />
@@ -440,6 +444,7 @@ function ClusterScene() {
               <ActorNode
                 key={actor.id}
                 actor={actor}
+                opens={opensIn(lesson, actor)}
                 focused={scene.focus.has(actor.id)}
                 dimmed={scene.dim && !scene.focus.has(actor.id)}
                 slots={actor.id === "node1" || actor.id === "node2" ? pods[actor.id] : undefined}

@@ -3,8 +3,9 @@ export type Layer = "api" | "state" | "control" | "node" | "net" | "drop"
 export type Category = "network" | "node" | "control" | "app" | "security"
 
 /** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod,
- *  two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"), and a node as Falco watches it. */
-export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "falco"
+ *  two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"), the stops a
+ *  write makes inside the API server ("admission"), and a node as Falco watches it. */
+export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "admission" | "falco"
 
 /** An actor id from src/scene/world.ts, such as "api", "node2" or "n2.kubelet". */
 export type ActorId = string
@@ -74,6 +75,9 @@ export type ResourceKind =
   | "ingress"
   | "pvc"
   | "pv"
+  | "policy"
+  | "policyreport"
+  | "networkpolicy"
 
 export interface Resource {
   kind: ResourceKind
@@ -120,6 +124,8 @@ export interface Lesson {
   overview: { body: string; facts: Fact[] }
   /** cluster-level actors this lesson uses, with "cp" for the whole control plane; the overview camera frames them */
   actors: ActorId[]
+  /** actors that open a level in this lesson only, besides the nodes and Pods that always do */
+  opens?: Record<ActorId, Level>
   /** Pods on each node before step 1 */
   pods?: PodLayout
   /** resource cards on screen before step 1 */

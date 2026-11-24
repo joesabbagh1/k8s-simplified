@@ -43,6 +43,7 @@ const GEOMETRY: Record<Level, { origin: Point; k: number }> = {
   pod: { origin: [500, 320], k: 0.8 },
   mesh: { origin: [500, 320], k: 0.78 },
   ambient: { origin: [500, 320], k: 0.78 },
+  admission: { origin: [500, 320], k: 0.78 },
   falco: { origin: [500, 320], k: 0.78 },
 }
 
@@ -297,6 +298,55 @@ const AMBIENT: Def[] = [
   },
 ]
 
+/** A write's way through the API server, and the admission webhook it can stop at. */
+const ADMISSION: Def[] = [
+  {
+    id: "g.client", level: "admission", g: [-116, 14], foot: [18, 22], name: "You · kubectl", sub: "or any other client",
+    about: "Whoever sends the request: kubectl, a controller, a CI job. They all take the same road.",
+    label: below(40), box: [-70, -60, 70, 70], art: memo(laptop(S * 0.8)),
+  },
+  {
+    id: "g.authn", level: "admission", g: [-60, 14], foot: [18, 16], name: "Authentication", sub: "who is it?",
+    about: "Works out who sent the request, from a certificate or a token.",
+    label: below(34), box: [-60, -45, 60, 60], art: memo(chip(S, 8, 7, 3, "authn")),
+  },
+  {
+    id: "g.authz", level: "admission", g: [-32, 14], foot: [18, 16], name: "Authorization", sub: "may they?",
+    about: "Asks RBAC whether this user may do this verb on this resource. It doesn't look inside the object.",
+    label: below(34), box: [-60, -45, 60, 60], art: memo(chip(S, 8, 7, 3, "authz")),
+  },
+  {
+    id: "g.mutate", level: "admission", g: [-4, 14], foot: [18, 16], name: "Mutating", sub: "change it?",
+    about: "Mutating admission. Calls everything registered to change this kind of object, and applies the patches that come back.",
+    label: below(34), box: [-70, -45, 70, 60], art: memo(chip(S, 8, 7, 4, "mutate", "hot")),
+  },
+  {
+    id: "g.schema", level: "admission", g: [24, 14], foot: [18, 16], name: "Schema", sub: "is it legal?",
+    about: "Checks the fields against the resource's definition: types, required values, ranges.",
+    label: below(34), box: [-60, -45, 60, 60], art: memo(chip(S, 8, 7, 3, "schema")),
+  },
+  {
+    id: "g.validate", level: "admission", g: [52, 14], foot: [18, 16], name: "Validating", sub: "accept it?",
+    about: "Validating admission. Calls everything registered to check this kind of object. It can only say yes or no, and one no is enough.",
+    label: below(34), box: [-70, -45, 70, 60], art: memo(chip(S, 8, 7, 4, "validate", "hot")),
+  },
+  {
+    id: "g.etcd", level: "admission", g: [92, 14], foot: [18, 18], name: "etcd", sub: "saved",
+    about: "The cluster's database. Until an object is here, no controller knows about it.",
+    label: below(36), box: [-60, -50, 60, 60], art: memo(etcd(S * 0.85)),
+  },
+  {
+    id: "g.kyverno", level: "admission", g: [16, -30], foot: [23, 18], name: "Admission controller", sub: "HTTPS :9443",
+    about: "Kyverno's webhook server. The API server sends it an object and waits for an answer.",
+    label: [0, -56, "middle"], box: [-80, -80, 80, 40], art: memo(chip(S, 10, 8, 4, "webhook")),
+  },
+  {
+    id: "g.engine", level: "admission", g: [52, -30], foot: [20, 16], name: "CEL engine", sub: "your policies",
+    about: "Runs the expressions in your policies, compiled ahead of time, on the object it's given.",
+    label: [0, -50, "middle"], box: [-70, -75, 70, 40], art: memo(chip(S, 9, 7, 3, "CEL")),
+  },
+]
+
 /** node-2 as Falco watches it: a Pod and the kernel under it, Falco's parts, and where its alerts go. */
 const FALCO: Def[] = [
   {
@@ -370,13 +420,14 @@ export const ACTORS: Actor[] = [
   ...POD,
   ...MESH,
   ...AMBIENT,
+  ...ADMISSION,
   ...FALCO,
 ].map(place)
 
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV", daemonset: "DS",
+  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -405,6 +456,11 @@ const RESOURCES: Actor[] = [
   resource("app-secret", "secret", "Secret api-key", "base64", "Sensitive bytes in the API, delivered to Pods only through mounted or env sources.", [60, -68], [0, -52, "middle"]),
   resource("backup-cj", "cronjob", "CronJob backup", "0 2 * * *", "A schedule in the API. At each tick its controller creates a Job object.", [28, -68]),
   resource("backup-job", "job", "Job backup-28471", "completions 1/1", "Runs Pods until the completions count is reached, retrying failures up to backoffLimit.", [60, -68], [0, -52, "middle"]),
+  resource("kyv-vpol", "policy", "disallow-latest-tag", "ValidatingPolicy", "A ValidatingPolicy: an expression that must be true for every Pod, and for everything that makes Pods.", [28, -68]),
+  resource("kyv-mpol", "policy", "default-seccomp", "MutatingPolicy", "A MutatingPolicy: sets the seccomp profile on Pods on their way in.", [60, -68], [0, -52, "middle"]),
+  resource("kyv-gpol", "policy", "default-deny", "GeneratingPolicy", "A GeneratingPolicy: puts a NetworkPolicy in every new namespace.", [-4, -68], [0, -52, "middle"]),
+  resource("kyv-report", "policyreport", "PolicyReport tools", "results", "What the policies say about one object as it is now. Kyverno writes it; you read it with kubectl.", [28, -100], [0, -52, "middle"]),
+  resource("kyv-netpol", "networkpolicy", "NetworkPolicy", "team-a/default-deny", "Created by Kyverno, not by you: blocks incoming traffic to every Pod in team-a until something allows it.", [-4, -100], [0, -52, "middle"]),
   resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
 ]
 
@@ -481,6 +537,17 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("a.zt1", "a.waypoint", [-22, 10], [-22, -44], [0, -44]),
     cable("a.waypoint", "a.zt2", [0, -44], [22, -44], [22, 10]),
   ],
+  admission: [
+    cable("g.client", "g.authn", [-116, 14], [-60, 14]),
+    cable("g.authn", "g.authz", [-60, 14], [-32, 14]),
+    cable("g.authz", "g.mutate", [-32, 14], [-4, 14]),
+    cable("g.mutate", "g.schema", [-4, 14], [24, 14]),
+    cable("g.schema", "g.validate", [24, 14], [52, 14]),
+    cable("g.validate", "g.etcd", [52, 14], [92, 14]),
+    cable("g.mutate", "g.kyverno", [-4, 14], [-4, -30], [16, -30]),
+    cable("g.validate", "g.kyverno", [52, 14], [52, -9], [16, -9], [16, -30]),
+    cable("g.kyverno", "g.engine", [16, -30], [52, -30]),
+  ],
   falco: [
     cable("f.web", "f.sys", [-88, -28], [-88, 40]),
     cable("f.sys", "f.probe", [-88, 40], [-44, 40]),
@@ -505,6 +572,7 @@ export const JOINTS: Record<Level, Point[]> = {
   pod: [],
   mesh: [[0, 16], [0, 38], [20, 38]],
   ambient: [],
+  admission: [],
   falco: [],
 }
 
@@ -516,6 +584,7 @@ export const FLOORS: Record<Level, { x0: number; x1: number; y0: number; y1: num
   pod: { x0: -14, x1: 54, y0: -34, y1: 38, text: "network namespace\nshared by pause and web", at: [-11, -30.8] },
   mesh: { x0: -80, x1: 80, y0: -68, y1: 70, text: "the mesh · namespace default", at: [-22, 66.6] },
   ambient: { x0: -78, x1: 78, y0: -58, y1: 46, text: "the mesh · namespace default", at: [-74, 42.6] },
+  admission: { x0: -84, x1: 106, y0: -55, y1: 44, text: "cluster", at: [84, 40.6] },
   falco: { x0: -110, x1: 66, y0: -52, y1: 66, text: "node-2 · 10.0.1.12", at: [18, 62.6] },
 }
 
@@ -568,6 +637,20 @@ export const GROUPS: Group[] = [
     members: ["a.zt2", "a.api"],
     hub: "a.zt2",
     floor: { x0: 8, x1: 70, y0: -34, y1: 34, text: "node-2 · 10.0.1.12", at: [27, -30] },
+  },
+  {
+    id: "g.apiserver", level: "admission", name: "API server",
+    about: "Every write takes these stops in this order. A no at any of them ends the request, and nothing is saved.",
+    members: ["g.authn", "g.authz", "g.mutate", "g.schema", "g.validate"],
+    hub: "g.authn",
+    floor: { x0: -75, x1: 70, y0: -4, y1: 36, text: "API server", at: [-54, 0.5] },
+  },
+  {
+    id: "g.kyv", level: "admission", name: "Kyverno",
+    about: "Ordinary Pods in the kyverno namespace. The API server reaches them through a Service.",
+    members: ["g.kyverno", "g.engine"],
+    hub: "g.kyverno",
+    floor: { x0: 2, x1: 68, y0: -47, y1: -14, text: "kyverno namespace", at: [26, -16.5] },
   },
   {
     id: "f.kernel", level: "falco", name: "The kernel",
@@ -712,13 +795,14 @@ export function screenRoute(level: Level, route: Point[], from?: Actor, to?: Act
   return out
 }
 
-/** Card-to-card ownership edges, drawn while both endpoints are on screen. */
+/** Card-to-card edges from an object to what it owns or makes, drawn while both endpoints are on screen. */
 export const RESOURCE_LINKS: [ActorId, ActorId][] = [
   ["web-deploy", "web-rs"], ["web-deploy", "web-rs2"],
   ["web-hpa", "web-deploy"],
   ["shop-ing", "web-svc"],
   ["backup-cj", "backup-job"], ["backup-cj", "nightly-job"],
   ["uploads-pvc", "uploads-pv"],
+  ["kyv-vpol", "kyv-report"], ["kyv-gpol", "kyv-netpol"],
 ]
 
 /** Which worker nodes each workload card's Pods currently sit on, derived from the Pod-slot layout.
@@ -750,6 +834,7 @@ export const LEVEL_NAME: Record<Level, string> = {
   pod: "Pod web-…-x2kqp",
   mesh: "Mesh, with sidecars",
   ambient: "Mesh, ambient mode",
+  admission: "Inside the API server",
   falco: "node-2, with Falco",
 }
 
