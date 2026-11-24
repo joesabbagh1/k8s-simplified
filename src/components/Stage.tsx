@@ -244,14 +244,11 @@ function ActorNode({ actor, focused, dimmed, slots, onHover }: {
 }
 
 /** A Kubernetes object (Deployment, ReplicaSet, Service…) drawn as a card, materialized by the event that touched it. */
-function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, delay, onHover }: {
+function ResourceNode({ actor, res, focused, dimmed, delay, onHover }: {
   actor: Actor
   res: Resource
   focused: boolean
   dimmed: boolean
-  /** number of the event that last touched this card */
-  badge?: number
-  badgeColor: string
   /** how long after its event lands the card appears, in milliseconds */
   delay: number
   onHover: (a: Actor | null) => void
@@ -273,12 +270,6 @@ function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, delay, o
         <text className="n">{res.name}</text>
         {res.sub && <text className="ip" y="16">{res.sub}</text>}
       </g>
-      {badge !== undefined && (
-        <g key={badge} className="res-badge" style={{ "--c": badgeColor } as CSSProperties} transform={`translate(${actor.pos[0] + 30} ${actor.pos[1] - 22})`}>
-          <circle r="9" />
-          <text y="3.5">{badge}</text>
-        </g>
-      )}
     </g>
   )
 }
@@ -383,7 +374,7 @@ function ClusterScene() {
           ...workloadNodes(resources, pods).filter(([a, b]) => resIds.has(a) && ids.has(b)),
         ]
 
-  // the cards the event that just landed changed, and its number for their badges
+  // the cards the event that just landed changed
   const { events } = timeline(lesson)
   const lastEvent = revealed > 0 ? events[revealed - 1] : undefined
   const touched = new Set(Object.entries(lastEvent?.res ?? {}).filter(([, r]) => r !== null).map(([id]) => id))
@@ -466,8 +457,6 @@ function ClusterScene() {
                   focused={scene.focus.has(id)}
                   dimmed={scene.dim && !scene.focus.has(id) && !touched.has(id)}
                   delay={bornDelay(id)}
-                  badge={touched.has(id) && lastEvent ? lastEvent.index + 1 : undefined}
-                  badgeColor={lastEvent ? LAYERS[lastEvent.layer].color : ""}
                   onHover={(a) => !cam.panning && setHover(a)}
                 />
               )
