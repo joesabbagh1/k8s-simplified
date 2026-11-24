@@ -52,7 +52,7 @@ Vite, React 19, TypeScript, UI SDK (`@ui-sdk/react` 0.1.0-beta.13, pinned), Zust
 
 - `/` is the homepage; the logo links to it. Hero: headline, one-paragraph pitch, "Start the first lesson" (Deploy an app) and "Browse all 25 lessons". Beside it, the cluster view's own isometric art with colored packets looping along the links (API, STATE, CONTROL, NODE, NETWORK), and the layer legend under it. No motion with reduced-motion on.
 - Below: "How a lesson works" (watch, read, decode), the four categories with three lessons each and a link to the Lessons page filtered to that category, and the demo cluster's addresses.
-- `/lessons`: see Area 11.
+- `/lessons`: see Area 11. Each category is led by its piece of the cluster (`LayerArt.tsx`) with its lessons as a two-column list beside it; the art is hidden during a search.
 
 ## Routing
 

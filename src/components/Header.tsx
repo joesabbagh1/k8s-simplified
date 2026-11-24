@@ -27,7 +27,7 @@ export function Header() {
       <span className="topbar-sep" aria-hidden="true">/</span>
       <nav className="crumbs" aria-label="Breadcrumb">
         <Link className="crumb" to={LIBRARY_PATH} aria-current={page === "library" ? "page" : undefined}>
-          <Icon name="grid" size={15} />
+          <Icon name="grid" />
           Lessons
         </Link>
         {page === "lesson" && (
