@@ -9,6 +9,7 @@ import { dnsInCluster } from "./dns-in-cluster"
 import { ingressGateway } from "./ingress-gateway"
 import { networkPolicy } from "./network-policy"
 import { ciliumEbpf } from "./cilium-ebpf"
+import { serviceMeshIstio } from "./service-mesh-istio"
 import { startingAContainer } from "./starting-a-container"
 import { imagePull } from "./image-pull"
 import { probesRestarts } from "./probes-restarts"
@@ -36,6 +37,7 @@ export const LESSONS: Lesson[] = [
   ingressGateway,
   networkPolicy,
   ciliumEbpf,
+  serviceMeshIstio,
   startingAContainer,
   imagePull,
   probesRestarts,

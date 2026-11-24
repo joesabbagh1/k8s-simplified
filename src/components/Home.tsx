@@ -11,7 +11,7 @@ import { Link } from "./Link"
 const FIRST = "deploy-an-app"
 
 const ABOUT: Record<Category, string> = {
-  network: "Packets on the wire: veth pairs, the VXLAN overlay, Services, DNS, Ingress and NetworkPolicy.",
+  network: "Packets on the wire: veth pairs, the VXLAN overlay, Services, DNS, Ingress, NetworkPolicy and service meshes.",
   node: "What the kubelet and containerd do on one machine: images, namespaces, cgroups, probes and volumes.",
   control: "The API server, etcd, watches, the scheduler and the controllers that keep reconciling.",
   app: "The workloads you write YAML for: rollouts, autoscaling, config, StatefulSets, Jobs and RBAC.",

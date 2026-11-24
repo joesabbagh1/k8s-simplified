@@ -9,11 +9,11 @@ Every layer, from packet to pod. An interactive explainer for developers who use
 | 1 | Concept and structure | Approved |
 | 2 | Visual identity | Approved (`design/style-tile.html`) |
 | 3 | App shell | Done |
-| 4 | Cluster diagram: camera, zoom levels (cluster → node → Pod), click to drill in; hand-steered camera: wheel zoom at the cursor, drag/pinch to pan, +/− and Reset view | Done |
+| 4 | Cluster diagram: camera, zoom levels (cluster → node → Pod, plus a service mesh with and without sidecars), click to drill in; hand-steered camera: wheel zoom at the cursor, drag/pinch to pan, +/− and Reset view | Done |
 | 5 | Playback: markers along links, events land one by one, summary. Reading pauses sized to the text, then it moves on by itself; Pause after Event / Step / None (None by default: plays straight through); a › button in the caption skips a pause; speed-up (1×/2×/4×); zoom transitions into and out of nodes and Pods | Done |
 | 6 | Decoder: fields, changed values, packet frame diagrams (incl. VXLAN) | Done |
 | 7 | Sequence view | Done |
-| 8 | Lessons | All 25 written; technical accuracy pass done 2026-11-23 |
+| 8 | Lessons | All 26 written; technical accuracy pass done 2026-11-23, before "Service mesh with Istio" was added |
 | 9 | Stack | Done |
 | 10 | Polish: deep links, bundle split, a11y, tests | Done, except deploying |
 | 11 | Minimal layout: diagram first, one story column, events in a drawer, quieter type | Done |
@@ -50,7 +50,7 @@ Vite, React 19, TypeScript, UI SDK (`@ui-sdk/react` 0.1.0-beta.13, pinned), Zust
 
 ## Area 12 · Homepage and Lessons page (done)
 
-- `/` is the homepage; the logo links to it. Hero: headline, one-paragraph pitch, "Start the first lesson" (Deploy an app) and "Browse all 25 lessons". Beside it, the cluster view's own isometric art with colored packets looping along the links (API, STATE, CONTROL, NODE, NETWORK), and the layer legend under it. No motion with reduced-motion on.
+- `/` is the homepage; the logo links to it. Hero: headline, one-paragraph pitch, "Start the first lesson" (Deploy an app) and "Browse all 26 lessons". Beside it, the cluster view's own isometric art with colored packets looping along the links (API, STATE, CONTROL, NODE, NETWORK), and the layer legend under it. No motion with reduced-motion on.
 - Below: "How a lesson works" (watch, read, decode), the four categories with three lessons each and a link to the Lessons page filtered to that category, and the demo cluster's addresses.
 - `/lessons`: see Area 11.
 
