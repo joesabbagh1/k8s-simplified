@@ -2,57 +2,46 @@ import { type CSSProperties, useEffect, useMemo, useRef, useState } from "react"
 import { LAYERS } from "../data/layers"
 import type { Layer, PodSlot } from "../data/types"
 import { useReducedMotion } from "../hooks"
-import { box, controlPlane, etcd, faceTop, iso, laptop, loadBalancer, workerNode, type Point } from "../iso/iso"
+import { box, faceTop, iso, type Point } from "../iso/iso"
+import { actorById, CABLES as ALL_CABLES, FLOORS, groundRoute, GROUPS, JOINTS as ALL_JOINTS, type Actor, type Floor } from "../scene/world"
 
-/* The home page scene: the demo cluster drawn on its own floor, with cables routed along the
-   isometric axes, and one packet replaying the first lesson hop by hop. Positions are ground
-   coordinates in the same units the iso builders use: x runs to the lower right, y to the lower left. */
+/* The home page scene: the same demo cluster the lessons play out on, drawn at the origin, with one
+   packet replaying the first lesson hop by hop. Positions are ground coordinates: x runs to the
+   lower right, y to the lower left. */
 
 const S = 4.6
 const P = (x: number, y: number, z = 0): Point => iso(x, y, z, S)
 const pts = (a: Point[]) => a.map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ")
 
-/** The cluster floor, in ground coordinates. */
-const FLOOR = { x0: -12, x1: 54, y0: -34, y1: 30 }
+/** Everyone in the scene, back to front. */
+const CAST = ["kcm", "etcd", "sched", "api", "node2", "you", "node1", "lb", "visitor"]
+/** Where the hero's label differs from the lessons': shorter, or in the way of something. */
+const TAGS: Record<string, { sub?: string; label?: Actor["label"] }> = {
+  node1: { sub: "10.0.1.11", label: [0, 62, "middle"] },
+  node2: { sub: "10.0.1.12" },
+  visitor: { label: [50, 22, "start"] },
+}
+const THINGS = CAST.map((id) => {
+  const a = actorById(id)!
+  return { id, at: a.g, name: a.name, sub: TAGS[id]?.sub ?? a.sub, label: TAGS[id]?.label ?? a.label, art: a.art }
+})
 
-type Thing = { id: string; at: [number, number]; name: string; sub: string; label: [dx: number, dy: number, anchor: "start" | "middle" | "end"] }
+const CABLES = ALL_CABLES.cluster.filter((c) => CAST.includes(c.a) && CAST.includes(c.b) && !(c.a === "node1" && c.b === "node2")).map((c) => c.route)
+const JOINTS = ALL_JOINTS.cluster
 
-const THINGS: Thing[] = [
-  { id: "etcd", at: [0, -24], name: "etcd", sub: "10.0.0.10:2379", label: [34, -14, "start"] },
-  { id: "cp", at: [0, 0], name: "Control plane", sub: "10.0.0.10:6443", label: [-48, -34, "end"] },
-  { id: "node2", at: [32, -16], name: "node-2", sub: "10.0.1.12", label: [76, -2, "start"] },
-  { id: "you", at: [0, 50], name: "You · kubectl", sub: "192.168.1.10", label: [0, 48, "middle"] },
-  { id: "node1", at: [32, 18], name: "node-1", sub: "10.0.1.11", label: [0, 62, "middle"] },
-  { id: "lb", at: [76, 1], name: "Load balancer", sub: "203.0.113.50", label: [0, 54, "middle"] },
-  { id: "visitor", at: [76, 40], name: "Visitor", sub: "198.51.100.7", label: [50, 22, "start"] },
-]
+type Hop = { layer: Layer; route: Point[]; who: string; what: string }
 
-/** Cables on the floor. The control plane and the load balancer each reach both nodes through a short bus. */
-const CABLES: [number, number][][] = [
-  [[0, 50], [0, 0]],
-  [[0, 0], [0, -24]],
-  [[0, 0], [16, 0]],
-  [[16, -16], [16, 18]],
-  [[16, 18], [32, 18]],
-  [[16, -16], [32, -16]],
-  [[76, 40], [76, 1]],
-  [[76, 1], [50, 1]],
-  [[50, -16], [50, 18]],
-  [[50, 18], [32, 18]],
-  [[50, -16], [32, -16]],
-]
-const JOINTS: [number, number][] = [[16, 0], [50, 1]]
-
-type Hop = { layer: Layer; route: [number, number][]; who: string; what: string }
+const hopRoute = (from: string, to: string) => groundRoute("cluster", from, to)
 
 /** The first lesson, shortened to the hops you can see from this height. Strings come from the lessons. */
 const HOPS: Hop[] = [
-  { layer: "api", route: [[0, 50], [0, 0]], who: "kubectl → API server", what: "POST /apis/apps/v1/namespaces/default/deployments" },
-  { layer: "state", route: [[0, 0], [0, -24]], who: "API server → etcd", what: "Txn put /registry/deployments/default/web" },
-  { layer: "control", route: [[0, 0], [16, 0], [16, -16], [32, -16]], who: "API server → kubelet on node-2", what: "WATCH MODIFIED Pod web-6f7c9d8b4-x2kqp" },
+  { layer: "api", route: hopRoute("you", "api"), who: "kubectl → API server", what: "POST /apis/apps/v1/namespaces/default/deployments" },
+  { layer: "state", route: hopRoute("api", "etcd"), who: "API server → etcd", what: "Txn put /registry/deployments/default/web" },
+  { layer: "control", route: hopRoute("sched", "api"), who: "Scheduler → API server", what: "POST /api/v1/namespaces/default/pods/web-6f7c9d8b4-x2kqp/binding" },
+  { layer: "control", route: hopRoute("api", "node2"), who: "API server → kubelet on node-2", what: "WATCH MODIFIED Pod web-6f7c9d8b4-x2kqp" },
   { layer: "node", route: [], who: "containerd on node-2", what: "StartContainer web · 10.244.2.17" },
-  { layer: "net", route: [[76, 40], [76, 1]], who: "Visitor → load balancer", what: "SYN 198.51.100.7 → 203.0.113.50:80" },
-  { layer: "net", route: [[76, 1], [50, 1], [50, -16], [32, -16]], who: "Load balancer → node-2", what: "SYN 198.51.100.7 → 10.0.1.12:30080" },
+  { layer: "net", route: hopRoute("visitor", "lb"), who: "Visitor → load balancer", what: "SYN 198.51.100.7 → 203.0.113.50:80" },
+  { layer: "net", route: hopRoute("lb", "node2"), who: "Load balancer → node-2", what: "SYN 198.51.100.7 → 10.0.1.12:30080" },
 ]
 
 const HOP_MS = 2200
@@ -68,20 +57,12 @@ function node2Slots(hop: number): PodSlot[] {
   return ["v1", "v1"]
 }
 
-function art(id: string, hop: number) {
-  switch (id) {
-    case "etcd": return etcd(S)
-    case "cp": return controlPlane(S)
-    case "node1": return workerNode(S, ["v1", "other"])
-    case "node2": return workerNode(S, node2Slots(hop))
-    case "you": return laptop(S)
-    case "lb": return loadBalancer(S)
-    default: return laptop(S, "browser")
-  }
+function slots(id: string, hop: number): PodSlot[] | undefined {
+  if (id === "node1") return ["v1", "other"]
+  return id === "node2" ? node2Slots(hop) : undefined
 }
 
-function floor() {
-  const { x0, x1, y0, y1 } = FLOOR
+function plate({ x0, x1, y0, y1, text, at }: Floor, cls = "") {
   let lines = ""
   for (let x = x0 + 4; x < x1; x += 4) {
     const [a, b] = [P(x, y0), P(x, y1)]
@@ -93,11 +74,13 @@ function floor() {
   }
   const slab = box(x0, y0, -1.4, x1 - x0, y1 - y0, 1.4, S, "slab")
   const top = `<polygon class="floor-top" points="${pts([P(x0, y0), P(x1, y0), P(x1, y1), P(x0, y1)])}"/>`
-  const name = `<g transform="${faceTop(2, y1 - 2.4, 0, S)}"><text class="floor-name" x="0" y="0" font-size="2.1">cluster</text></g>`
-  return slab + top + `<g class="floor-grid">${lines}</g>` + name
+  const name = `<g transform="${faceTop(...at, 0, S)}"><text class="floor-name" x="0" y="0" font-size="2.1">${text}</text></g>`
+  return `<g class="floor ${cls}">${slab}${top}<g class="floor-grid">${lines}</g>${name}</g>`
 }
 
-const pathOf = (route: [number, number][]) => route.map(([x, y], i) => `${i ? "L" : "M"}${P(x, y).map((v) => v.toFixed(1)).join(" ")}`).join(" ")
+const floor = () => [plate(FLOORS.cluster), ...GROUPS.map((g) => plate(g.floor, "plate"))].join("")
+
+const pathOf = (route: Point[]) => route.map(([x, y], i) => `${i ? "L" : "M"}${P(x, y).map((v) => v.toFixed(1)).join(" ")}`).join(" ")
 
 /** A point a fraction t along a polyline of screen points. */
 function along(points: Point[], t: number): Point {
@@ -171,7 +154,7 @@ export function HeroScene() {
 
   return (
     <figure className="hero-figure">
-      <svg ref={svg} className="iso hero-art" viewBox="-262 -124 650 432" aria-hidden="true">
+      <svg ref={svg} className="iso hero-art" viewBox="-320 -200 760 520" aria-hidden="true">
         <g dangerouslySetInnerHTML={{ __html: ground }} />
         <path className="cable" d={cables} />
         {JOINTS.map(([x, y]) => {
@@ -187,7 +170,7 @@ export function HeroScene() {
           const live = current?.layer === "node" && t.id === "node2"
           return (
             <g key={t.id} className="thing" data-live={live || undefined}>
-              <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`} dangerouslySetInnerHTML={{ __html: art(t.id, hop < 0 ? HOPS.length - 1 : hop) }} />
+              <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)})`} dangerouslySetInnerHTML={{ __html: t.art(slots(t.id, hop < 0 ? HOPS.length - 1 : hop)) }} />
               <text className="tag" x={x + t.label[0]} y={y + t.label[1]} textAnchor={t.label[2]}>
                 <tspan className="tag-n">{t.name}</tspan>
                 <tspan className="tag-s" x={x + t.label[0]} dy="15">{t.sub}</tspan>

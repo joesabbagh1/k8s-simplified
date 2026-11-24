@@ -39,10 +39,10 @@ export const reconcileLoops: Lesson = {
         ["4 · REPORT", "status subresource"],
       ],
       view: "cluster",
-      focus: ["cp"],
+      focus: ["api", "kcm"],
       events: [
         ev({
-          id: "rc1", at: 0, src: "replicaset ctrl", dst: "replicaset ctrl", layer: "control", size: " - ", title: "AT REST", path: ["cp", "cp"],
+          id: "rc1", at: 0, src: "replicaset ctrl", dst: "replicaset ctrl", layer: "control", size: " - ", title: "AT REST", path: ["kcm", "kcm"],
           says: "Right now the loop is idle: desired 3, actual 3, nothing to do.",
           info: `${RS}: spec.replicas=3 · running=3 · ready=3`,
           decoded: [sec("THE DIFF", [["desired", "3 (spec.replicas)"], ["actual", "3 (owned, non-terminating)"], ["verdict", "equal → sleep", true]])],
@@ -60,11 +60,11 @@ export const reconcileLoops: Lesson = {
         ["COUNT", "3 → 2, immediately"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "node2"],
+      focus: ["you", "api", "node2"],
       pods: { node2: ["other", "v1", "terminating"] },
       events: [
         ev({
-          id: "rc2", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DELETE THE POD", path: ["you", "cp"],
+          id: "rc2", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DELETE THE POD", path: ["you", "api"],
           says: "You delete one Pod out of three.",
           info: `DELETE …/pods/${DEAD} (grace 30 s)`,
           decoded: [sec("EFFECT", [["metadata.deletionTimestamp", "set, not gone", true], ["object", "lives until kubelet confirms"], ["grace", "30 s (SIGTERM story: a later lesson)"]])],
@@ -87,16 +87,16 @@ export const reconcileLoops: Lesson = {
         ["DIFF", "3 desired − 2 actual = −1"],
       ],
       view: "cluster",
-      focus: ["cp"],
+      focus: ["api", "kcm"],
       events: [
         ev({
-          id: "rc4", at: 220, src: API, dst: "replicaset ctrl", layer: "control", size: "2.2 KB", title: "WATCH: TERMINATING", path: ["cp", "cp"],
+          id: "rc4", at: 220, src: API, dst: "replicaset ctrl", layer: "control", size: "2.2 KB", title: "WATCH: TERMINATING", path: ["api", "kcm"],
           says: "The controller hears about the deletion like everyone else - through its watch.",
           info: `WATCH MODIFIED Pod ${DEAD} (deletionTimestamp set)`,
           decoded: [sec("INFORMER", [["type", "MODIFIED · now terminating"], ["handler", "enqueue ReplicaSet (the owner)"], ["recheck", "from cache, not from the event"]])],
         }),
         ev({
-          id: "rc5", at: 250, src: "replicaset ctrl", dst: "replicaset ctrl", layer: "control", size: " - ", title: "RE-DIFF", path: ["cp", "cp"],
+          id: "rc5", at: 250, src: "replicaset ctrl", dst: "replicaset ctrl", layer: "control", size: " - ", title: "RE-DIFF", path: ["kcm", "kcm"],
           says: "It counts what it owns and finds one short.",
           info: "owned alive: kq9tw, x2kqp → want 3, have 2",
           decoded: [sec("COUNT", [[`${RS}-kq9tw`, "node-1 · alive"], [`${RS}-x2kqp`, "node-2 · alive"], [DEAD, "terminating - not counted", true], ["diff", "create 1", true]])],
@@ -113,17 +113,17 @@ export const reconcileLoops: Lesson = {
         ["IMAGE", "already on node-2 · 0.7 s to start"],
       ],
       view: "cluster",
-      focus: ["cp", "node2"],
+      focus: ["api", "sched", "kcm", "node2"],
       pods: { node2: ["other", "v1", "terminating", "starting"] },
       events: [
         ev({
-          id: "rc6", at: 300, src: "replicaset ctrl", dst: API, layer: "api", size: "2.3 KB", title: "CREATE ONE", path: ["cp", "cp"],
+          id: "rc6", at: 300, src: "replicaset ctrl", dst: API, layer: "api", size: "2.3 KB", title: "CREATE ONE", path: ["kcm", "api"],
           says: "One create, sized exactly to the diff.",
           info: `POST …/pods  ${NEW}`,
           decoded: [sec("BODY · POD", [["metadata.name", NEW, true], ["generateName", `${RS}-`], ["ownerReferences", `ReplicaSet/${RS}`], ["spec.nodeName", "\"\" - scheduler's move"]])],
         }),
         ev({
-          id: "rc7", at: 340, src: "kube-scheduler", dst: API, layer: "api", size: "0.3 KB", title: "BIND → NODE-2", path: ["cp", "cp"],
+          id: "rc7", at: 340, src: "kube-scheduler", dst: API, layer: "api", size: "0.3 KB", title: "BIND → NODE-2", path: ["sched", "api"],
           says: "The scheduler picks node-2 for the replacement.",
           info: `POST …/pods/${NEW}/binding → node-2`,
           decoded: [sec("PLACEMENT", [["filter", "both fit"], ["spread", "tie · 1 web Pod each (terminating Pods don't count)"], ["score", "node-2: more free room", true]])],
@@ -141,17 +141,17 @@ export const reconcileLoops: Lesson = {
         ["NOBODY COMMANDS", "each actor watches and decides"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "node1", "node2"],
+      focus: ["you", "api", "kcm", "node1", "node2"],
       pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
       events: [
         ev({
-          id: "rc8", at: 4700, src: "kubelet · node-2", dst: API, layer: "api", size: "0.9 KB", title: "READY", path: ["node2", "cp"],
+          id: "rc8", at: 4700, src: "kubelet · node-2", dst: API, layer: "api", size: "0.9 KB", title: "READY", path: ["node2", "api"],
           says: "The replacement passes its probe and reports Ready.",
           info: `PATCH …/pods/${NEW}/status  Ready=True`,
           decoded: [sec("STATUS PATCH", [["conditions.Ready", "False → True", true], ["podIP", "10.244.2.22 · new"]])],
         }),
         ev({
-          id: "rc9", at: 4730, src: "replicaset ctrl", dst: API, layer: "control", size: "0.4 KB", title: "STATUS: 3 OF 3", path: ["cp", "cp"],
+          id: "rc9", at: 4730, src: "replicaset ctrl", dst: API, layer: "control", size: "0.4 KB", title: "STATUS: 3 OF 3", path: ["kcm", "api"],
           says: "The controller writes the final count and goes back to sleep.",
           info: `PATCH …/replicasets/${RS}/status  readyReplicas=3`,
           decoded: [sec("RECONCILED", [["readyReplicas", "2 → 3", true], ["diff", "0 → sleep"], ["this is why", "kubectl delete pod can't shrink a Deployment"]])],

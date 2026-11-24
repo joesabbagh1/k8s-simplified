@@ -5,7 +5,7 @@ export type Category = "network" | "node" | "control" | "app"
 /** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod. */
 export type Level = "cluster" | "node1" | "node2" | "pod"
 
-/** An actor id from src/scene/world.ts, such as "cp", "node2" or "n2.kubelet". */
+/** An actor id from src/scene/world.ts, such as "api", "node2" or "n2.kubelet". */
 export type ActorId = string
 
 export type Fact = readonly [label: string, value: string]
@@ -116,7 +116,7 @@ export interface Lesson {
   /** the search result: a title of up to 48 characters (the site name is added) and a description of 110 to 160 */
   seo: { title: string; description: string }
   overview: { body: string; facts: Fact[] }
-  /** cluster-level actors this lesson uses; the overview camera frames them */
+  /** cluster-level actors this lesson uses, with "cp" for the whole control plane; the overview camera frames them */
   actors: ActorId[]
   /** Pods on each node before step 1 */
   pods?: PodLayout

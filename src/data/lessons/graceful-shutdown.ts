@@ -44,11 +44,11 @@ export const gracefulShutdown: Lesson = {
         ["GAP", "watch + sync wait + programming · no fixed bound"],
       ],
       view: "cluster",
-      focus: ["cp", "node1", "node2"],
+      focus: ["api", "kcm", "node1", "node2"],
       pods: { node2: ["other", "v1", "terminating"] },
       events: [
         ev({
-          id: "gs1", at: 0, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "ENDPOINT OUT", path: ["cp", "cp"],
+          id: "gs1", at: 0, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "ENDPOINT OUT", path: ["kcm", "api"],
           says: "The Pod is marked not ready in the Service's endpoint list, so it should get no new traffic.",
           info: "PUT …/endpointslices/web-7xk2p  10.244.2.18 terminating",
           decoded: [sec("ENDPOINTSLICE", [["10.244.2.18", "ready=true → false · terminating=true", true], ["serving", "2 of 3 ready"]])],

@@ -43,17 +43,17 @@ export const mountingVolume: Lesson = {
         ["WAITING FOR", "a Pod that mounts it"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "uploads-pvc"],
+      focus: ["you", "api", "kcm", "uploads-pvc"],
       events: [
         ev({
-          id: "mv1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.4 KB", title: "APPLY THE CLAIM", path: ["you", "cp"],
+          id: "mv1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.4 KB", title: "APPLY THE CLAIM", path: ["you", "api"],
           says: "kubectl posts the claim: 10 Gi on fast-nvme.",
           info: "POST …/persistentvolumeclaims  uploads",
           res: { "uploads-pvc": { kind: "pvc", name: "PVC uploads", sub: "10Gi · fast-nvme · Pending", state: "creating" } },
           decoded: [sec("BODY · PVC", [["metadata.name", "uploads"], ["spec.accessModes", "[ReadWriteOnce]"], ["spec.storageClassName", "fast-nvme"], ["spec.resources.requests.storage", "10Gi"]])],
         }),
         ev({
-          id: "mv2", at: 400, src: "pv controller", dst: API, layer: "state", size: "0.3 KB", title: "PENDING, ON PURPOSE", path: ["cp", "uploads-pvc"],
+          id: "mv2", at: 400, src: "pv controller", dst: API, layer: "state", size: "0.3 KB", title: "PENDING, ON PURPOSE", path: ["kcm", "uploads-pvc"],
           says: "The claim stays Pending: the class waits for the first Pod that uses it.",
           info: "event WaitForFirstConsumer · waiting for first consumer to be created before binding",
           res: { "uploads-pvc": { kind: "pvc", name: "PVC uploads", sub: "10Gi · Pending · waiting for a Pod" } },
@@ -73,11 +73,11 @@ export const mountingVolume: Lesson = {
         ["PV", `${PV} · 10 Gi · Bound`],
       ],
       view: "cluster",
-      focus: ["cp", "uploads-pvc", "uploads-pv", "node1", "node2"],
+      focus: ["api", "sched", "uploads-pvc", "uploads-pv", "node1", "node2"],
       pods: { node2: ["other", "v1", "v1", "starting"] },
       events: [
         ev({
-          id: "mv3", at: 2000, src: "kube-scheduler", dst: API, layer: "control", size: "0.4 KB", title: "SCHEDULE WITH A VOLUME", path: ["cp", "uploads-pvc"],
+          id: "mv3", at: 2000, src: "kube-scheduler", dst: API, layer: "control", size: "0.4 KB", title: "SCHEDULE WITH A VOLUME", path: ["sched", "uploads-pvc"],
           says: "The scheduler plans around the volume's topology, picks node-2, and tells the claim.",
           info: "PATCH …/persistentvolumeclaims/uploads  selected-node=node-2",
           res: { "uploads-pvc": { kind: "pvc", name: "PVC uploads", sub: "Pending · node-2 chosen" } },
@@ -95,7 +95,7 @@ export const mountingVolume: Lesson = {
           note: "No human creates PVs in a dynamic cluster. The sidecar's whole job is this loop: see claim, call backend, write PV.",
         }),
         ev({
-          id: "mv4b", at: 2500, src: API, dst: KUBELET, layer: "control", size: "2.4 KB", title: "KUBELET WANTS THE VOLUME", path: ["cp", "node2"],
+          id: "mv4b", at: 2500, src: API, dst: KUBELET, layer: "control", size: "2.4 KB", title: "KUBELET WANTS THE VOLUME", path: ["api", "node2"],
           says: "The Pod is bound to node-2. Its kubelet immediately needs the volume - which is not attached to this node yet.",
           info: `WATCH MODIFIED Pod ${POD} (nodeName node-2)`,
           decoded: [sec("KUBELET VOLUME MANAGER", [["desired state", "PVC uploads mounted at /uploads"], ["actual", "not attached to node-2"], ["container start", "held · Pod shows ContainerCreating", true]])],
@@ -112,7 +112,7 @@ export const mountingVolume: Lesson = {
         ["DEVICE", "empty · never formatted"],
       ],
       view: "cluster",
-      focus: ["cp", "uploads-pv", "node2"],
+      focus: ["api", "uploads-pv", "node2"],
       events: [
         ev({
           id: "mv5", at: 2600, src: "attacher", dst: API, layer: "state", size: "0.4 KB", title: "PUBLISH TO THE NODE", path: ["uploads-pv", "node2"],

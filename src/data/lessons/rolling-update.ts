@@ -45,10 +45,10 @@ export const rollingUpdate: Lesson = {
         ["TEMPLATE HASH", "6f7c9d8b4 → 7b5d4c9f6"],
       ],
       view: "cluster",
-      focus: ["you", "cp"],
+      focus: ["you", "api"],
       events: [
         ev({
-          id: "u1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "PATCH THE DEPLOYMENT", path: ["you", "cp"],
+          id: "u1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.3 KB", title: "PATCH THE DEPLOYMENT", path: ["you", "api"],
           says: "kubectl changes one field in the Deployment: the image version.",
           info: "PATCH /apis/apps/v1/namespaces/default/deployments/web",
           res: { "web-deploy": { kind: "deployment", name: "Deployment web", sub: "1.5.0 · 3 replicas" } },
@@ -58,7 +58,7 @@ export const rollingUpdate: Lesson = {
           ],
         }),
         ev({
-          id: "u2", at: 6, src: API, dst: "deployment ctrl", layer: "control", size: "1.3 KB", title: "TEMPLATE CHANGED", path: ["cp", "web-deploy"],
+          id: "u2", at: 6, src: API, dst: "deployment ctrl", layer: "control", size: "1.3 KB", title: "TEMPLATE CHANGED", path: ["api", "web-deploy"],
           says: "The Deployment controller notices the Pod template changed, and needs new Pods.",
           info: "WATCH MODIFIED Deployment web · new hash 7b5d4c9f6",
           decoded: [sec("DEPLOYMENT CONTROLLER", [["pod-template-hash", "6f7c9d8b4 → 7b5d4c9f6", true], ["matching ReplicaSet", "none yet"], ["old ReplicaSet", `${OLD} · 3 Pods`]])],
@@ -94,7 +94,7 @@ export const rollingUpdate: Lesson = {
           decoded: [sec("BODY · POD", [["metadata.name", `${NEW}-h4vzn`], ["image", "…/web:1.5.0"], ["status.phase", "Pending"]])],
         }),
         ev({
-          id: "u5", at: 40, src: "kube-scheduler", dst: API, layer: "api", size: "0.3 KB", title: "BINDING", path: ["cp", "cp"],
+          id: "u5", at: 40, src: "kube-scheduler", dst: API, layer: "api", size: "0.3 KB", title: "BINDING", path: ["sched", "api"],
           says: "The scheduler places the new Pod on node-1.",
           info: `POST …/pods/${NEW}-h4vzn/binding → node-1`,
           res: { "web-rs2": { kind: "replicaset", name: "ReplicaSet …c9f6", sub: "1 Pod · on node-1" } },
@@ -112,7 +112,7 @@ export const rollingUpdate: Lesson = {
         ["ENDPOINTS", "4 · three v1, one v2"],
       ],
       view: "cluster",
-      focus: ["cp", "node1"],
+      focus: ["api", "kcm", "node1"],
       pods: { node1: ["other", "v1", "v2"] },
       events: [
         ev({
@@ -128,13 +128,13 @@ export const rollingUpdate: Lesson = {
           decoded: [sec("HTTP PROBE", [["after", "initialDelaySeconds: 10"], ["result", "200 OK"]])],
         }),
         ev({
-          id: "u8", at: 11110, src: "kubelet · node-1", dst: API, layer: "api", size: "0.9 KB", title: "NEW POD READY", path: ["node1", "cp"],
+          id: "u8", at: 11110, src: "kubelet · node-1", dst: API, layer: "api", size: "0.9 KB", title: "NEW POD READY", path: ["node1", "api"],
           says: "The new Pod is reported Ready.",
           info: `PATCH …/pods/${NEW}-h4vzn/status  Ready=True`,
           decoded: [sec("STATUS PATCH", [["conditions.Ready", "False → True", true]])],
         }),
         ev({
-          id: "u9", at: 11125, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.8 KB", title: "ADD TO ENDPOINTS", path: ["cp", "web-svc"],
+          id: "u9", at: 11125, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.8 KB", title: "ADD TO ENDPOINTS", path: ["kcm", "web-svc"],
           says: "It joins the Service's endpoints. Old and new versions now both serve traffic.",
           info: "PUT …/endpointslices/web-7xk2p  +10.244.1.13:8080",
           res: { "web-svc": { kind: "service", name: "Service web", sub: "endpoints: 4 · 3×v1 + 1×v2" } },
@@ -170,7 +170,7 @@ export const rollingUpdate: Lesson = {
           note: "Deleting is a two-step affair: the API server only marks the Pod. The object stays until the kubelet confirms the container has stopped.",
         }),
         ev({
-          id: "u12", at: 11152, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.8 KB", title: "STOP SENDING TRAFFIC", path: ["cp", "web-svc"],
+          id: "u12", at: 11152, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.8 KB", title: "STOP SENDING TRAFFIC", path: ["kcm", "web-svc"],
           says: "That Pod is taken out of the endpoints, so new traffic stops going to it.",
           info: "PUT …/endpointslices/web-7xk2p  10.244.2.18 terminating",
           res: { "web-svc": { kind: "service", name: "Service web", sub: "endpoints: 3 ready · 1 leaving" } },
@@ -241,10 +241,10 @@ export const rollingUpdate: Lesson = {
         ["ROLLBACK", "kubectl rollout undo deployment/web"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "web-deploy", "web-rs", "web-rs2", "web-svc", "node1", "node2"],
+      focus: ["you", "api", "kcm", "web-deploy", "web-rs", "web-rs2", "web-svc", "node1", "node2"],
       events: [
         ev({
-          id: "u19", at: 22300, src: "deployment ctrl", dst: API, layer: "control", size: " - ", title: "ROUND 2", path: ["cp", "node2"],
+          id: "u19", at: 22300, src: "deployment ctrl", dst: API, layer: "control", size: " - ", title: "ROUND 2", path: ["kcm", "node2"],
           says: "Round 2: another new Pod becomes ready, another old one goes.",
           info: `+${NEW}-m2xbd on node-2 ready · −${OLD}-kq9tw`,
           res: {
@@ -255,7 +255,7 @@ export const rollingUpdate: Lesson = {
           pods: { node1: ["other", "v2"], node2: ["other", "v1", "v2"] },
         }),
         ev({
-          id: "u20", at: 33500, src: "deployment ctrl", dst: API, layer: "control", size: " - ", title: "ROUND 3", path: ["cp", "node2"],
+          id: "u20", at: 33500, src: "deployment ctrl", dst: API, layer: "control", size: " - ", title: "ROUND 3", path: ["kcm", "node2"],
           says: "Round 3: the last old Pod is replaced.",
           info: `+${NEW}-zq7wd on node-2 ready · −${OLD}-x2kqp`,
           res: {
@@ -277,7 +277,7 @@ export const rollingUpdate: Lesson = {
           decoded: [sec("STATUS", [["updatedReplicas", "3", true], ["availableReplicas", "3"], ["conditions.Progressing", "NewReplicaSetAvailable"]]), sec("HISTORY", [["revisionHistoryLimit", "10"], [OLD, "kept at 0 for rollback"]])],
         }),
         ev({
-          id: "u22", at: 33530, src: API, dst: "kubectl", layer: "api", size: "0.2 KB", title: "ROLLOUT STATUS", path: ["cp", "you"],
+          id: "u22", at: 33530, src: API, dst: "kubectl", layer: "api", size: "0.2 KB", title: "ROLLOUT STATUS", path: ["api", "you"],
           says: "kubectl rollout status reports success.",
           info: "deployment \"web\" successfully rolled out",
           decoded: [sec("kubectl rollout status", [["watching", "Deployment web"], ["result", "successfully rolled out", true]])],

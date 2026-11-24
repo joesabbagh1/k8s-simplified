@@ -206,7 +206,7 @@ test("going from Scheduling into node-2, a marker carries playback in and the ca
   act(() => useApp.getState().goToStep(4))
   act(() => useApp.getState().togglePlay())
   // the Binding stays on the control plane, so a marker first carries the next event (the watch push) out to node-2
-  expect(useApp.getState().transit).toMatchObject({ from: "cp", to: "node2", eventId: "e14", phase: "carry" })
+  expect(useApp.getState().transit).toMatchObject({ from: "api", to: "node2", eventId: "e14", phase: "carry" })
   expect(useApp.getState().step).toBe(4)
   run(1150)
   expect(useApp.getState().transit).toMatchObject({ to: "node2", phase: "dive" })

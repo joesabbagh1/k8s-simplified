@@ -14,7 +14,7 @@ export const ciliumEbpf: Lesson = {
     title: "Cilium and eBPF in Kubernetes",
     description: "How Cilium replaces flannel, Calico and kube-proxy in a Kubernetes cluster with eBPF programs in each node's kernel, and identities instead of IPs.",
   },
-  actors: ["you", "cp", "etcd", "node1", "node2"],
+  actors: ["you", "cp", "node1", "node2"],
   pods: { node1: ["other", "other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {
     kubectl: "you",
@@ -49,10 +49,10 @@ export const ciliumEbpf: Lesson = {
         ["PODS NOTICE", "nothing · same IPs, same Services"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "node1", "node2"],
+      focus: ["you", "api", "etcd", "node1", "node2"],
       events: [
         ev({
-          id: "ce1", at: 0, src: "kubectl", dst: "kube-apiserver", layer: "api", size: "1.4 KB", title: "INSTALL CILIUM", path: ["you", "cp"],
+          id: "ce1", at: 0, src: "kubectl", dst: "kube-apiserver", layer: "api", size: "1.4 KB", title: "INSTALL CILIUM", path: ["you", "api"],
           says: "You install one thing: a DaemonSet that puts an agent on every node.",
           info: "POST /apis/apps/v1/namespaces/kube-system/daemonsets",
           decoded: [
@@ -60,7 +60,7 @@ export const ciliumEbpf: Lesson = {
           ],
         }),
         ev({
-          id: "ce2", at: 2, src: "kube-apiserver", dst: "etcd", layer: "state", size: "1.1 KB", title: "STORED", path: ["cp", "etcd"],
+          id: "ce2", at: 2, src: "kube-apiserver", dst: "etcd", layer: "state", size: "1.1 KB", title: "STORED", path: ["api", "etcd"],
           says: "The DaemonSet is stored, and the usual machinery starts one agent Pod per node.",
           info: "Txn put /registry/daemonsets/kube-system/cilium",
           decoded: [
@@ -68,7 +68,7 @@ export const ciliumEbpf: Lesson = {
           ],
         }),
         ev({
-          id: "ce3", at: 4, src: "kube-apiserver", dst: "cilium-agent · node-1", layer: "control", size: "0.9 KB", title: "AGENT UP · NODE-1", path: ["cp", "node1"],
+          id: "ce3", at: 4, src: "kube-apiserver", dst: "cilium-agent · node-1", layer: "control", size: "0.9 KB", title: "AGENT UP · NODE-1", path: ["api", "node1"],
           says: "node-1's agent starts in the host network namespace and opens its watches.",
           info: "cilium-agent · host netns · health :9879",
           decoded: [
@@ -76,7 +76,7 @@ export const ciliumEbpf: Lesson = {
           ],
         }),
         ev({
-          id: "ce4", at: 4.5, src: "kube-apiserver", dst: "cilium-agent · node-2", layer: "control", size: "0.9 KB", title: "AGENT UP · NODE-2", path: ["cp", "node2"],
+          id: "ce4", at: 4.5, src: "kube-apiserver", dst: "cilium-agent · node-2", layer: "control", size: "0.9 KB", title: "AGENT UP · NODE-2", path: ["api", "node2"],
           says: "node-2's agent does the same, independent of its neighbor.",
           info: "cilium-agent · host netns · watches open",
           decoded: [

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
 import { lanesOf, timeline } from "../playback"
-import { actorById } from "../scene/world"
+import { actorById, expand, FLOORS, GROUPS, groundRoute } from "../scene/world"
 import { LESSONS } from "./lessons"
 
 const playable = LESSONS.filter((l) => l.steps.length)
@@ -26,6 +26,7 @@ test("every lesson is written", () => {
 
 describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
   const { events } = timeline(lesson)
+  const actors = expand(lesson.actors)
 
   test("has a title and description that fit a search result", () => {
     expect(lesson.seo.title.length).toBeLessThanOrEqual(48)
@@ -44,7 +45,7 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
   })
 
   test("every cluster actor exists", () => {
-    for (const id of lesson.actors) expect(actorById(id)?.level, id).toBe("cluster")
+    for (const id of actors) expect(actorById(id)?.level, id).toBe("cluster")
   })
 
   test.each(lesson.steps.map((s, i) => [i + 1, s] as const))("step %i points at actors on its own level", (_, step) => {
@@ -52,13 +53,13 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
     expect(step.facts.length).toBeGreaterThan(0)
     for (const id of step.focus) {
       expect(actorById(id)?.level, `focus ${id}`).toBe(step.view)
-      if (step.view === "cluster") expect(lesson.actors, `focus ${id}`).toContain(id)
+      if (step.view === "cluster") expect(actors, `focus ${id}`).toContain(id)
     }
     for (const e of step.events) {
       expect(e.decoded.length, `${e.id} has nothing to decode`).toBeGreaterThan(0)
       for (const id of e.path ?? []) {
         expect(actorById(id)?.level, `${e.id} path ${id}`).toBe(step.view)
-        if (step.view === "cluster") expect(lesson.actors, `${e.id} path ${id}`).toContain(id)
+        if (step.view === "cluster") expect(actors, `${e.id} path ${id}`).toContain(id)
       }
     }
   })
@@ -78,4 +79,22 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
   test("the sequence diagram has room for its lanes", () => {
     expect(lanesOf(lesson).length).toBeLessThanOrEqual(9)
   })
+})
+
+test("packets between the control plane and a card go through the API server", () => {
+  const route = groundRoute("cluster", "kcm", "web-svc")
+  expect(route[0]).toEqual(actorById("kcm")!.g)
+  expect(route).toContainEqual(actorById("api")!.g)
+  expect(route.at(-1)).toEqual(actorById("web-svc")!.g)
+})
+
+test("every group stands inside its level's floor, with its members on its plate", () => {
+  for (const { level, floor, members } of GROUPS) {
+    const outer = FLOORS[level]
+    expect(floor.x0 > outer.x0 && floor.x1 < outer.x1 && floor.y0 > outer.y0 && floor.y1 < outer.y1).toBe(true)
+    for (const id of members) {
+      const [x, y] = actorById(id)!.g
+      expect(x > floor.x0 && x < floor.x1 && y > floor.y0 && y < floor.y1, id).toBe(true)
+    }
+  }
 })

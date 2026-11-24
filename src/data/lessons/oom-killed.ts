@@ -140,7 +140,7 @@ export const oomKilled: Lesson = {
         ["FIX B", "stream the report · peak 90 Mi"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "node2"],
+      focus: ["you", "api", "node2"],
       events: [
         ev({
           id: "om7", at: 17400, src: KUBELET, dst: POD, layer: "node", size: "0.1 KB", title: "RESTARTED, DOOMED", path: ["node2", "node2"],
@@ -149,14 +149,14 @@ export const oomKilled: Lesson = {
           decoded: [sec("THE LOOP", [["attempt 2", "loads month 11 again"], ["peak wanted", "≈ 311 Mi > 256"], ["outcome", "OOMKilled at the same page"]])],
         }),
         ev({
-          id: "om8", at: 25000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "RAISE THE LIMIT", path: ["you", "cp"],
+          id: "om8", at: 25000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "RAISE THE LIMIT", path: ["you", "api"],
           says: "The fix that fits the job: a bigger limit, rolled out like any change.",
           info: "kubectl set resources … --limits=memory=384Mi",
           decoded: [sec("OR FIX THE JOB", [["limits.memory", "256Mi → 384Mi", true], ["new Pod", "new template hash, scheduled fresh"], ["peak after", "311 Mi - under at last"], ["leak instead?", "stream it · peak 90 Mi, limit untouched"]])],
           note: "The scheduler places Pods by their requests, not their limits. Raise the limit without the request and the node can be overcommitted; set the request near the real peak so the scheduler reserves room for it.",
         }),
         ev({
-          id: "om9", at: 33000, src: KUBELET, dst: API, layer: "api", size: "0.9 KB", title: "READY AGAIN", path: ["node2", "cp"],
+          id: "om9", at: 33000, src: KUBELET, dst: API, layer: "api", size: "0.9 KB", title: "READY AGAIN", path: ["node2", "api"],
           says: "The replacement Pod finishes the report and reports Ready.",
           info: "PATCH …/pods/web-…-r5m8n/status  Ready=True",
           decoded: [sec("RECOVERED", [["report", "written · peak 311 Mi"], ["conditions.Ready", "True", true], ["endpoint", "back in the slice"]])],

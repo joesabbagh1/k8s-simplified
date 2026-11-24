@@ -37,16 +37,16 @@ export const theScheduler: Lesson = {
         ["QUEUE", "active · priority 0"],
       ],
       view: "cluster",
-      focus: ["you", "cp"],
+      focus: ["you", "api", "sched"],
       events: [
         ev({
-          id: "sd1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "SCALE TO FOUR", path: ["you", "cp"],
+          id: "sd1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "SCALE TO FOUR", path: ["you", "api"],
           says: "You ask for a fourth web Pod.",
           info: "PATCH …/deployments/web  replicas 3 → 4",
           decoded: [sec("PATCH", [["spec.replicas", "3 → 4", true], ["cascade", "ReplicaSet → new Pod (earlier lesson)"]])],
         }),
         ev({
-          id: "sd2", at: 40, src: API, dst: SCHED, layer: "control", size: "2.3 KB", title: "UNSCHEDULED POD SEEN", path: ["cp", "cp"],
+          id: "sd2", at: 40, src: API, dst: SCHED, layer: "control", size: "2.3 KB", title: "UNSCHEDULED POD SEEN", path: ["api", "sched"],
           says: "The scheduler's watch delivers the new Pod with no node.",
           info: `WATCH ADDED Pod ${NEW_POD} (spec.nodeName "")`,
           decoded: [sec("WATCH STREAM", [["request", "GET /api/v1/pods?fieldSelector=status.phase!=Succeeded,status.phase!=Failed&watch=true"], ["type", "ADDED"], ["nodeName", "empty - my problem now", true], ["enqueued", "active queue, priority 0"], ["Pods with a node", "kept in its cache, to know what each node holds"]])],
@@ -64,10 +64,10 @@ export const theScheduler: Lesson = {
         ["FEASIBLE", "2 of 2"],
       ],
       view: "cluster",
-      focus: ["cp", "node1", "node2"],
+      focus: ["api", "sched", "node1", "node2"],
       events: [
         ev({
-          id: "sd3", at: 60, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "RUN THE FILTERS", path: ["cp", "cp"],
+          id: "sd3", at: 60, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "RUN THE FILTERS", path: ["sched", "sched"],
           says: "Six filter plugins run per node; both nodes survive all of them.",
           info: "NodeResourcesFit · TaintToleration · NodeAffinity · NodePorts · …",
           decoded: [sec("FILTER RESULTS", [["NodeResourcesFit", "node-1 ✓ · node-2 ✓"], ["TaintToleration", "no taints to respect ✓"], ["NodeAffinity", "no constraints ✓"], ["NodePorts", "no host ports used ✓"], ["feasible", "node-1, node-2", true]])],
@@ -86,10 +86,10 @@ export const theScheduler: Lesson = {
         ["WINNER", "node-2 · 337 to 332"],
       ],
       view: "cluster",
-      focus: ["cp", "node1", "node2"],
+      focus: ["api", "sched", "node1", "node2"],
       events: [
         ev({
-          id: "sd4", at: 75, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "SCORE THE SURVIVORS", path: ["cp", "cp"],
+          id: "sd4", at: 75, src: SCHED, dst: SCHED, layer: "control", size: " - ", title: "SCORE THE SURVIVORS", path: ["sched", "sched"],
           says: "The scoring plugins disagree; the weighted totals settle it.",
           info: "node-2: 337 · node-1: 332",
           decoded: [sec("SCORECARD · 0-100 PER PLUGIN", [["NodeResourcesFit ×1", "node-2 59 · node-1 38"], ["BalancedAllocation ×1", "node-2 90 · node-1 82"], ["ImageLocality ×1", "node-2 12 · node-1 12 · both have it"], ["PodTopologySpread ×2", "node-1 100 · node-2 88", true], ["total", "node-2 337 · node-1 332 → node-2", true]])],
@@ -108,11 +108,11 @@ export const theScheduler: Lesson = {
         ["THEN", "kubelet node-2 hears it via its watch"],
       ],
       view: "cluster",
-      focus: ["cp", "node2"],
+      focus: ["api", "sched", "node2"],
       pods: { node2: ["other", "v1", "v1", "starting"] },
       events: [
         ev({
-          id: "sd5", at: 90, src: SCHED, dst: API, layer: "api", size: "0.3 KB", title: "BINDING → NODE-2", path: ["cp", "cp"],
+          id: "sd5", at: 90, src: SCHED, dst: API, layer: "api", size: "0.3 KB", title: "BINDING → NODE-2", path: ["sched", "api"],
           says: "The verdict is written as a Binding: node-2.",
           info: `POST …/pods/${NEW_POD}/binding`,
           decoded: [sec("BODY · BINDING", [["target.name", "node-2", true], ["effect", "spec.nodeName: \"\" → \"node-2\""], ["assumption", "kubelet node-2 will make it so"]])],
@@ -136,10 +136,10 @@ export const theScheduler: Lesson = {
         ["REASONS", "Insufficient cpu/memory · taints · affinity"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "node1", "node2"],
+      focus: ["you", "api", "sched", "node1", "node2"],
       events: [
         ev({
-          id: "sd7", at: 200, src: SCHED, dst: API, layer: "drop", size: "0.4 KB", title: "THE OTHER OUTCOME", path: ["cp", "cp"],
+          id: "sd7", at: 200, src: SCHED, dst: API, layer: "drop", size: "0.4 KB", title: "THE OTHER OUTCOME", path: ["sched", "api"],
           says: "On a full cluster, the same loop ends here instead: Pending, with the reason recorded.",
           info: "PodStatus conditions.PodScheduled=False (Unschedulable)",
           decoded: [sec("PENDING", [["reason", "0/2 nodes available: 2 Insufficient cpu", true], ["who fixes it", "a cluster autoscaler adding a node, or you"], ["preemption", "only if priority demands it"], ["events", "FailedScheduling, visible in describe"]])],

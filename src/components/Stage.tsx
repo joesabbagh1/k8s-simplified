@@ -12,7 +12,7 @@ import { useReducedMotion } from "../hooks"
 import { podsAt, resourcesAt, timeline } from "../playback"
 import { useExploreCamera } from "../scene/camera"
 import { CARRY_MS, DEPTH } from "../scene/transition"
-import { actorById, actorsAt, CABLES, floorCorners, floorFor, floorMatrix, frame, groundRoute, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape } from "../scene/world"
+import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
 import { useApp, useLesson, type Flight, type StageView } from "../store"
 import { sentence } from "../data/text"
 import { Icon } from "./Icon"
@@ -20,6 +20,9 @@ import { Transport } from "./Transport"
 
 const SequenceView = lazy(() => import("./SequenceView"))
 
+
+/** anything the reader can point at for a caption: an actor, or a group of them */
+type Described = Pick<Actor, "id" | "name" | "about">
 
 interface SceneState {
   level: Level
@@ -43,7 +46,8 @@ function useSceneState(lesson: Lesson): SceneState {
     const entering = step < 0 && !finished && !!transit
     const level: Level = override ?? current?.view ?? (entering ? actorById(transit.to)?.level : undefined) ?? "cluster"
     const all = actorsAt(level)
-    const visible = level === "cluster" && lesson.actors.length ? all.filter((a) => lesson.actors.includes(a.id)) : all
+    const used = expand(lesson.actors)
+    const visible = level === "cluster" && used.length ? all.filter((a) => used.includes(a.id)) : all
     const following = !override && (!!current || entering)
     if (following && transit && transit.phase !== "surface") {
       const ids = transit.phase === "carry" ? [transit.from, transit.to] : [transit.to]
@@ -276,8 +280,8 @@ function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover 
   )
 }
 
-/** The plate a level stands on: a thin slab with a faint grid and its name lying on it. */
-function Floor({ level, floor }: { level: Level; floor: FloorShape }) {
+/** The plate a level or a group stands on: a thin slab with a faint grid and its name lying on it. */
+function Floor({ level, floor, group, onHover }: { level: Level; floor: FloorShape; group?: Group; onHover?: (g: Group | null) => void }) {
   const markup = useMemo(() => {
     const { x0, x1, y0, y1 } = floor
     const P = (x: number, y: number) => toScreen(level, [x, y])
@@ -290,7 +294,7 @@ function Floor({ level, floor }: { level: Level; floor: FloorShape }) {
     return { edge: [pts([e, c, down(c), down(e)]), pts([c, b, down(b), down(c)])], top: pts([a, b, c, e]), grid }
   }, [level, floor])
   return (
-    <g className="floor">
+    <g className="floor" data-group={group?.id} onPointerEnter={() => group && onHover?.(group)} onPointerLeave={() => group && onHover?.(null)}>
       {markup.edge.map((p) => <polygon key={p} className="floor-edge" points={p} />)}
       <polygon className="floor-top" points={markup.top} />
       <path className="floor-grid" d={markup.grid} />
@@ -320,7 +324,7 @@ function ClusterScene() {
   const transit = useApp((s) => s.transit)
   const speed = useApp((s) => s.speed)
   const scene = useSceneState(lesson)
-  const [hover, setHover] = useState<Actor | null>(null)
+  const [hover, setHover] = useState<Described | null>(null)
 
   const [entered, setEntered] = useState<{ level: Level; direction: "in" | "out" | "emerge" }>({ level: scene.level, direction: "in" })
   if (entered.level !== scene.level) {
@@ -404,6 +408,9 @@ function ClusterScene() {
         <g key={scene.level} className="camera" data-dive={scene.dive || undefined} data-manual={cam.manual || undefined} data-surface={transit?.phase === "surface" || undefined} style={camera}>
           <g className="level" data-enter={entered.direction}>
             <Floor level={scene.level} floor={floor} />
+            {GROUPS.filter((g) => g.level === scene.level && g.members.every((m) => ids.has(m))).map((g) => (
+              <Floor key={g.id} level={g.level} floor={g.floor} group={g} onHover={(h) => !cam.panning && setHover(h)} />
+            ))}
             {cables.map((c) => (
                 <CableLine key={`${c.a}-${c.b}`} level={scene.level} cable={c} on={scene.focus.has(c.a) && scene.focus.has(c.b)} />
               ))}
@@ -466,7 +473,7 @@ function ClusterScene() {
 }
 
 /** The caption under the diagram: what's happening right now, in one plain sentence. */
-function Narration({ hover }: { hover: Actor | null }) {
+function Narration({ hover }: { hover: Described | null }) {
   const lesson = useLesson()
   const step = useApp((s) => s.step)
   const intro = useApp((s) => s.intro)

@@ -50,10 +50,10 @@ export const jobsCronjobs: Lesson = {
         ["CAPS", "activeDeadlineSeconds 600 · ttl 3600"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "backup-job"],
+      focus: ["you", "api", "backup-job"],
       events: [
         ev({
-          id: "jb1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.7 KB", title: "APPLY THE JOB", path: ["you", "cp"],
+          id: "jb1", at: 0, src: "kubectl", dst: API, layer: "api", size: "0.7 KB", title: "APPLY THE JOB", path: ["you", "api"],
           says: "kubectl posts the Job: one Pod, one success, up to five retries.",
           info: "POST /apis/batch/v1/namespaces/default/jobs",
           res: { "backup-job": { kind: "job", name: "Job report", sub: "completions 1/1 · retries 5", state: "creating" } },
@@ -63,7 +63,7 @@ export const jobsCronjobs: Lesson = {
           ],
         }),
         ev({
-          id: "jb2", at: 6, src: API, dst: JC, layer: "control", size: "0.8 KB", title: "WATCH EVENT", path: ["cp", "backup-job"],
+          id: "jb2", at: 6, src: API, dst: JC, layer: "control", size: "0.8 KB", title: "WATCH EVENT", path: ["api", "backup-job"],
           says: "The Job controller hears about it: one completion wanted, none reached.",
           info: "WATCH ADDED Job default/report",
           decoded: [sec("JOB CONTROLLER", [["wants", "1 success"], ["active", "0"], ["next", "create 1 Pod"]])],
@@ -130,16 +130,16 @@ export const jobsCronjobs: Lesson = {
         ["POD OBJECT", "kept - kubectl logs still works"],
       ],
       view: "cluster",
-      focus: ["cp", "backup-job"],
+      focus: ["api", "kcm", "backup-job"],
       events: [
         ev({
-          id: "jb8", at: 43100, src: API, dst: JC, layer: "control", size: "0.5 KB", title: "SUCCEEDED", path: ["cp", "backup-job"],
+          id: "jb8", at: 43100, src: API, dst: JC, layer: "control", size: "0.5 KB", title: "SUCCEEDED", path: ["api", "backup-job"],
           says: "The Job controller hears the Pod finished successfully.",
           info: "WATCH MODIFIED Pod report-5xk2p  phase=Succeeded",
           decoded: [sec("WATCH STREAM", [["type", "MODIFIED"], ["phase", "Succeeded"], ["counted as", "1 completion"]])],
         }),
         ev({
-          id: "jb9", at: 43300, src: JC, dst: API, layer: "api", size: "0.4 KB", title: "MARK COMPLETE", path: ["cp", "backup-job"],
+          id: "jb9", at: 43300, src: JC, dst: API, layer: "api", size: "0.4 KB", title: "MARK COMPLETE", path: ["kcm", "backup-job"],
           says: "It marks the Job Complete: one success of one wanted.",
           info: "PATCH …/jobs/report/status  Complete",
           res: { "backup-job": { kind: "job", name: "Job report", sub: "Complete · 43.3 s · Pod kept" } },
@@ -159,10 +159,10 @@ export const jobsCronjobs: Lesson = {
         ["JOB", "Failed · reason BackoffLimitExceeded"],
       ],
       view: "cluster",
-      focus: ["cp", "backup-job", "nightly-job", "node1"],
+      focus: ["api", "kcm", "backup-job", "nightly-job", "node1"],
       events: [
         ev({
-          id: "jb10", at: 60000, src: CC, dst: API, layer: "api", size: "0.7 KB", title: "THE NIGHTLY JOB", path: ["cp", "nightly-job"],
+          id: "jb10", at: 60000, src: CC, dst: API, layer: "api", size: "0.7 KB", title: "THE NIGHTLY JOB", path: ["kcm", "nightly-job"],
           says: "A new Job is created for the 03:00 run - this one carries the broken query.",
           info: "POST …/jobs  nightly-report-29921940",
           res: { "nightly-job": { kind: "job", name: "Job nightly-report", sub: "made by CronJob · broken SQL", state: "creating" } },
@@ -199,7 +199,7 @@ export const jobsCronjobs: Lesson = {
           note: "The doubling curve is the same one from the probes lesson; there it restarted one Pod forever, here it mints a new Pod per attempt.",
         }),
         ev({
-          id: "jb15", at: 389000, src: JC, dst: API, layer: "api", size: "0.4 KB", title: "JOB FAILED", path: ["cp", "nightly-job"],
+          id: "jb15", at: 389000, src: JC, dst: API, layer: "api", size: "0.4 KB", title: "JOB FAILED", path: ["kcm", "nightly-job"],
           says: "Six failures pass backoffLimit 5, so the Job itself is marked Failed.",
           info: "PATCH …/jobs/nightly-report-29921940/status  Failed",
           res: { "nightly-job": { kind: "job", name: "Job nightly-report", sub: "Failed · BackoffLimitExceeded" } },
@@ -218,17 +218,17 @@ export const jobsCronjobs: Lesson = {
         ["ALSO", "Replace · Allow · startingDeadlineSeconds"],
       ],
       view: "cluster",
-      focus: ["cp", "backup-cj", "nightly-job"],
+      focus: ["api", "kcm", "backup-cj", "nightly-job"],
       events: [
         ev({
-          id: "jb16", at: 390100, src: CC, dst: CC, layer: "control", size: " - ", title: "THE TICK ARRIVES", path: ["cp", "backup-cj"],
+          id: "jb16", at: 390100, src: CC, dst: CC, layer: "control", size: " - ", title: "THE TICK ARRIVES", path: ["kcm", "backup-cj"],
           says: "The controller wakes at the time it computed for the next tick.",
           info: "tick 03:00 matches 0 3 * * *",
           res: { "backup-cj": { kind: "cronjob", name: "CronJob nightly-report", sub: "0 3 * * * · Forbid", state: "creating" } },
           decoded: [sec("CRONJOB CONTROLLER", [["wakes", "at the next scheduled time · computed, not polled"], ["schedule", "0 3 * * * - daily 03:00"], ["timeZone", "unset → UTC (field exists since 1.27)"], ["startingDeadlineSeconds", "unset - set it to skip stale ticks after an outage"]])],
         }),
         ev({
-          id: "jb17", at: 390200, src: CC, dst: API, layer: "api", size: "0.7 KB", title: "ONE JOB PER TICK", path: ["backup-cj", "cp"],
+          id: "jb17", at: 390200, src: CC, dst: API, layer: "api", size: "0.7 KB", title: "ONE JOB PER TICK", path: ["backup-cj", "api"],
           says: "The tick gets its own Job, stamped from the template.",
           info: "POST …/jobs  nightly-report-29923380",
           res: { "backup-cj": { kind: "cronjob", name: "CronJob nightly-report", sub: "one Job per tick" } },
@@ -254,16 +254,16 @@ export const jobsCronjobs: Lesson = {
         ["NO DEADLINE", "a hung Job runs forever"],
       ],
       view: "cluster",
-      focus: ["cp", "backup-cj", "backup-job", "nightly-job"],
+      focus: ["api", "kcm", "backup-cj", "backup-job", "nightly-job"],
       events: [
         ev({
-          id: "jb19", at: 392000, src: CC, dst: API, layer: "api", size: "0.2 KB", title: "PRUNE THE HISTORY", path: ["backup-cj", "cp"],
+          id: "jb19", at: 392000, src: CC, dst: API, layer: "api", size: "0.2 KB", title: "PRUNE THE HISTORY", path: ["backup-cj", "api"],
           says: "The oldest success is past the limit of 3, so the CronJob controller deletes it.",
           info: "DELETE …/jobs/nightly-report-29916180",
           decoded: [sec("HISTORY", [["successfulJobs", "4 > successfulJobsHistoryLimit 3"], ["deleted", "nightly-report-29916180 + its Pods (cascade)", true], ["failedJobsHistoryLimit", "1"]])],
         }),
         ev({
-          id: "jb20", at: 3643300, src: "ttl ctrl", dst: API, layer: "api", size: "0.2 KB", title: "TTL EXPIRED", path: ["cp", "backup-job"],
+          id: "jb20", at: 3643300, src: "ttl ctrl", dst: API, layer: "api", size: "0.2 KB", title: "TTL EXPIRED", path: ["kcm", "backup-job"],
           says: "An hour after completing, the first Job hits its TTL and goes, Pod and all.",
           info: "DELETE …/jobs/report  ttlSecondsAfterFinished=3600",
           res: { "backup-job": null },

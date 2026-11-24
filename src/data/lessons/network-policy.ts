@@ -15,7 +15,7 @@ export const networkPolicy: Lesson = {
     title: "How Kubernetes NetworkPolicy drops a packet",
     description: "Write a Kubernetes NetworkPolicy and watch the CNI plugin enforce it in the node's kernel: which Pods it selects, what it allows and what it drops.",
   },
-  actors: ["you", "cp", "etcd", "node1", "node2"],
+  actors: ["you", "cp", "node1", "node2"],
   pods: { node1: ["other", "other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {
     [BUSYBOX]: "busybox Pod", [API_POD]: "api Pod", "web-…-x2kqp": "Pod x2kqp", "web-…-p8m4z": "node-2",
@@ -85,10 +85,10 @@ export const networkPolicy: Lesson = {
         ["STORED", "etcd · /registry/networkpolicies/default/api-allow-web"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "etcd"],
+      focus: ["you", "api", "etcd"],
       events: [
         ev({
-          id: "np4", at: 10, src: "kubectl", dst: "kube-apiserver", layer: "api", size: "0.6 KB", title: "APPLY NETWORKPOLICY", path: ["you", "cp"],
+          id: "np4", at: 10, src: "kubectl", dst: "kube-apiserver", layer: "api", size: "0.6 KB", title: "APPLY NETWORKPOLICY", path: ["you", "api"],
           says: "kubectl posts one NetworkPolicy that selects the api Pods.",
           info: "POST /apis/networking.k8s.io/v1/namespaces/default/networkpolicies",
           decoded: [
@@ -97,7 +97,7 @@ export const networkPolicy: Lesson = {
           note: "One rule closes everything else. A Pod selected by any policy is isolated for that direction, and policies only ever add allows - there is no deny rule in the NetworkPolicy API. (Cluster-wide admin policy, a separate API, does have one.)",
         }),
         ev({
-          id: "np5", at: 13, src: "kube-apiserver", dst: "etcd", layer: "state", size: "0.5 KB", title: "STORED", path: ["cp", "etcd"],
+          id: "np5", at: 13, src: "kube-apiserver", dst: "etcd", layer: "state", size: "0.5 KB", title: "STORED", path: ["api", "etcd"],
           says: "The API server stores the policy, and nothing else happens here.",
           info: "Txn put /registry/networkpolicies/default/api-allow-web",
           decoded: [
@@ -105,7 +105,7 @@ export const networkPolicy: Lesson = {
           ],
         }),
         ev({
-          id: "np6", at: 15, src: "kube-apiserver", dst: "kubectl", layer: "api", size: "0.3 KB", title: "201 CREATED", path: ["cp", "you"],
+          id: "np6", at: 15, src: "kube-apiserver", dst: "kubectl", layer: "api", size: "0.3 KB", title: "201 CREATED", path: ["api", "you"],
           says: "kubectl gets 201 Created. The policy exists, but isn't enforced yet.",
           info: "201 Created networkpolicy/api-allow-web",
           decoded: [

@@ -149,10 +149,10 @@ export const ingressGateway: Lesson = {
         ["PATH /", "→ Service web:80"],
       ],
       view: "cluster",
-      focus: ["cp", "shop-ing", "node1"],
+      focus: ["api", "shop-ing", "node1"],
       events: [
         ev({
-          id: "gw8", at: 52.5, src: "kube-apiserver", dst: "ingress-nginx", layer: "control", size: "1.5 KB", title: "WHERE RULES COME FROM", path: ["cp", "shop-ing"],
+          id: "gw8", at: 52.5, src: "kube-apiserver", dst: "ingress-nginx", layer: "control", size: "1.5 KB", title: "WHERE RULES COME FROM", path: ["api", "shop-ing"],
           says: "Standing state: the controller built its routing table from Ingress objects, and reloads when they change.",
           info: "WATCH Ingress, IngressClass, Secrets, EndpointSlices",
           decoded: [

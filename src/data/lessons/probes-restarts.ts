@@ -99,17 +99,17 @@ export const probesRestarts: Lesson = {
         ["POD LIFETIME", "unbounded - it loops for days if you let it"],
       ],
       view: "cluster",
-      focus: ["cp", "node2"],
+      focus: ["api", "kcm", "node2"],
       events: [
         ev({
-          id: "pr6", at: 152000, src: API, dst: "kubectl", layer: "api", size: "0.5 KB", title: "WHAT YOU SEE", path: ["cp", "cp"],
+          id: "pr6", at: 152000, src: API, dst: "kubectl", layer: "api", size: "0.5 KB", title: "WHAT YOU SEE", path: ["api", "api"],
           says: "From the outside, the status never changes: CrashLoopBackOff, restartCount climbing.",
           info: "kubectl get pods → CrashLoopBackOff · RESTARTS 4",
           decoded: [sec("CRASH SCHEDULE", [["crash 1", "t=0.4 s"], ["crash 2", "t≈10 s"], ["crash 3", "t≈30 s"], ["crash 4", "t≈71 s"], ["crash 5", "t≈151 s"], ["crash 6+", "every 300 s, capped", true]])],
           note: "The name is a promise: crash, loop, back off. The kubelet assumes the fault is temporary and keeps trying on a human-patience schedule.",
         }),
         ev({
-          id: "pr7", at: 311600, src: "endpointslice ctrl", dst: API, layer: "control", size: "0.7 KB", title: "ALREADY FORGOTTEN", path: ["cp", "cp"],
+          id: "pr7", at: 311600, src: "endpointslice ctrl", dst: API, layer: "control", size: "0.7 KB", title: "ALREADY FORGOTTEN", path: ["kcm", "api"],
           says: "The Service dropped this Pod long ago; the loop is invisible to traffic.",
           info: "endpoints web: 10.244.1.12, 10.244.2.17 (p8m4z absent)",
           decoded: [sec("ENDPOINTSLICE", [["10.244.2.18", "removed at first readiness failure", true], ["serving", "2 of 3 endpoints"], ["users", "unaffected - retries hide the gap"]])],
@@ -155,10 +155,10 @@ export const probesRestarts: Lesson = {
         ["ENDPOINT", "10.244.2.18 back in the slice"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "node2"],
+      focus: ["you", "api", "kcm", "node2"],
       events: [
         ev({
-          id: "pr10", at: 600000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "FIX THE CONFIGMAP", path: ["you", "cp"],
+          id: "pr10", at: 600000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "FIX THE CONFIGMAP", path: ["you", "api"],
           says: "The typo is fixed and applied.",
           info: "PATCH …/configmaps/web-config  LOG_LEVEL=debug",
           decoded: [sec("PATCH", [["data.LOG_LEVEL", "debugg → debug", true], ["reaches the Pod", "on the next container start"]])],
@@ -176,7 +176,7 @@ export const probesRestarts: Lesson = {
           decoded: [sec("HTTP PROBE", [["attempt", "2 (first raced the boot)"], ["result", "200 OK"], ["conditions.Ready", "False → True", true]])],
         }),
         ev({
-          id: "pr13", at: 614800, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "ENDPOINT BACK", path: ["cp", "cp"],
+          id: "pr13", at: 614800, src: "endpointslice ctrl", dst: API, layer: "api", size: "0.7 KB", title: "ENDPOINT BACK", path: ["kcm", "api"],
           says: "The endpoint returns and traffic resumes, three of three again.",
           info: "PUT …/endpointslices/web-7xk2p  +10.244.2.18:8080 ready",
           decoded: [sec("ENDPOINTSLICE", [["10.244.2.18", "ready=true", true], ["serving", "3 of 3"], ["restartCount", "6 - history, not a verdict"]])],

@@ -47,22 +47,22 @@ export const autoscaling: Lesson = {
         ["LAG", "metrics ≈ 15-45 s old"],
       ],
       view: "cluster",
-      focus: ["cp", "node1", "node2"],
+      focus: ["api", "node1", "node2"],
       events: [
         ev({
-          id: "hp1", at: 0, src: "kubelet · node-1", dst: MS, layer: "control", size: "38 KB", title: "SCRAPE NODE-1", path: ["node1", "cp"],
+          id: "hp1", at: 0, src: "kubelet · node-1", dst: MS, layer: "control", size: "38 KB", title: "SCRAPE NODE-1", path: ["node1", "api"],
           says: "metrics-server pulls each node's Pod metrics from its kubelet.",
           info: "GET https://10.0.1.11:10250/metrics/resource",
           decoded: [sec("RESOURCE SCRAPE", [["source", "cAdvisor inside the kubelet"], ["per Pod", "cpu usage (cumulative seconds) · memory working set"], ["interval", "15 s", true]])],
         }),
         ev({
-          id: "hp2", at: 15, src: "kubelet · node-2", dst: MS, layer: "control", size: "52 KB", title: "SCRAPE NODE-2", path: ["node2", "cp"],
+          id: "hp2", at: 15, src: "kubelet · node-2", dst: MS, layer: "control", size: "52 KB", title: "SCRAPE NODE-2", path: ["node2", "api"],
           says: "Node-2 answers the same pull - two web Pods live here.",
           info: "GET https://10.0.1.12:10250/metrics/resource",
           decoded: [sec("WHAT ARRIVED", [["web-…-x2kqp", "cpu 612m · mem 231Mi"], ["web-…-p8m4z", "cpu 588m · mem 226Mi"], ["staleness", "< 15 s"]])],
         }),
         ev({
-          id: "hp3", at: 100, src: MS, dst: API, layer: "api", size: "1.8 KB", title: "METRICS PUBLISHED", path: ["cp", "cp"],
+          id: "hp3", at: 100, src: MS, dst: API, layer: "api", size: "1.8 KB", title: "METRICS PUBLISHED", path: ["api", "api"],
           says: "The aggregate is served through the API server like any other resource.",
           info: "GET /apis/metrics.k8s.io/v1beta1/namespaces/default/pods",
           decoded: [sec("AGGREGATION LAYER", [["apiservice", "v1beta1.metrics.k8s.io → metrics-server"], ["backed by", "memory, not etcd"], ["consumers", "HPA, kubectl top"]])],

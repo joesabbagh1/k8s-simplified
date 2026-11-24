@@ -52,10 +52,10 @@ export const statefulsetStorage: Lesson = {
         ["VS DEPLOYMENT", "fixed names · ordered · a volume each"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "db-sts"],
+      focus: ["you", "api", "db-sts"],
       events: [
         ev({
-          id: "st1", at: 0, src: "kubectl", dst: API, layer: "api", size: "1.4 KB", title: "APPLY THE STATEFULSET", path: ["you", "cp"],
+          id: "st1", at: 0, src: "kubectl", dst: API, layer: "api", size: "1.4 KB", title: "APPLY THE STATEFULSET", path: ["you", "api"],
           says: "kubectl posts the StatefulSet and its headless Service to the API server.",
           info: "POST /apis/apps/v1/namespaces/default/statefulsets · POST …/services",
           res: { "db-sts": { kind: "statefulset", name: "StatefulSet db", sub: "3 replicas · ordered starts", state: "creating" } },
@@ -66,7 +66,7 @@ export const statefulsetStorage: Lesson = {
           note: "One template, three claims: the controller will create db-data-db-0, db-data-db-1 and db-data-db-2 - one per ordinal, permanent.",
         }),
         ev({
-          id: "st2", at: 6, src: API, dst: SSC, layer: "control", size: "1.5 KB", title: "WATCH EVENT", path: ["cp", "db-sts"],
+          id: "st2", at: 6, src: API, dst: SSC, layer: "control", size: "1.5 KB", title: "WATCH EVENT", path: ["api", "db-sts"],
           says: "The StatefulSet controller hears about it within milliseconds and starts at ordinal zero.",
           info: "WATCH ADDED StatefulSet default/db",
           decoded: [sec("STATEFULSET CONTROLLER", [["wants", "3 Pods · db-0 db-1 db-2"], ["has", "0"], ["policy", "OrderedReady → create db-0 only", true]])],
@@ -84,7 +84,7 @@ export const statefulsetStorage: Lesson = {
         ["GATE", "db-1 waits for db-0 Ready"],
       ],
       view: "cluster",
-      focus: ["cp", "db-sts", "node1"],
+      focus: ["api", "db-sts", "node1"],
       pods: { node1: ["other", "v1", "starting"] },
       events: [
         ev({
@@ -96,7 +96,7 @@ export const statefulsetStorage: Lesson = {
           note: "A ReplicaSet uses generateName and gets names like web-6f7c9d8b4-x2kqp. A StatefulSet uses ordinals: db-0, db-1, db-2 - the same names come back after every reschedule.",
         }),
         ev({
-          id: "st4", at: 9600, src: API, dst: SSC, layer: "control", size: "0.9 KB", title: "READY - GATE OPENS", path: ["cp", "db-sts"],
+          id: "st4", at: 9600, src: API, dst: SSC, layer: "control", size: "0.9 KB", title: "READY - GATE OPENS", path: ["api", "db-sts"],
           says: "db-0 is Running and Ready, so the controller is finally allowed to create db-1.",
           info: "WATCH MODIFIED Pod db-0  phase=Running  Ready=True",
           res: { "db-sts": { kind: "statefulset", name: "StatefulSet db", sub: "db-0 Ready · gate open" } },
@@ -116,11 +116,11 @@ export const statefulsetStorage: Lesson = {
         ["BIND MODE", "WaitForFirstConsumer"],
       ],
       view: "cluster",
-      focus: ["cp", "db-sts", "node2"],
+      focus: ["api", "kcm", "db-sts", "node2"],
       pods: { node2: ["other", "v1", "starting"] },
       events: [
         ev({
-          id: "st5", at: 9850, src: SSC, dst: API, layer: "api", size: "0.6 KB", title: "CREATE PVC FROM TEMPLATE", path: ["db-sts", "cp"],
+          id: "st5", at: 9850, src: SSC, dst: API, layer: "api", size: "0.6 KB", title: "CREATE PVC FROM TEMPLATE", path: ["db-sts", "api"],
           says: "Before the Pod, the controller creates db-1's PVC from the template.",
           info: "POST /api/v1/namespaces/default/persistentvolumeclaims  db-data-db-1",
           res: { "db-sts": { kind: "statefulset", name: "StatefulSet db", sub: "claims: db-0 · db-1 (pending)" } },
@@ -130,13 +130,13 @@ export const statefulsetStorage: Lesson = {
           ],
         }),
         ev({
-          id: "st6", at: 9900, src: SSC, dst: API, layer: "api", size: "2.2 KB", title: "CREATE POD DB-1", path: ["cp", "cp"],
+          id: "st6", at: 9900, src: SSC, dst: API, layer: "api", size: "2.2 KB", title: "CREATE POD DB-1", path: ["kcm", "api"],
           says: "Then Pod db-1, immediately after its claim.",
           info: "POST /api/v1/namespaces/default/pods  db-1",
           decoded: [sec("BODY · POD", [["metadata.name", "\"db-1\""], ["volumes[0]", "PVC db-data-db-1", true], ["status.phase", "Pending · no node yet"]])],
         }),
         ev({
-          id: "st7", at: 11400, src: PROV, dst: API, layer: "state", size: "0.5 KB", title: "PV CARVED OUT", path: ["cp", "node2"],
+          id: "st7", at: 11400, src: PROV, dst: API, layer: "state", size: "0.5 KB", title: "PV CARVED OUT", path: ["api", "node2"],
           says: "The scheduler has picked node-2, so the CSI driver carves out a 50 Gi volume and binds the claim.",
           info: "POST …/persistentvolumes  pvc-b2f7c3… → PVC Bound",
           res: { "db-sts": { kind: "statefulset", name: "StatefulSet db", sub: "claims: db-0 Bound · db-1 Bound" } },
@@ -201,7 +201,7 @@ export const statefulsetStorage: Lesson = {
         ["CLUSTER NOW", "3 db Pods · 3 claims bound"],
       ],
       view: "cluster",
-      focus: ["cp", "db-sts", "node1", "node2"],
+      focus: ["api", "kcm", "db-sts", "node1", "node2"],
       events: [
         ev({
           id: "st13", at: 12700, src: "db-1", dst: DNS, layer: "net", size: "96 B", title: "HEADLESS LOOKUP", path: ["node2", "node1"],
@@ -211,7 +211,7 @@ export const statefulsetStorage: Lesson = {
           note: "The Service exists only as DNS here: each Pod is one A record. The bare Service name, pg-headless, returns the IPs of every ready Pod - round-robin at best.",
         }),
         ev({
-          id: "st14", at: 21000, src: API, dst: SSC, layer: "control", size: "0.9 KB", title: "DB-1 READY - GATE OPENS", path: ["cp", "cp"],
+          id: "st14", at: 21000, src: API, dst: SSC, layer: "control", size: "0.9 KB", title: "DB-1 READY - GATE OPENS", path: ["api", "kcm"],
           says: "db-1 passes its own readiness probe, so db-2 may finally start.",
           info: "WATCH MODIFIED Pod db-1  Ready=True",
           decoded: [sec("ORDERED GATE", [["readyReplicas", "2 of 3"], ["next", "ordinal 2 · db-2 → node-2", true]])],
@@ -245,10 +245,10 @@ export const statefulsetStorage: Lesson = {
         ["DATA", "WAL replayed · nothing lost"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "db-sts", "node1", "node2"],
+      focus: ["you", "api", "db-sts", "node1", "node2"],
       events: [
         ev({
-          id: "st17", at: 40000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DELETE DB-1", path: ["you", "cp"],
+          id: "st17", at: 40000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "DELETE DB-1", path: ["you", "api"],
           says: "You delete db-1. Its PVC is not part of the delete.",
           info: "DELETE /api/v1/namespaces/default/pods/db-1",
           res: { "db-sts": { kind: "statefulset", name: "StatefulSet db", sub: "db-1 deleted · claim kept" } },
@@ -264,7 +264,7 @@ export const statefulsetStorage: Lesson = {
           pods: { node1: ["other", "v1", "v2", "starting"], node2: ["other", "v1", "v2"] },
         }),
         ev({
-          id: "st19", at: 43300, src: ATT, dst: API, layer: "state", size: "0.4 KB", title: "DETACH, REATTACH", path: ["cp", "node1"],
+          id: "st19", at: 43300, src: ATT, dst: API, layer: "state", size: "0.4 KB", title: "DETACH, REATTACH", path: ["api", "node1"],
           says: "The disk detaches from node-2 and attaches to node-1.",
           info: "VolumeAttachment pvc-b2f7c3… · node-2 → node-1",
           decoded: [sec("ATTACH-DETACH", [["detach", "from node-2 (Pod gone)", true], ["attach", "to node-1 · ControllerPublishVolume", true], ["the data", "moves nowhere - the disk is re-pointed"]])],
@@ -297,7 +297,7 @@ export const statefulsetStorage: Lesson = {
         ["PARTITION", "2 → canary on the top ordinal"],
       ],
       view: "cluster",
-      focus: ["you", "cp", "db-sts", "node1", "node2"],
+      focus: ["you", "api", "kcm", "db-sts", "node1", "node2"],
       events: [
         ev({
           id: "st22", at: 60000, src: "kubectl", dst: API, layer: "api", size: "0.2 KB", title: "SCALE TO 4", path: ["you", "db-sts"],
@@ -307,7 +307,7 @@ export const statefulsetStorage: Lesson = {
           decoded: [sec("PATCH", [["spec.replicas", "3 → 4", true], ["new Pod", "db-3 · with PVC db-data-db-3"]])],
         }),
         ev({
-          id: "st23", at: 60100, src: SSC, dst: API, layer: "api", size: "2.7 KB", title: "CREATE DB-3 + ITS CLAIM", path: ["cp", "cp"],
+          id: "st23", at: 60100, src: SSC, dst: API, layer: "api", size: "2.7 KB", title: "CREATE DB-3 + ITS CLAIM", path: ["kcm", "api"],
           says: "db-3 gets a claim and a Pod of its own, on node-2.",
           info: "POST …/persistentvolumeclaims db-data-db-3 · POST …/pods db-3",
           decoded: [sec("ORDINAL 3", [["PVC", "db-data-db-3 · 50 Gi · fast-nvme", true], ["Pod", "db-3 → node-2"]])],
@@ -338,7 +338,7 @@ export const statefulsetStorage: Lesson = {
           decoded: [sec("PATCH", [["…containers[postgres].image", "…/postgres:16.4 → …/postgres:16.5", true], ["updateStrategy", "RollingUpdate · ordinal-descending", true]])],
         }),
         ev({
-          id: "st27", at: 70400, src: SSC, dst: API, layer: "api", size: "0.2 KB", title: "DB-2 FIRST", path: ["cp", "cp"],
+          id: "st27", at: 70400, src: SSC, dst: API, layer: "api", size: "0.2 KB", title: "DB-2 FIRST", path: ["kcm", "api"],
           says: "db-2 is deleted and recreated on the new image, and nothing moves until it is Ready.",
           info: "DELETE …/pods/db-2 · POST …/pods db-2 (16.5)",
           decoded: [sec("DESCENDING", [["order", "db-2 → db-1 → db-0", true], ["gate", "each waits for the previous Ready"], ["partition", "set 2 → only ordinals ≥ 2 update (canary)"]])],
