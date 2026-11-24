@@ -3,7 +3,7 @@ export const LIBRARY_ROUTE = "lessons"
 export const HOME_PATH = "/"
 
 /** The source on GitHub, where lessons are fixed and added. */
-export const REPO_URL = "https://github.com/joesabbagh1/k8s-simplified"
+export const REPO_URL = "https://github.com/joesabbagh1/kubelearn"
 export const LIBRARY_PATH = `/${LIBRARY_ROUTE}`
 export const lessonPath = (id: string, part?: number | "summary") => `/${id}${part === undefined ? "" : `/${part}`}`
 
