@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 import { createAgent } from "@ui-sdk/react/agent"
 import { beforeEach, expect, test, vi } from "vitest"
 import App from "./App"
+import { LESSONS } from "./data/lessons"
 import { useApp } from "./store"
 
 const agent = createAgent()
@@ -199,11 +200,19 @@ test("the homepage scene draws the cluster's plates and no other level's", () =>
   expect(names).toEqual(["cluster", "control plane"])
 })
 
+test("the homepage links to every lesson", () => {
+  window.history.replaceState(null, "", "/")
+  render(<App />)
+  const section = screen.getByRole("region", { name: /lessons, from the app down to the wire/ })
+  const links = within(section).getAllByRole("link").map((a) => a.getAttribute("href"))
+  expect(links).toEqual(expect.arrayContaining(LESSONS.map((l) => `/${l.id}`)))
+})
+
 test("a category on the homepage opens the lessons page filtered to it", async () => {
   const user = userEvent.setup()
   window.history.replaceState(null, "", "/")
   render(<App />)
-  await user.click(screen.getByRole("link", { name: /All network lessons/ }))
+  await user.click(screen.getByRole("link", { name: "Network lessons" }))
   const page = await screen.findByRole("main", { name: "Kubernetes lessons" })
   expect(within(page).getByRole("radio", { name: /^Network/ }).getAttribute("aria-checked")).toBe("true")
   expect(within(page).queryByRole("heading", { name: /^Node/ })).toBeNull()

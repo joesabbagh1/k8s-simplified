@@ -1,21 +1,23 @@
-import { useEffect, useRef } from "react"
-import { CATEGORIES, CATEGORY_NAME } from "../data/layers"
+import { type CSSProperties, useEffect, useRef } from "react"
+import { CATEGORY_NAME } from "../data/layers"
 import { LESSONS } from "../data/lessons"
 import type { Category } from "../data/types"
 import { LIBRARY_PATH, lessonPath, REPO_URL } from "../route"
 import { useApp } from "../store"
 import { HeroScene } from "./HeroScene"
 import { Icon } from "./Icon"
+import { LayerArt } from "./LayerArt"
 import { Link } from "./Link"
 
 const FIRST = "deploy-an-app"
 
-const ABOUT: Record<Category, string> = {
-  network: "Packets on the wire: veth pairs, the VXLAN overlay, Services, DNS, Ingress, NetworkPolicy and service meshes.",
-  node: "What the kubelet and containerd do on one machine: images, namespaces, cgroups, probes and volumes.",
-  control: "The API server, etcd, watches, the scheduler and the controllers that keep reconciling.",
-  app: "The workloads you write YAML for: rollouts, autoscaling, config, StatefulSets and Jobs.",
-  security: "Who may do what, and how you find out when someone does something else: RBAC, ServiceAccounts and Falco's alerts.",
+/** The floors of the stack, top to bottom, then security, which belongs to all of them. */
+const FLOORS: Record<Category, string> = {
+  app: "The workloads you write YAML for",
+  control: "The API server, etcd and the controllers",
+  node: "The kubelet and containerd on one machine",
+  network: "Packets on the wire",
+  security: "Who may do what, and alerts on the rest",
 }
 
 const HOW: [string, string][] = [
@@ -88,28 +90,31 @@ export function Home() {
         </section>
 
         <section className="home-section" aria-labelledby="topics-title">
-          <h2 id="topics-title" className="home-h2">What the lessons cover</h2>
-          <ul className="topics">
-            {CATEGORIES.map((category) => {
+          <h2 id="topics-title" className="home-h2">{LESSONS.length} lessons, from the app down to the wire</h2>
+          <ul className="floors">
+            {(Object.entries(FLOORS) as [Category, string][]).map(([category, about]) => {
               const lessons = LESSONS.filter((l) => l.category === category)
               return (
-                <li key={category} className="topic">
-                  <div className="topic-head">
-                    <h3>{CATEGORY_NAME[category]}</h3>
-                    <span className="topic-count">{lessons.length} lessons</span>
+                <li key={category} className="floor-row">
+                  <LayerArt category={category} />
+                  <div className="floor-body">
+                    <div className="floor-label">
+                      <h3>
+                        <Link to={LIBRARY_PATH} onClick={browse(category)}>
+                          {CATEGORY_NAME[category]} <span className="sr-only">lessons</span>
+                          <Icon name="right" size={13} />
+                        </Link>
+                      </h3>
+                      <p>{about}</p>
+                    </div>
+                    <ul className="floor-lessons" style={{ "--rows": Math.ceil(lessons.length / 3) } as CSSProperties}>
+                      {lessons.map((l) => (
+                        <li key={l.id}>
+                          <Link to={lessonPath(l.id)}>{l.title}</Link>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <p>{ABOUT[category]}</p>
-                  <ul className="topic-lessons">
-                    {lessons.slice(0, 3).map((l) => (
-                      <li key={l.id}>
-                        <Link to={lessonPath(l.id)}>{l.title}</Link>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link className="topic-all" to={LIBRARY_PATH} onClick={browse(category)}>
-                    All {CATEGORY_NAME[category].toLowerCase()} lessons
-                    <Icon name="right" size={13} />
-                  </Link>
                 </li>
               )
             })}

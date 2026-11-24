@@ -490,26 +490,38 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 @keyframes cable-in { from { opacity: 0; } }
 .home-inner { max-width: 1200px; margin: 0 auto; padding: 0 24px 64px; }
 .home-section { padding-top: 40px; margin-top: 40px; border-top: 1px solid var(--line); }
-.home-h2 { font-size: 20px; font-weight: 500; letter-spacing: -.01em; margin-bottom: 16px; }
+.home-h2 { font-size: 20px; font-weight: 500; letter-spacing: -.01em; margin-bottom: 16px; text-wrap: balance; }
 .how { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
 .how-n { font-family: var(--mono); font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; }
 .how h3 { margin-top: 8px; font-size: 15px; font-weight: 500; }
 .how p { margin-top: 4px; color: var(--dim); }
-/* five topics: three, then two */
-.topics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.topics .topic { grid-column: span 2; }
-.topics .topic:nth-child(n + 4) { grid-column: span 3; }
-.topic { display: flex; flex-direction: column; gap: 8px; padding: 20px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
-.topic-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.topic-head h3 { font-size: 15px; font-weight: 500; }
-.topic-count { font-family: var(--mono); font-size: 12px; color: var(--faint); white-space: nowrap; }
-.topic > p { color: var(--dim); font-size: 13px; }
-.topic-lessons { display: flex; flex-direction: column; gap: 0; padding-top: 8px; border-top: 1px solid var(--line); }
-.topic-lessons a { display: block; padding: 4px 8px; margin: 0 -8px; border-radius: 4px; font-size: 14px; color: var(--text); text-decoration: none; }
-.topic-lessons a:hover { background: var(--raised); }
-.topic-lessons a, .topic-all { transition: background-color .15s, color .15s; }
-.topic-all { margin-top: auto; padding-top: 8px; display: inline-flex; align-items: center; gap: 4px; font-size: 13px; font-weight: 500; color: var(--dim); text-decoration: none; }
-.topic-all:hover { color: var(--accent-text); }
+/* The stack, taken apart: each floor is level with the rule that starts at its right corner, and dashed
+   guides join it to the floor below. --w sizes it all; the numbers come from LayerArt's viewBox (226 × 168,
+   with the floor's corners 92 below its top). */
+.floors { --w: 192px; --up: calc(var(--w) * 92 / 226); padding-top: var(--up); }
+.floor-row { position: relative; min-height: calc(var(--w) * .74); padding-left: var(--w); }
+.floor-row:last-child { min-height: calc(var(--w) * .34); margin-top: 32px; }
+.floor-row .layer-art { position: absolute; left: 0; top: calc(var(--up) * -1); width: var(--w); margin: 0; }
+.floor-row .slab polygon { transition: fill .15s, stroke .15s; }
+.floor-row:is(:hover, :focus-within) .slab polygon { stroke: var(--accent-text); }
+.floor-row:is(:hover, :focus-within) .slab .f-t { fill: var(--iso-hot-right); }
+/* security sits apart, so the last guides end at the wire */
+.floor-row:nth-last-child(n + 3)::before, .floor-row:nth-last-child(n + 3)::after { content: ""; position: absolute; top: 6px; height: calc(100% - 6px); border-left: 1px dashed var(--line-strong); }
+.floor-row::before { left: 1px; }
+.floor-row::after { left: calc(var(--w) - 2px); }
+.floor-body { display: grid; grid-template-columns: 192px minmax(0, 1fr); gap: 0 32px; padding: 12px 0 24px 32px; border-top: 1px solid var(--line); }
+.floor-label h3 { font-size: 15px; font-weight: 500; line-height: 24px; }
+.floor-label a { display: inline-flex; align-items: center; gap: 4px; color: var(--text); text-decoration: none; transition: color .15s; }
+.floor-label .ico { color: var(--dim); }
+.floor-label a:hover .ico { color: inherit; }
+/* the drawing is part of its floor's link */
+.floor-label a::after { content: ""; position: absolute; left: 0; top: calc(var(--up) * -1); width: var(--w); height: calc(var(--w) * .74); }
+.floor-label a:hover { color: var(--accent-text); }
+.floor-label p { font-size: 13px; line-height: 20px; color: var(--dim); text-wrap: balance; }
+/* reads down each column, like the lessons page */
+.floor-lessons { display: grid; grid-auto-flow: column; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), auto); align-content: start; gap: 4px 16px; margin-top: -2px; }
+.floor-lessons a { display: block; padding: 2px 8px; margin: 0 -8px; border-radius: 4px; line-height: 24px; color: var(--text); text-decoration: none; transition: background-color .15s; }
+.floor-lessons a:hover { background: var(--raised); }
 .cluster-facts { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 3fr); gap: 32px; }
 .cluster-facts .sub { color: var(--dim); }
 .facts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 24px; }
@@ -577,9 +589,9 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 }
 @media (max-width: 1000px) {
   .hero { grid-template-columns: minmax(0, 1fr); padding-top: 32px; }
-  .topics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .topics .topic, .topics .topic:nth-child(n + 4) { grid-column: auto; }
-  .topics .topic:last-child:nth-child(odd) { grid-column: 1 / -1; }
+  .floors { --w: 160px; }
+  .floor-body { grid-template-columns: minmax(0, 1fr); gap: 12px; padding-left: 24px; }
+  .floor-lessons { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: none; }
   .cluster-facts { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .library-group { gap: 0 32px; }
   .lesson-list { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
@@ -609,7 +621,11 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .lesson-item { padding: 0; }
   .hero { padding: 24px 16px; gap: 20px; }
   .home-inner { padding: 0 16px 40px; }
-  .how, .topics, .facts-grid { grid-template-columns: minmax(0, 1fr); }
+  .floors { --w: 96px; }
+  .floor-body { padding-left: 16px; }
+  .floor-lessons { grid-template-columns: minmax(0, 1fr); row-gap: 0; }
+  .floor-lessons a { padding: 6px 8px; }
+  .how, .facts-grid { grid-template-columns: minmax(0, 1fr); }
   .hero-actions .btn { flex: 1 1 100%; }
   /* the scene draws at about half size here: drop the addresses and grow the names so they stay readable */
   .hero-art .tag-s { display: none; }
