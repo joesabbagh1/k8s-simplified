@@ -9,7 +9,7 @@ import { LAYERS } from "../data/layers"
 import type { ActorId, ClusterEvent, Lesson, Level, PodSlot, Resource } from "../data/types"
 import type { Point } from "../iso/iso"
 import { useReducedMotion } from "../hooks"
-import { podsAt, resourcesAt, timeline } from "../playback"
+import { CREATE_MS, createdBy, podsAt, resourcesAt, timeline } from "../playback"
 import { useExploreCamera } from "../scene/camera"
 import { CARRY_MS, DEPTH } from "../scene/transition"
 import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
@@ -74,7 +74,7 @@ function CableLine({ level, cable, on }: { level: Level; cable: Cable; on: boole
 }
 
 /** An ownership edge between a card and what it owns: a thin dashed L on the floor, arrow at the owned end. */
-function OwnLink({ a, b, on }: { a: Actor; b: Actor; on: boolean }) {
+function OwnLink({ a, b, on, delay }: { a: Actor; b: Actor; on: boolean; delay: number }) {
   const pts = screenRoute(a.level, ownRoute(a, b), a, b)
   const [p, q] = [pts[pts.length - 2], pts[pts.length - 1]]
   const len = Math.hypot(q[0] - p[0], q[1] - p[1]) || 1
@@ -82,7 +82,7 @@ function OwnLink({ a, b, on }: { a: Actor; b: Actor; on: boolean }) {
   const head = (ang: number) => [q[0] - 7 * (ux * Math.cos(ang) - uy * Math.sin(ang)), q[1] - 7 * (uy * Math.cos(ang) + ux * Math.sin(ang))]
   const [h1, h2] = [head(0.5), head(-0.5)]
   return (
-    <g className="own" data-on={on || undefined}>
+    <g className="own" data-on={on || undefined} style={{ "--born": `${delay}ms` } as CSSProperties}>
       <path className="own-line" d={d(pts)} />
       <path d={`M${h1[0].toFixed(1)} ${h1[1].toFixed(1)} L${q[0].toFixed(1)} ${q[1].toFixed(1)} L${h2[0].toFixed(1)} ${h2[1].toFixed(1)}`} />
     </g>
@@ -143,7 +143,7 @@ function useProgress(key: string | number, duration: number, enabled: boolean, o
 }
 
 /** The cable an event travels, lighting up behind its packet. Drawn under the actors. */
-function Trail({ flight, event }: { flight: Flight; event: ClusterEvent }) {
+function Trail({ flight, event }: { flight: Pick<Flight, "duration"> & { key: string | number }; event: ClusterEvent }) {
   const ref = useRef<SVGPathElement>(null)
   const { pts } = useFlightRoute(event)
   useProgress(flight.key, flight.duration, pts.length > 1, (t) => ref.current?.style.setProperty("stroke-dashoffset", String(1 - t)))
@@ -154,7 +154,7 @@ function Trail({ flight, event }: { flight: Flight; event: ClusterEvent }) {
 const clip = (text: string, max = 44) => (text.length > max ? `${text.slice(0, max - 1)}…` : text)
 
 /** The event in flight: a packet that travels the cables from one actor to another, or a ring that pulses on one. */
-function Marker({ flight, event }: { flight: Flight; event: ClusterEvent }) {
+function Marker({ flight, event }: { flight: Pick<Flight, "duration"> & { key: string | number }; event: ClusterEvent }) {
   const ref = useRef<SVGGElement>(null)
   const textRef = useRef<SVGTextElement>(null)
   const rectRef = useRef<SVGRectElement>(null)
@@ -244,7 +244,7 @@ function ActorNode({ actor, focused, dimmed, slots, onHover }: {
 }
 
 /** A Kubernetes object (Deployment, ReplicaSet, Service…) drawn as a card, materialized by the event that touched it. */
-function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover }: {
+function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, delay, onHover }: {
   actor: Actor
   res: Resource
   focused: boolean
@@ -252,6 +252,8 @@ function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover 
   /** number of the event that last touched this card */
   badge?: number
   badgeColor: string
+  /** how long after its event lands the card appears, in milliseconds */
+  delay: number
   onHover: (a: Actor | null) => void
 }) {
   const art = useMemo(() => actor.art(), [actor])
@@ -262,6 +264,7 @@ function ResourceNode({ actor, res, focused, dimmed, badge, badgeColor, onHover 
       data-state={res.state ?? "active"}
       data-on={focused || undefined}
       data-dim={dimmed || undefined}
+      style={{ "--born": `${delay}ms` } as CSSProperties}
       onPointerEnter={() => onHover(actor)}
       onPointerLeave={() => onHover(null)}
     >
@@ -385,6 +388,22 @@ function ClusterScene() {
   const lastEvent = revealed > 0 ? events[revealed - 1] : undefined
   const touched = new Set(Object.entries(lastEvent?.res ?? {}).filter(([, r]) => r !== null).map(([id]) => id))
 
+  // a card created somewhere other than where its event landed: a marker carries it the rest of the way
+  const landed = useApp((s) => s.landed)
+  const reduced = useReducedMotion()
+  const origin = lastEvent?.path?.[1]
+  const creating =
+    lastEvent && landed === lastEvent.id && origin && onScreen(origin) && !reduced
+      ? createdBy(lesson, lastEvent).filter((id) => id !== origin && resIds.has(id))
+      : []
+  const createMs = CREATE_MS / speed
+  const births = creating.map((id) => ({
+    flight: { key: `born-${lastEvent!.id}-${id}`, duration: createMs },
+    event: { ...lastEvent!, title: resources[id].name, path: [origin, id] as [ActorId, ActorId] },
+  }))
+  const bornDelay = (id: ActorId) => (creating.includes(id) ? createMs : 0)
+  const bornStyle = { "--born": `${createMs}ms` } as CSSProperties
+
   // the reader can take the camera: scroll to zoom, drag to move; a new level takes it back
   const svgRef = useRef<SVGSVGElement | null>(null)
   const cam = useExploreCamera(autoBox, scene.level, svgRef)
@@ -419,7 +438,10 @@ function ClusterScene() {
               return <circle key={p.join()} className="joint" cx={cx} cy={cy} r={2.2} />
             })}
             {ownLinks.map(([a, b]) => (
-              <OwnLink key={`own-${a}-${b}`} a={actorById(a)!} b={actorById(b)!} on={scene.focus.has(a) && scene.focus.has(b)} />
+              <OwnLink key={`own-${a}-${b}`} a={actorById(a)!} b={actorById(b)!} on={scene.focus.has(a) && scene.focus.has(b)} delay={Math.max(bornDelay(a), bornDelay(b))} />
+            ))}
+            {births.map((b) => (
+              <g key={b.flight.key} className="birth" style={bornStyle}><Trail flight={b.flight} event={b.event} /></g>
             ))}
             {flight && flying && <Trail key={`trail-${flight.key}`} flight={flight} event={flying} />}
             {carried && <Trail key={`trail-${carried.flight.key}`} flight={carried.flight} event={carried.event} />}
@@ -442,13 +464,17 @@ function ClusterScene() {
                   actor={actor}
                   res={res}
                   focused={scene.focus.has(id)}
-                  dimmed={scene.dim && !scene.focus.has(id)}
+                  dimmed={scene.dim && !scene.focus.has(id) && !touched.has(id)}
+                  delay={bornDelay(id)}
                   badge={touched.has(id) && lastEvent ? lastEvent.index + 1 : undefined}
                   badgeColor={lastEvent ? LAYERS[lastEvent.layer].color : ""}
                   onHover={(a) => !cam.panning && setHover(a)}
                 />
               )
             })}
+            {births.map((b) => (
+              <g key={b.flight.key} className="birth" style={bornStyle}><Marker flight={b.flight} event={b.event} /></g>
+            ))}
             {flight && flying && <Marker key={flight.key} flight={flight} event={flying} />}
             {carried && <Marker key={carried.flight.key} flight={carried.flight} event={carried.event} />}
           </g>
