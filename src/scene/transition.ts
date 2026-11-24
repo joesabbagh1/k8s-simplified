@@ -2,7 +2,7 @@ import type { ActorId, Lesson, Level } from "../data/types"
 import { timeline } from "../playback"
 import { actorById, ACTORS, levelPath } from "./world"
 
-export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2, mesh: 1, ambient: 1 }
+export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2, mesh: 1, ambient: 1, falco: 1 }
 
 export interface Transit {
   /** where the marker sets off, on the current level */

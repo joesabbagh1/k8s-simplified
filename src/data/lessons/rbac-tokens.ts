@@ -9,7 +9,7 @@ export const rbacTokens: Lesson = {
   id: "rbac-tokens",
   title: "RBAC and ServiceAccounts",
   subtitle: "Who can do what",
-  category: "app",
+  category: "security",
   seo: {
     title: "Kubernetes RBAC and ServiceAccount tokens",
     description: "How a Kubernetes Pod proves who it is with a projected ServiceAccount token, and how Roles and RoleBindings decide each API request.",
@@ -233,11 +233,11 @@ export const rbacTokens: Lesson = {
   ],
   summary: {
     title: "PROVEN AND CHECKED",
-    body: "Identity and permission only meet at request time. The Pod's whole identity is a JWT the kubelet mints, projects and refreshes - it expires, and it is bound to one Pod. The API server verifies it, then asks RBAC whether the union of the subject's bindings grants this verb on this resource; when no rule matches, the default deny answers 403. That was the last mechanism in the box: every lesson in this series has been some component watching, asking or answering through this one server.",
+    body: "Identity and permission only meet at request time. The Pod's whole identity is a JWT the kubelet mints, projects and refreshes - it expires, and it is bound to one Pod. The API server verifies it, then asks RBAC whether the union of the subject's bindings grants this verb on this resource; when no rule matches, the default deny answers 403. But RBAC only sees API requests: what a program does inside its container is out of its sight, and that is where the next lesson goes.",
     facts: [
       ["IDENTITY", "projected JWT · 3607 s · refreshed at 80 %"],
       ["AUTHZ", "allow-only · union of bindings · default deny"],
-      ["WRAP-UP", "every lesson, done"],
+      ["NEXT", "Runtime alerts with Falco"],
     ],
   },
 }
