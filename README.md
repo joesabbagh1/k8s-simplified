@@ -50,7 +50,7 @@ Production builds include the cookieless [Cloudflare Web Analytics](https://deve
 
 ## Contributing
 
-New lessons, fixes and corrections are welcome. Fork the repo, add or edit a file in `src/data/lessons/` (see "Writing a lesson" above), make sure `npm test` and `npm run typecheck` pass, and open a pull request. If you spot something technically wrong in a lesson, an issue is just as helpful.
+New lessons, fixes and corrections are welcome from anyone. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to set up, what to check and how to open a pull request. If you spot something technically wrong in a lesson, an [issue](https://github.com/joesabbagh1/kubelearn/issues/new) is just as helpful.
 
 ## License
 
