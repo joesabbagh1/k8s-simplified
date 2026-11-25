@@ -183,7 +183,7 @@ export const nodeGoesDark: Lesson = {
     facts: [
       ["DETECTION", "40 s (lease deadline)"],
       ["GRACE", "300 s (tolerationSeconds)"],
-      ["NEXT", "Graceful shutdown"],
+      ["NEXT", "A node joins the cluster"],
     ],
   },
 }
