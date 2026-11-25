@@ -197,7 +197,7 @@ export const mountingVolume: Lesson = {
     facts: [
       ["CHAIN", "PVC → PV → attach → stage → publish → mount"],
       ["SLOWEST", "attach 1.5 s · format 0.8 s"],
-      ["NEXT", "List and watch"],
+      ["NEXT", "A Pod asks for a GPU"],
     ],
   },
 }
