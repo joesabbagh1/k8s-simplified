@@ -197,6 +197,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .res.kind-policy { --rk: var(--l-control); }
 .res.kind-policyreport { --rk: var(--l-state); }
 .res.kind-networkpolicy { --rk: var(--l-net); }
+.res.kind-csr { --rk: var(--l-api); }
 .res.kind-pdb { --rk: var(--l-drop); }
 .res.kind-hpa { --rk: #f0abfc; }
 :root[data-theme="light"] .res.kind-hpa { --rk: #a21caf; }
@@ -216,6 +217,8 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .res { animation: card-in .5s cubic-bezier(.2, .7, .2, 1) var(--born) backwards; }
   .res[data-state="creating"] { animation: card-in .5s cubic-bezier(.2, .7, .2, 1) var(--born) backwards, blink 2.4s ease-in-out calc(var(--born) + .5s) infinite; }
   .own { animation: own-in .4s ease-out var(--born) backwards; }
+  /* a node that joins mid-lesson grows into place like a new card */
+  .actor[data-joins] { transform-box: fill-box; transform-origin: 50% 50%; animation: card-in .5s cubic-bezier(.2, .7, .2, 1) backwards; }
   /* the marker that carries a new card to its place, gone once the card is there */
   .birth { animation: birth-out .25s ease-out var(--born) forwards; }
 }

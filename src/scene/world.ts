@@ -1,4 +1,4 @@
-import type { ActorId, Level, PodSlot, Resource, ResourceKind } from "../data/types"
+import type { ActorId, Level, NodeId, PodLayout, Resource, ResourceKind } from "../data/types"
 import { apiServer, chip, controllerManager, etcd, iso, laptop, loadBalancer, pod, rack, resourceCard, scheduler, workerNode, type Point } from "../iso/iso"
 
 export const WORLD = { width: 1000, height: 640 }
@@ -21,11 +21,13 @@ export interface Actor {
   label: [dx: number, dy: number, anchor: Anchor]
   /** what the camera must keep in view, relative to pos: [left, top, right, bottom] */
   box: [number, number, number, number]
-  art: (slots?: PodSlot[]) => string
+  art: (slots?: PodLayout[NodeId]) => string
   /** the level this actor opens when clicked */
   opens?: Level
   /** set for Kubernetes-object cards: they render only while a lesson's events have them on screen */
   kind?: ResourceKind
+  /** set for a node that joins the cluster during a lesson: it is drawn once the lesson's Pod layout lists it */
+  joins?: boolean
 }
 
 const S = 4.6
@@ -113,6 +115,16 @@ const CLUSTER: Def[] = [
     id: "node2", level: "cluster", g: [36, -26], foot: [37, 37], name: "node-2", sub: "10.0.1.12 · Pods 10.244.2.0/24", opens: "node2",
     about: "A worker node: a machine that runs Pods. Click to look inside.",
     label: [76, -2, "start"], box: [-90, -60, 250, 60], art: (slots) => workerNode(S, slots),
+  },
+  {
+    id: "node3", level: "cluster", g: [36, -62], foot: [37, 37], name: "node-3", sub: "10.0.1.13 · Pods 10.244.3.0/24", joins: true,
+    about: "A worker node that joins the cluster during the lesson: a new machine, with nothing on it at first.",
+    label: [76, -2, "start"], box: [-90, -60, 250, 60], art: (slots) => workerNode(S, slots),
+  },
+  {
+    id: "cloud", level: "cluster", g: [84, -62], foot: [18, 18], name: "Cloud API", sub: "AWS · eu-west-1",
+    about: "The cloud provider's API: Auto Scaling groups and EC2. It makes and removes the machines; it knows nothing about Pods.",
+    label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.85, "AWS")),
   },
 ]
 
@@ -473,7 +485,7 @@ export const ACTORS: Actor[] = [
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", pdb: "PDB",
+  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -509,6 +521,7 @@ const RESOURCES: Actor[] = [
   resource("kyv-gpol", "policy", "default-deny", "GeneratingPolicy", "A GeneratingPolicy: puts a NetworkPolicy in every new namespace.", [-4, -68], [0, -52, "middle"]),
   resource("kyv-report", "policyreport", "PolicyReport tools", "results", "What the policies say about one object as it is now. Kyverno writes it; you read it with kubectl.", [28, -100], [0, -52, "middle"]),
   resource("kyv-netpol", "networkpolicy", "NetworkPolicy", "team-a/default-deny", "Created by Kyverno, not by you: blocks incoming traffic to every Pod in team-a until something allows it.", [-4, -100], [0, -52, "middle"]),
+  resource("node3-csr", "csr", "CSR csr-7bq4z", "node-3's client certificate", "A CertificateSigningRequest: the kubelet's public key and the name it wants, waiting for a controller to approve and sign it.", [-4, -68], [0, -52, "middle"]),
   resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
 ]
 
@@ -550,6 +563,9 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("api", "node1", [0, 0], [23, 0], [23, 10], [36, 10]),
     cable("api", "node2", [0, 0], [23, 0], [23, -26], [36, -26]),
     cable("node1", "node2", [36, 10], [36, -26]),
+    cable("api", "node3", [0, 0], [23, 0], [23, -62], [36, -62]),
+    cable("node2", "node3", [36, -26], [36, -62]),
+    cable("cloud", "node3", [84, -62], [36, -62]),
     cable("lb", "node1", [80, -8], [54, -8], [54, 10], [36, 10]),
     cable("lb", "node2", [80, -8], [54, -8], [54, -26], [36, -26]),
     cable("visitor", "lb", [80, 31], [80, -8]),
@@ -742,6 +758,9 @@ export const expand = (ids: ActorId[]): ActorId[] => ids.flatMap((id) => GROUPS.
 /** Who stands on a level's floor. When a lesson leaves some of them out, the floor shrinks to the rest. */
 const ON_FLOOR: Partial<Record<Level, ActorId[]>> = { cluster: ["cp", "node1", "node2"] }
 
+/** Who stands on the floor only in the lessons that show them: the floor grows to take them in. */
+const GROWS: Partial<Record<Level, ActorId[]>> = { cluster: ["node3"] }
+
 /** The ground a group or actor covers, as [x0, y0, x1, y1]. */
 function covers(id: ActorId, margin = 0): Box {
   const plate = GROUPS.find((g) => g.id === id)?.floor
@@ -753,6 +772,19 @@ function covers(id: ActorId, margin = 0): Box {
 
 /** The floor as a lesson shows it: the full plate, or one fitted around the members it keeps. */
 export function floorFor(level: Level, shown: Set<ActorId>): Floor {
+  const base = fitted(level, shown)
+  const extra = (GROWS[level] ?? []).filter((id) => shown.has(id)).map((id) => covers(id, 12))
+  if (!extra.length) return base
+  return {
+    ...base,
+    x0: Math.min(base.x0, ...extra.map((b) => b[0])),
+    y0: Math.min(base.y0, ...extra.map((b) => b[1])),
+    x1: Math.max(base.x1, ...extra.map((b) => b[2])),
+    y1: Math.max(base.y1, ...extra.map((b) => b[3])),
+  }
+}
+
+function fitted(level: Level, shown: Set<ActorId>): Floor {
   const full = FLOORS[level]
   const on = ON_FLOOR[level] ?? []
   const boxes = on.filter((id) => expand([id]).every((m) => shown.has(m))).map((id) => covers(id, 12))
@@ -874,13 +906,16 @@ export const RESOURCE_LINKS: [ActorId, ActorId][] = [
   ["kyv-vpol", "kyv-report"], ["kyv-gpol", "kyv-netpol"],
 ]
 
+/** The worker nodes, in the order they joined. */
+export const NODES: NodeId[] = ["node1", "node2", "node3"]
+
 /** Which worker nodes each workload card's Pods currently sit on, derived from the Pod-slot layout.
  *  With two ReplicaSets on screen the v1 slots belong to the first and v2/starting to the second.
  *  StatefulSet and Job lessons keep the standing web Pods in v1, so their own Pods are the v2/starting slots. */
-export function workloadNodes(resources: Record<string, Resource>, pods: Partial<Record<"node1" | "node2", PodSlot[]>>): [ActorId, ActorId][] {
+export function workloadNodes(resources: Record<string, Resource>, pods: PodLayout): [ActorId, ActorId][] {
   const twoRs = Object.values(resources).filter((r) => r.kind === "replicaset").length > 1
   const edges: [ActorId, ActorId][] = []
-  for (const node of ["node1", "node2"] as const) {
+  for (const node of NODES) {
     const slots = pods[node] ?? []
     const v1 = slots.includes("v1") || slots.includes("terminating")
     const v2 = slots.includes("v2") || slots.includes("starting")
