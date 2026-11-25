@@ -15,6 +15,7 @@ import { imagePull } from "./image-pull"
 import { probesRestarts } from "./probes-restarts"
 import { oomKilled } from "./oom-killed"
 import { mountingVolume } from "./mounting-volume"
+import { gpuDevicePlugin } from "./gpu-device-plugin"
 import { listAndWatch } from "./list-and-watch"
 import { theScheduler } from "./the-scheduler"
 import { reconcileLoops } from "./reconcile-loops"
@@ -46,6 +47,7 @@ export const LESSONS: Lesson[] = [
   probesRestarts,
   oomKilled,
   mountingVolume,
+  gpuDevicePlugin,
   listAndWatch,
   theScheduler,
   reconcileLoops,

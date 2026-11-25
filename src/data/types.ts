@@ -4,8 +4,8 @@ export type Category = "network" | "node" | "control" | "app" | "security"
 
 /** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod,
  *  two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"), the stops a
- *  write makes inside the API server ("admission"), and a node as Falco watches it. */
-export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "admission" | "falco"
+ *  write makes inside the API server ("admission"), a node as Falco watches it, and node-2 with its GPU ("gpu"). */
+export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "admission" | "falco" | "gpu"
 
 /** An actor id from src/scene/world.ts, such as "api", "node2" or "n2.kubelet". */
 export type ActorId = string
@@ -89,6 +89,8 @@ export interface Resource {
   /** one-line status under the name, e.g. "replicas 3/3" */
   sub?: string
   state?: "creating" | "active" | "terminating"
+  /** for a DaemonSet that runs on some nodes only: the nodes it runs on */
+  nodes?: NodeId[]
 }
 
 /** A snapshot of resource cards: keys not mentioned keep their previous value; null removes one. */

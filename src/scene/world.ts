@@ -47,6 +47,7 @@ const GEOMETRY: Record<Level, { origin: Point; k: number }> = {
   ambient: { origin: [500, 320], k: 0.78 },
   admission: { origin: [500, 320], k: 0.78 },
   falco: { origin: [500, 320], k: 0.78 },
+  gpu: { origin: [500, 320], k: 0.78 },
 }
 
 export const toScreen = (level: Level, [x, y]: Point): Point => {
@@ -423,6 +424,50 @@ const FALCO: Def[] = [
   },
 ]
 
+/** node-2 with its GPU: the kubelet and the device plugin it talks to, the runtime, and the card under the driver. */
+const GPU: Def[] = [
+  {
+    id: "gp.api", level: "gpu", g: [-90, -44], foot: [14, 14], name: "API server", sub: "10.0.0.10:6443",
+    about: "The way out to the control plane. The kubelet reports the node's GPUs to it and watches it for Pods.",
+    label: below(36), box: [-70, -60, 70, 60], art: memo(apiServer(S * 0.6)),
+  },
+  {
+    id: "gp.kubelet", level: "gpu", g: [-30, -44], foot: [21, 16], name: "kubelet", sub: "device manager · kubelet.sock",
+    about: "The node agent. Its device manager serves the Registration socket, keeps the list of devices each plugin reports, and picks a device for each container that asks for one.",
+    label: below(36), box: [-80, -50, 80, 60], art: memo(chip(S, 9, 7, 3, "kubelet")),
+  },
+  {
+    id: "gp.containerd", level: "gpu", g: [16, -44], foot: [25, 16], name: "containerd", sub: "CRI · reads CDI specs",
+    about: "The container runtime. Given a CDI device name, it looks the name up in the spec files and adds what they list to the container.",
+    label: below(36), box: [-80, -50, 80, 60], art: memo(chip(S, 11, 7, 3, "containerd")),
+  },
+  {
+    id: "gp.llm", level: "gpu", g: [56, -10], foot: [20, 20], name: "llm", sub: "nvidia.com/gpu: 1",
+    about: "A Pod that asked for one GPU. Its container sees /dev/nvidia0 and the driver's libraries, and nothing else of the node's hardware.",
+    label: [36, -4, "start"], box: [-60, -65, 170, 45], art: memo(pod(S * 0.85)),
+  },
+  {
+    id: "gp.plugin", level: "gpu", g: [-30, 6], foot: [21, 16], name: "nvidia-device-plugin", sub: "a Pod · gRPC on its own socket",
+    about: "NVIDIA's device plugin, one Pod per GPU node. It finds the GPUs through the driver, reports them to the kubelet and says how to hand one to a container.",
+    label: below(36), box: [-90, -50, 90, 60], art: memo(chip(S, 9, 7, 4, "plugin", "hot")),
+  },
+  {
+    id: "gp.cdi", level: "gpu", g: [16, 6], foot: [16, 12], name: "CDI spec", sub: "/var/run/cdi/*.json",
+    about: "A Container Device Interface file: for each device name, the device nodes, libraries and environment a container needs to use it.",
+    label: below(30), box: [-80, -40, 80, 55], art: memo(chip(S, 7, 5, 1.6, "CDI")),
+  },
+  {
+    id: "gp.driver", level: "gpu", g: [-30, 38], foot: [21, 14], name: "NVIDIA driver", sub: "kernel modules · 580.95",
+    about: "The kernel modules nvidia, nvidia-uvm and nvidia-modeset, and the user-space libraries that go with them. Nothing can use the GPU without them.",
+    label: below(34), box: [-80, -40, 80, 60], art: memo(chip(S, 9, 6, 2.2, "nvidia.ko")),
+  },
+  {
+    id: "gp.gpu", level: "gpu", g: [16, 38], foot: [25, 16], name: "NVIDIA L4", sub: "/dev/nvidia0 · 24 GB",
+    about: "The GPU itself, a PCIe card. Linux shows it as the device file /dev/nvidia0 once the driver is loaded.",
+    label: below(36), box: [-80, -45, 80, 60], art: memo(chip(S, 11, 7, 2, "L4", "hot")),
+  },
+]
+
 const place = (d: Def): Actor => ({ ...d, pos: toScreen(d.level, d.g) })
 
 export const ACTORS: Actor[] = [
@@ -434,6 +479,7 @@ export const ACTORS: Actor[] = [
   ...AMBIENT,
   ...ADMISSION,
   ...FALCO,
+  ...GPU,
 ].map(place)
 
 const BADGE: Record<ResourceKind, string> = {
@@ -460,6 +506,7 @@ const RESOURCES: Actor[] = [
   resource("web-svc", "service", "Service web", "10.96.120.15:80", "A stable virtual IP and DNS name. Its EndpointSlices list the Pod IPs that currently answer.", [44, 56]),
   resource("shop-ing", "ingress", "Ingress shop", "shop.example.com", "Layer-7 routing rules: hosts and paths to Services, served by an ingress controller behind a load balancer.", [44, 84]),
   // everything else: a row behind node-2, one lesson at a time
+  resource("gpu-plugin-ds", "daemonset", "nvidia-device-plugin", "DaemonSet · gpu-operator", "Runs the device plugin on every node labelled as having an NVIDIA GPU, and on no other node.", [28, -68]),
   resource("falco-ds", "daemonset", "DaemonSet falco", "ns falco", "Runs one Falco Pod on every node it may run on, and adds one when a node joins.", [28, -68]),
   resource("db-sts", "statefulset", "StatefulSet db", "replicas 3", "Like a Deployment, but with stable identities: db-0, db-1, db-2 start one at a time and keep their volumes.", [28, -68]),
   resource("uploads-pvc", "pvc", "PVC uploads", "10Gi · fast-nvme", "A PersistentVolumeClaim: the app's ask for storage. The provisioner fulfils it with a volume that outlives the Pod.", [28, -68]),
@@ -564,6 +611,17 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("g.validate", "g.kyverno", [52, 14], [52, -9], [16, -9], [16, -30]),
     cable("g.kyverno", "g.engine", [16, -30], [52, -30]),
   ],
+  gpu: [
+    cable("gp.api", "gp.kubelet", [-90, -44], [-30, -44]),
+    cable("gp.kubelet", "gp.containerd", [-30, -44], [16, -44]),
+    cable("gp.kubelet", "gp.plugin", [-30, -44], [-30, 6]),
+    cable("gp.containerd", "gp.cdi", [16, -44], [16, 6]),
+    cable("gp.containerd", "gp.llm", [16, -44], [56, -44], [56, -10]),
+    cable("gp.plugin", "gp.cdi", [-30, 6], [16, 6]),
+    cable("gp.plugin", "gp.driver", [-30, 6], [-30, 38]),
+    cable("gp.driver", "gp.gpu", [-30, 38], [16, 38]),
+    cable("gp.llm", "gp.gpu", [56, -10], [56, 38], [16, 38]),
+  ],
   falco: [
     cable("f.web", "f.sys", [-88, -28], [-88, 40]),
     cable("f.sys", "f.probe", [-88, 40], [-44, 40]),
@@ -590,6 +648,7 @@ export const JOINTS: Record<Level, Point[]> = {
   ambient: [],
   admission: [],
   falco: [],
+  gpu: [],
 }
 
 /** The plate each level stands on, in ground units, and what is written on it (one line per \\n). */
@@ -602,6 +661,7 @@ export const FLOORS: Record<Level, { x0: number; x1: number; y0: number; y1: num
   ambient: { x0: -78, x1: 78, y0: -58, y1: 46, text: "the mesh · namespace default", at: [-74, 42.6] },
   admission: { x0: -84, x1: 106, y0: -55, y1: 44, text: "cluster", at: [84, 40.6] },
   falco: { x0: -110, x1: 66, y0: -52, y1: 66, text: "node-2 · 10.0.1.12", at: [18, 62.6] },
+  gpu: { x0: -70, x1: 76, y0: -58, y1: 68, text: "node-2 · 10.0.1.12", at: [36, 64.6] },
 }
 
 export type Floor = (typeof FLOORS)[Level]
@@ -619,6 +679,13 @@ export interface Group {
 }
 
 export const GROUPS: Group[] = [
+  {
+    id: "gp.hw", level: "gpu", name: "Kernel and hardware",
+    about: "The driver in node-2's kernel and the card it drives. Every container on the node shares this one kernel, so the driver is installed once, on the node.",
+    members: ["gp.driver", "gp.gpu"],
+    hub: "gp.driver",
+    floor: { x0: -48, x1: 36, y0: 26, y1: 60, text: "kernel and hardware", at: [-12, 57.6] },
+  },
   {
     id: "cp", level: "cluster", name: "Control plane",
     about: "The components that run the cluster: the API server, etcd, the scheduler and the controller manager. They decide what should run; the worker nodes run it.",
@@ -855,7 +922,7 @@ export function workloadNodes(resources: Record<string, Resource>, pods: PodLayo
     for (const [id, r] of Object.entries(resources)) {
       if (r.kind === "replicaset" && (twoRs ? (id === "web-rs" ? v1 : v2) : any)) edges.push([id, node])
       else if ((r.kind === "statefulset" || r.kind === "job") && v2) edges.push([id, node])
-      else if (r.kind === "daemonset" && r.state !== "creating") edges.push([id, node])
+      else if (r.kind === "daemonset" && r.state !== "creating" && (!r.nodes || r.nodes.includes(node))) edges.push([id, node])
       else if (r.kind === "service" && ready) edges.push([id, node])
     }
   }
@@ -871,6 +938,7 @@ export const LEVEL_NAME: Record<Level, string> = {
   ambient: "Mesh, ambient mode",
   admission: "Inside the API server",
   falco: "node-2, with Falco",
+  gpu: "node-2, with a GPU",
 }
 
 /** The chain of levels above and including this one, for the breadcrumb. */
