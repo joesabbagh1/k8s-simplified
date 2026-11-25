@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest"
-import { createdBy, lanesOf, timeline } from "../playback"
-import { actorById, expand, FLOORS, GROUPS, groundRoute } from "../scene/world"
+import { createdBy, lanesOf, podsAt, timeline } from "../playback"
+import { actorById, expand, floorFor, FLOORS, GROUPS, groundRoute } from "../scene/world"
 import { surfaceAfter, transitionAfter } from "../scene/transition"
 import { LESSONS, lessonById } from "./lessons"
 
@@ -18,7 +18,7 @@ test("every lesson is written", () => {
     "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf", "service-mesh-istio",
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "list-and-watch",
-    "the-scheduler", "reconcile-loops", "node-goes-dark",
+    "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins",
     "graceful-shutdown", "autoscaling", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies", "falco-alerts",
   ])
@@ -67,7 +67,8 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
 
   test("pod layouts fit on a node", () => {
     for (const layout of [lesson.pods, ...lesson.steps.map((s) => s.pods), ...events.map((e) => e.pods)]) {
-      for (const slots of Object.values(layout ?? {})) expect(slots.length).toBeLessThanOrEqual(4)
+      // a node that has left the cluster has no layout
+      for (const slots of Object.values(layout ?? {})) expect(slots?.length ?? 0).toBeLessThanOrEqual(4)
     }
   })
 
@@ -118,5 +119,25 @@ describe("the Kyverno lesson", () => {
     const { events } = timeline(lesson)
     const born = events.flatMap((e) => createdBy(lesson, e).map((id) => [id, e.path?.[1]]))
     expect(Object.fromEntries(born)).toEqual({ "kyv-vpol": "api", "kyv-report": "api", "kyv-mpol": "api", "kyv-gpol": "api", "kyv-netpol": "api" })
+  })
+})
+
+describe("the node-joins lesson", () => {
+  const lesson = lessonById("node-joins")!
+
+  test("node-3 is there from the moment its instance launches until it is terminated", () => {
+    const launched = lesson.steps.findIndex((s) => s.events.some((e) => e.pods?.node3))
+    expect(podsAt(lesson, -1).node3).toBeUndefined()
+    expect(podsAt(lesson, launched - 1).node3).toBeUndefined()
+    expect(podsAt(lesson, launched).node3).toBeDefined()
+    expect(podsAt(lesson, lesson.steps.length - 1).node3).toBeUndefined()
+  })
+
+  test("the cluster floor grows to take node-3 in", () => {
+    const two = new Set(expand(["cp", "node1", "node2"]))
+    const three = new Set([...two, "node3"])
+    expect(floorFor("cluster", two)).toEqual(FLOORS.cluster)
+    const [, y] = actorById("node3")!.g
+    expect(floorFor("cluster", three).y0).toBeLessThan(y - 8)
   })
 })

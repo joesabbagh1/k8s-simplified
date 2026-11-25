@@ -1,5 +1,5 @@
 const UPPER = new Set([
-  "ACK", "API", "ARP", "BPF", "CA", "CEL", "CNI", "CPU", "CRI", "DNAT", "DNS", "EDS", "FDB", "GET", "HBONE", "HPA", "HTTP", "ID", "IP", "JWT",
+  "ACK", "API", "ARP", "BPF", "AWS", "CA", "CEL", "CIDR", "CNI", "CPU", "CRI", "CSR", "DNAT", "DNS", "EDS", "FDB", "GET", "HBONE", "HPA", "HTTP", "ID", "IP", "IPAM", "JWT",
   "MAC", "MTU", "RSA", "SPIFFE", "NAT", "NXDOMAIN", "OK", "OOM", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
   "TTL", "UDP", "URL", "VIP", "VM", "VTEP", "VXLAN",
 ])
@@ -11,10 +11,12 @@ const PROPER: Record<string, string> = {
   CILIUM: "Cilium",
   CLIENTHELLO: "ClientHello",
   CLUSTERIP: "ClusterIP",
+  CERTIFICATESIGNINGREQUEST: "CertificateSigningRequest",
   CONFIGMAP: "ConfigMap",
   COREDNS: "CoreDNS",
   CRASHLOOPBACKOFF: "CrashLoopBackOff",
   DAEMONSET: "DaemonSet",
+  DAEMONSETS: "DaemonSets",
   DEPLOYMENT: "Deployment",
   DNSCONFIG: "dnsConfig",
   EBPF: "eBPF",
@@ -36,6 +38,7 @@ const PROPER: Record<string, string> = {
   NAMESPACE: "Namespace",
   NETWORKPOLICY: "NetworkPolicy",
   NODEPORT: "NodePort",
+  NODERESTRICTION: "NodeRestriction",
   OOMKILLED: "OOMKilled",
   PEERAUTHENTICATION: "PeerAuthentication",
   PERSISTENTVOLUMECLAIM: "PersistentVolumeClaim",
@@ -56,7 +59,7 @@ const PROPER: Record<string, string> = {
 }
 
 /** Words that are names written in lower case, so they never get a capital, even first. */
-const lowerName = (word: string) => /\d|[()_.]|:\S|^(etcd|istiod|ztunnel|mTLS|xDS|kubelet|kube-|eth|veth|cni|cali|runc|iptables|ndots|overlayfs|cgroups|clone|pivot|\/)/.test(word)
+const lowerName = (word: string) => /\d|[()_.]|:\S|^(etcd|istiod|ztunnel|mTLS|xDS|kubelet|kubeadm|kube-|flannel|eth|veth|cni|cali|runc|iptables|ndots|overlayfs|cgroups|clone|pivot|\/)/.test(word)
 
 /**
  * The lessons write step and event titles in capitals. This turns them into sentence case

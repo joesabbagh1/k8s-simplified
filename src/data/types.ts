@@ -58,7 +58,10 @@ export interface ClusterEvent {
 /** What a Pod slot on a worker node shows. */
 export type PodSlot = "other" | "v1" | "v2" | "starting" | "terminating"
 
-export type PodLayout = Partial<Record<"node1" | "node2", PodSlot[]>>
+/** The worker nodes. node-3 only exists in lessons where it joins the cluster. */
+export type NodeId = "node1" | "node2" | "node3"
+
+export type PodLayout = Partial<Record<NodeId, PodSlot[]>>
 
 /** The Kubernetes objects drawn as cards on the cluster view. */
 export type ResourceKind =
@@ -78,6 +81,7 @@ export type ResourceKind =
   | "policy"
   | "policyreport"
   | "networkpolicy"
+  | "csr"
 
 export interface Resource {
   kind: ResourceKind

@@ -19,6 +19,7 @@ import { listAndWatch } from "./list-and-watch"
 import { theScheduler } from "./the-scheduler"
 import { reconcileLoops } from "./reconcile-loops"
 import { nodeGoesDark } from "./node-goes-dark"
+import { nodeJoins } from "./node-joins"
 import { gracefulShutdown } from "./graceful-shutdown"
 import { autoscaling } from "./autoscaling"
 import { configmapsSecrets } from "./configmaps-secrets"
@@ -49,6 +50,7 @@ export const LESSONS: Lesson[] = [
   theScheduler,
   reconcileLoops,
   nodeGoesDark,
+  nodeJoins,
   gracefulShutdown,
   autoscaling,
   configmapsSecrets,
