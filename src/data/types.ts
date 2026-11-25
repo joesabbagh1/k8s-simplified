@@ -78,6 +78,7 @@ export type ResourceKind =
   | "policy"
   | "policyreport"
   | "networkpolicy"
+  | "pdb"
 
 export interface Resource {
   kind: ResourceKind
