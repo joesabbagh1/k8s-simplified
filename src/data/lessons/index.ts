@@ -21,6 +21,7 @@ import { theScheduler } from "./the-scheduler"
 import { reconcileLoops } from "./reconcile-loops"
 import { nodeGoesDark } from "./node-goes-dark"
 import { nodeJoins } from "./node-joins"
+import { upgradingTheCluster } from "./upgrading-the-cluster"
 import { gracefulShutdown } from "./graceful-shutdown"
 import { autoscaling } from "./autoscaling"
 import { configmapsSecrets } from "./configmaps-secrets"
@@ -53,6 +54,7 @@ export const LESSONS: Lesson[] = [
   reconcileLoops,
   nodeGoesDark,
   nodeJoins,
+  upgradingTheCluster,
   gracefulShutdown,
   autoscaling,
   configmapsSecrets,
