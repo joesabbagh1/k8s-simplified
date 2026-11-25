@@ -17,7 +17,7 @@ test("every lesson is written", () => {
     "pod-to-pod-same-node", "pod-to-pod-across-nodes", "pod-calls-service",
     "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf", "service-mesh-istio",
     "starting-a-container", "image-pull", "probes-restarts",
-    "oom-killed", "mounting-volume", "list-and-watch",
+    "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
     "the-scheduler", "reconcile-loops", "node-goes-dark",
     "graceful-shutdown", "autoscaling", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies", "falco-alerts",
