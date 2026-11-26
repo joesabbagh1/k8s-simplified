@@ -352,7 +352,7 @@ export const drainingANode: Lesson = {
       ["CORDON", "spec.unschedulable · NoSchedule taint"],
       ["EVICTION", "POST …/eviction · 200 or 429"],
       ["BUDGET", "spent before the delete · refilled by Ready Pods"],
-      ["NEXT", "Backing up and restoring etcd"],
+      ["NEXT", "Upgrading the cluster"],
     ],
   },
 }
