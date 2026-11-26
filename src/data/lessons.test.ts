@@ -19,7 +19,7 @@ test("every lesson is written", () => {
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
     "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster", "etcd-backup-restore",
-    "graceful-shutdown", "autoscaling", "configmaps-secrets",
+    "graceful-shutdown", "autoscaling", "keda-scale-to-zero", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies", "falco-alerts",
   ])
   expect(playable).toHaveLength(LESSONS.length)

@@ -83,6 +83,7 @@ export type ResourceKind =
   | "networkpolicy"
   | "csr"
   | "pdb"
+  | "scaledobject"
 
 export interface Resource {
   kind: ResourceKind

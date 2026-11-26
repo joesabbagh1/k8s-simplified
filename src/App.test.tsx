@@ -84,7 +84,7 @@ test("the Lessons link opens a page that searches and filters every lesson", asy
   expect(window.location.pathname).toBe("/lessons")
   const page = screen.getByRole("main", { name: "Kubernetes lessons" })
   const lessonLinks = () => within(page).queryAllByRole("link").filter((a) => /^\/[^/]+$/.test(a.getAttribute("href")!))
-  expect(lessonLinks()).toHaveLength(33)
+  expect(lessonLinks()).toHaveLength(34)
 
   await user.click(within(page).getByRole("radio", { name: /^Control plane/ }))
   expect(lessonLinks()).toHaveLength(10)
@@ -92,7 +92,7 @@ test("the Lessons link opens a page that searches and filters every lesson", asy
   await user.click(within(page).getByRole("radio", { name: /^All/ }))
   await user.type(within(page).getByRole("searchbox", { name: "Search lessons and steps" }), "dns")
   expect(lessonLinks().map((a) => a.textContent)).toContain("DNS in the cluster")
-  expect(lessonLinks().length).toBeLessThan(33)
+  expect(lessonLinks().length).toBeLessThan(34)
 
   await user.click(within(page).getByRole("link", { name: "DNS in the cluster" }))
   expect(within(details()).getByRole("heading", { name: "DNS in the cluster" })).toBeTruthy()
