@@ -400,7 +400,7 @@ export const nodeJoins: Lesson = {
       ["TRIGGER", "a Pod marked Unschedulable"],
       ["IDENTITY", "bootstrap token → CSR → system:node:node-3"],
       ["READY WHEN", "the CNI config is in place"],
-      ["NEXT", "Backing up and restoring etcd"],
+      ["NEXT", "Draining a node"],
     ],
   },
 }

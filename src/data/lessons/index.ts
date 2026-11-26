@@ -21,6 +21,7 @@ import { theScheduler } from "./the-scheduler"
 import { reconcileLoops } from "./reconcile-loops"
 import { nodeGoesDark } from "./node-goes-dark"
 import { nodeJoins } from "./node-joins"
+import { drainingANode } from "./draining-a-node"
 import { etcdBackupRestore } from "./etcd-backup-restore"
 import { gracefulShutdown } from "./graceful-shutdown"
 import { autoscaling } from "./autoscaling"
@@ -54,6 +55,7 @@ export const LESSONS: Lesson[] = [
   reconcileLoops,
   nodeGoesDark,
   nodeJoins,
+  drainingANode,
   etcdBackupRestore,
   gracefulShutdown,
   autoscaling,
