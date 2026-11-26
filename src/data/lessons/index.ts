@@ -26,6 +26,7 @@ import { upgradingTheCluster } from "./upgrading-the-cluster"
 import { etcdBackupRestore } from "./etcd-backup-restore"
 import { gracefulShutdown } from "./graceful-shutdown"
 import { autoscaling } from "./autoscaling"
+import { kedaScaleToZero } from "./keda-scale-to-zero"
 import { configmapsSecrets } from "./configmaps-secrets"
 import { statefulsetStorage } from "./statefulset-storage"
 import { jobsCronjobs } from "./jobs-cronjobs"
@@ -61,6 +62,7 @@ export const LESSONS: Lesson[] = [
   etcdBackupRestore,
   gracefulShutdown,
   autoscaling,
+  kedaScaleToZero,
   configmapsSecrets,
   statefulsetStorage,
   jobsCronjobs,

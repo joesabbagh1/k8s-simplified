@@ -122,6 +122,11 @@ const CLUSTER: Def[] = [
     label: [76, -2, "start"], box: [-90, -60, 250, 60], art: (slots) => workerNode(S, slots),
   },
   {
+    id: "rabbitmq", level: "cluster", g: [84, -8], foot: [18, 18], name: "RabbitMQ", sub: "queue jobs · :5671",
+    about: "A message broker outside the cluster. Producers publish jobs to the queue jobs; workers take them off one at a time.",
+    label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.85, "MQ")),
+  },
+  {
     id: "cloud", level: "cluster", g: [84, -62], foot: [18, 18], name: "Cloud API", sub: "AWS · eu-west-1",
     about: "The cloud provider's API: Auto Scaling groups and EC2. It makes and removes the machines; it knows nothing about Pods.",
     label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.85, "AWS")),
@@ -485,7 +490,7 @@ export const ACTORS: Actor[] = [
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB",
+  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB", scaledobject: "SO",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -502,6 +507,9 @@ const RESOURCES: Actor[] = [
   resource("web-deploy", "deployment", "Deployment web", "replicas 3", "The record you applied: desired state in etcd. It owns ReplicaSets, never Pods directly.", [-66, -12]),
   resource("web-rs", "replicaset", "ReplicaSet …d8b4", "3 Pods", "Created by the Deployment for one Pod-template hash. It counts matching Pods and creates or deletes them until the count is right.", [-66, -54]),
   resource("web-pdb", "pdb", "PDB web-pdb", "minAvailable 2", "A PodDisruptionBudget: how many of web's Pods must stay healthy while someone evicts them on purpose. The API server checks it before every eviction.", [-98, -54]),
+  resource("worker-so", "scaledobject", "ScaledObject worker", "0–10 · queue jobs", "A KEDA ScaledObject: which Deployment to scale, between which counts, and on what metric. KEDA turns it into an HPA and does the step to and from zero itself.", [-98, 24]),
+  resource("worker-hpa", "hpa", "HPA keda-hpa-worker", "made by KEDA", "An ordinary Horizontal Pod Autoscaler that KEDA created and owns. It scales from 1 upwards on the queue's length.", [-66, 24]),
+  resource("worker-deploy", "deployment", "Deployment worker", "replicas 0", "The workers that take jobs off the queue. KEDA and the HPA set its replica count; nobody else does.", [-66, -12]),
   resource("web-rs2", "replicaset", "ReplicaSet …c9f6", "1 Pod", "The ReplicaSet for the new template hash. During a rollout it scales up while the old one scales down.", [-98, -12]),
   // traffic: in front of the nodes
   resource("web-svc", "service", "Service web", "10.96.120.15:80", "A stable virtual IP and DNS name. Its EndpointSlices list the Pod IPs that currently answer.", [44, 56]),
@@ -900,6 +908,7 @@ export const RESOURCE_LINKS: [ActorId, ActorId][] = [
   ["web-deploy", "web-rs"], ["web-deploy", "web-rs2"],
   ["web-hpa", "web-deploy"],
   ["web-pdb", "web-rs"],
+  ["worker-so", "worker-hpa"], ["worker-hpa", "worker-deploy"],
   ["shop-ing", "web-svc"],
   ["backup-cj", "backup-job"], ["backup-cj", "nightly-job"],
   ["uploads-pvc", "uploads-pv"],

@@ -197,7 +197,7 @@ export const autoscaling: Lesson = {
     facts: [
       ["THE LEVER", "one integer: spec.replicas"],
       ["WHY REQUESTS", "they're the denominator"],
-      ["NEXT", "ConfigMaps and Secrets"],
+      ["NEXT", "Scale to zero with KEDA"],
     ],
   },
 }
