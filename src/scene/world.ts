@@ -371,12 +371,12 @@ const ADMISSION: Def[] = [
     label: below(36), box: [-60, -50, 60, 60], art: memo(etcd(S * 0.85)),
   },
   {
-    id: "g.kyverno", level: "admission", g: [16, -30], foot: [23, 18], name: "Admission controller", sub: "HTTPS :9443",
+    id: "g.kyverno", level: "admission", g: [16, -30], optional: true, foot: [23, 18], name: "Admission controller", sub: "HTTPS :9443",
     about: "Kyverno's webhook server. The API server sends it an object and waits for an answer.",
     label: [0, -56, "middle"], box: [-80, -80, 80, 40], art: memo(chip(S, 10, 8, 4, "webhook")),
   },
   {
-    id: "g.engine", level: "admission", g: [52, -30], foot: [20, 16], name: "CEL engine", sub: "your policies",
+    id: "g.engine", level: "admission", g: [52, -30], optional: true, foot: [20, 16], name: "CEL engine", sub: "your policies",
     about: "Runs the expressions in your policies, compiled ahead of time, on the object it's given.",
     label: [0, -50, "middle"], box: [-70, -75, 70, 40], art: memo(chip(S, 9, 7, 3, "CEL")),
   },
@@ -522,7 +522,7 @@ export const ACTORS: Actor[] = [
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB", scaledobject: "SO",
+  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB", scaledobject: "SO", resourcequota: "RQ", limitrange: "LR",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -542,6 +542,9 @@ const RESOURCES: Actor[] = [
   resource("worker-so", "scaledobject", "ScaledObject worker", "0–10 · queue jobs", "A KEDA ScaledObject: which Deployment to scale, between which counts, and on what metric. KEDA turns it into an HPA and does the step to and from zero itself.", [-98, 24]),
   resource("worker-hpa", "hpa", "HPA keda-hpa-worker", "made by KEDA", "An ordinary Horizontal Pod Autoscaler that KEDA created and owns. It scales from 1 upwards on the queue's length.", [-66, 24]),
   resource("worker-deploy", "deployment", "Deployment worker", "replicas 0", "The workers that take jobs off the queue. KEDA and the HPA set its replica count; nobody else does.", [-66, -12]),
+  resource("team-deploy", "deployment", "Deployment app", "team-a", "The team's app. Its Pod template is what admission checks, once for every Pod the ReplicaSet creates.", [-66, -12]),
+  resource("team-rs", "replicaset", "ReplicaSet app-6d9f…", "team-a", "Creates the Deployment's Pods. When admission refuses one, the error lands here, as a FailedCreate event.", [-66, -54]),
+  resource("team-rs2", "replicaset", "ReplicaSet app-58c7…", "team-a", "The ReplicaSet for the fixed Pod template.", [-98, -12]),
   resource("web-rs2", "replicaset", "ReplicaSet …c9f6", "1 Pod", "The ReplicaSet for the new template hash. During a rollout it scales up while the old one scales down.", [-98, -12]),
   // traffic: in front of the nodes
   resource("web-svc", "service", "Service web", "10.96.120.15:80", "A stable virtual IP and DNS name. Its EndpointSlices list the Pod IPs that currently answer.", [44, 56]),
@@ -562,6 +565,8 @@ const RESOURCES: Actor[] = [
   resource("kyv-report", "policyreport", "PolicyReport tools", "results", "What the policies say about one object as it is now. Kyverno writes it; you read it with kubectl.", [28, -100], [0, -52, "middle"]),
   resource("kyv-netpol", "networkpolicy", "NetworkPolicy", "team-a/default-deny", "Created by Kyverno, not by you: blocks incoming traffic to every Pod in team-a until something allows it.", [-4, -100], [0, -52, "middle"]),
   resource("node3-csr", "csr", "CSR csr-7bq4z", "node-3's client certificate", "A CertificateSigningRequest: the kubelet's public key and the name it wants, waiting for a controller to approve and sign it.", [-4, -68], [0, -52, "middle"]),
+  resource("team-quota", "resourcequota", "ResourceQuota team-a", "pods 0/5", "Hard limits on what the namespace may use in total: CPU and memory requests, and the number of Pods. Checked when each Pod is created.", [28, -68]),
+  resource("team-limits", "limitrange", "LimitRange defaults", "100m / 128Mi", "Default requests and limits for containers that don't set their own, filled in when each Pod is created.", [-4, -68], [0, -52, "middle"]),
   resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
 ]
 
@@ -945,6 +950,7 @@ export const RESOURCE_LINKS: [ActorId, ActorId][] = [
   ["web-hpa", "web-deploy"],
   ["web-pdb", "web-rs"],
   ["worker-so", "worker-hpa"], ["worker-hpa", "worker-deploy"],
+  ["team-deploy", "team-rs"], ["team-deploy", "team-rs2"],
   ["shop-ing", "web-svc"],
   ["backup-cj", "backup-job"], ["backup-cj", "nightly-job"],
   ["uploads-pvc", "uploads-pv"],
@@ -955,10 +961,11 @@ export const RESOURCE_LINKS: [ActorId, ActorId][] = [
 export const NODES: NodeId[] = ["node1", "node2", "node3"]
 
 /** Which worker nodes each workload card's Pods currently sit on, derived from the Pod-slot layout.
- *  With two ReplicaSets on screen the v1 slots belong to the first and v2/starting to the second.
+ *  With two ReplicaSets on screen the v1 slots belong to the first one put on screen and v2/starting to the second.
  *  StatefulSet and Job lessons keep the standing web Pods in v1, so their own Pods are the v2/starting slots. */
 export function workloadNodes(resources: Record<string, Resource>, pods: PodLayout): [ActorId, ActorId][] {
-  const twoRs = Object.values(resources).filter((r) => r.kind === "replicaset").length > 1
+  const replicaSets = Object.entries(resources).filter(([, r]) => r.kind === "replicaset").map(([id]) => id)
+  const twoRs = replicaSets.length > 1
   const edges: [ActorId, ActorId][] = []
   for (const node of NODES) {
     const slots = pods[node] ?? []
@@ -967,7 +974,7 @@ export function workloadNodes(resources: Record<string, Resource>, pods: PodLayo
     const any = slots.some((s) => s !== "other")
     const ready = slots.includes("v1") || slots.includes("v2")
     for (const [id, r] of Object.entries(resources)) {
-      if (r.kind === "replicaset" && (twoRs ? (id === "web-rs" ? v1 : v2) : any)) edges.push([id, node])
+      if (r.kind === "replicaset" && (twoRs ? (id === replicaSets[0] ? v1 : v2) : any)) edges.push([id, node])
       else if ((r.kind === "statefulset" || r.kind === "job") && v2) edges.push([id, node])
       else if (r.kind === "daemonset" && r.state !== "creating" && (!r.nodes || r.nodes.includes(node))) edges.push([id, node])
       else if (r.kind === "service" && ready) edges.push([id, node])

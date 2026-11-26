@@ -34,6 +34,7 @@ import { jobsCronjobs } from "./jobs-cronjobs"
 import { rbacTokens } from "./rbac-tokens"
 import { podCloudCredentials } from "./pod-cloud-credentials"
 import { kyvernoPolicies } from "./kyverno-policies"
+import { tenantQuotas } from "./tenant-quotas"
 import { falcoAlerts } from "./falco-alerts"
 
 export const LESSONS: Lesson[] = [
@@ -72,6 +73,7 @@ export const LESSONS: Lesson[] = [
   rbacTokens,
   podCloudCredentials,
   kyvernoPolicies,
+  tenantQuotas,
   falcoAlerts,
 ]
 
