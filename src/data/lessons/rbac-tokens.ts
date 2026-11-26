@@ -237,7 +237,7 @@ export const rbacTokens: Lesson = {
     facts: [
       ["IDENTITY", "projected JWT · 3607 s · refreshed at 80 %"],
       ["AUTHZ", "allow-only · union of bindings · default deny"],
-      ["NEXT", "Kyverno policies"],
+      ["NEXT", "A Pod gets AWS credentials"],
     ],
   },
 }

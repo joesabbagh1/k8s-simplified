@@ -129,6 +129,21 @@ const CLUSTER: Def[] = [
     label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.85, "MQ")),
   },
   {
+    id: "oidc", level: "cluster", g: [78, -70], foot: [18, 18], name: "OIDC issuer", sub: "kubelearn-oidc.s3…amazonaws.com",
+    about: "Where the cluster publishes its token issuer's discovery document and public keys, so anyone can check a ServiceAccount token's signature without asking the cluster.",
+    label: below(42), box: [-90, -60, 90, 80], art: memo(rack(S * 0.85, "OIDC")),
+  },
+  {
+    id: "sts", level: "cluster", g: [96, -28], foot: [18, 18], name: "AWS STS", sub: "sts.eu-west-1.amazonaws.com",
+    about: "AWS Security Token Service. It exchanges a trusted identity token for temporary AWS credentials for a role.",
+    label: below(42), box: [-90, -60, 90, 80], art: memo(rack(S * 0.85, "STS")),
+  },
+  {
+    id: "s3", level: "cluster", g: [96, 8], foot: [18, 18], name: "S3", sub: "bucket kubelearn-uploads",
+    about: "The bucket the uploader app writes to. It accepts requests signed with credentials for a role that may write there.",
+    label: below(42), box: [-90, -60, 90, 80], art: memo(rack(S * 0.85, "S3")),
+  },
+  {
     id: "cloud", level: "cluster", g: [84, -62], foot: [18, 18], name: "Cloud API", sub: "AWS · eu-west-1",
     about: "The cloud provider's API: Auto Scaling groups and EC2. It makes and removes the machines; it knows nothing about Pods.",
     label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.85, "AWS")),
@@ -591,6 +606,7 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("api", "node3", [0, 0], [23, 0], [23, -62], [36, -62]),
     cable("node2", "node3", [36, -26], [36, -62]),
     cable("cloud", "node3", [84, -62], [36, -62]),
+    cable("sts", "oidc", [96, -28], [96, -70], [78, -70]),
     cable("lb", "node1", [80, -8], [54, -8], [54, 10], [36, 10]),
     cable("lb", "node2", [80, -8], [54, -8], [54, -26], [36, -26]),
     cable("visitor", "lb", [80, 31], [80, -8]),
