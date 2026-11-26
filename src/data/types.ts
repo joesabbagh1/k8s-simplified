@@ -86,6 +86,7 @@ export type ResourceKind =
   | "scaledobject"
   | "resourcequota"
   | "limitrange"
+  | "pod"
 
 export interface Resource {
   kind: ResourceKind

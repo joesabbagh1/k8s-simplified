@@ -18,7 +18,7 @@ test("every lesson is written", () => {
     "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf", "service-mesh-istio",
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
-    "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster", "etcd-backup-restore",
+    "the-scheduler", "pending-pod", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster", "etcd-backup-restore",
     "graceful-shutdown", "autoscaling", "keda-scale-to-zero", "model-server-startup", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "pod-cloud-credentials", "kyverno-policies", "tenant-quotas", "falco-alerts",
   ])

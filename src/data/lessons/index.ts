@@ -18,6 +18,7 @@ import { mountingVolume } from "./mounting-volume"
 import { gpuDevicePlugin } from "./gpu-device-plugin"
 import { listAndWatch } from "./list-and-watch"
 import { theScheduler } from "./the-scheduler"
+import { pendingPod } from "./pending-pod"
 import { reconcileLoops } from "./reconcile-loops"
 import { nodeGoesDark } from "./node-goes-dark"
 import { nodeJoins } from "./node-joins"
@@ -57,6 +58,7 @@ export const LESSONS: Lesson[] = [
   gpuDevicePlugin,
   listAndWatch,
   theScheduler,
+  pendingPod,
   reconcileLoops,
   nodeGoesDark,
   nodeJoins,

@@ -522,7 +522,7 @@ export const ACTORS: Actor[] = [
 const BADGE: Record<ResourceKind, string> = {
   deployment: "DEP", replicaset: "RS", service: "SVC", hpa: "HPA", statefulset: "STS",
   job: "JOB", cronjob: "CJ", configmap: "CM", secret: "SEC", ingress: "ING",
-  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB", scaledobject: "SO", resourcequota: "RQ", limitrange: "LR",
+  pvc: "PVC", pv: "PV", daemonset: "DS", policy: "POL", policyreport: "REP", networkpolicy: "NP", csr: "CSR", pdb: "PDB", scaledobject: "SO", resourcequota: "RQ", limitrange: "LR", pod: "POD",
 }
 
 const resource = (id: string, kind: ResourceKind, name: string, sub: string, about: string, g: Point, label?: Actor["label"]): Actor =>
@@ -568,6 +568,7 @@ const RESOURCES: Actor[] = [
   resource("team-quota", "resourcequota", "ResourceQuota team-a", "pods 0/5", "Hard limits on what the namespace may use in total: CPU and memory requests, and the number of Pods. Checked when each Pod is created.", [28, -68]),
   resource("team-limits", "limitrange", "LimitRange defaults", "100m / 128Mi", "Default requests and limits for containers that don't set their own, filled in when each Pod is created.", [-4, -68], [0, -52, "middle"]),
   resource("nightly-job", "job", "Job nightly-report", "made by CronJob", "A Job stamped from a CronJob template on one schedule tick. Its name carries the tick's epoch-minutes.", [28, -100]),
+  resource("search-pod", "pod", "Pod search", "Pending", "A Pod with no node: it exists only as a record in the API until the scheduler places it.", [28, -68]),
 ]
 
 const byId = new Map([...ACTORS, ...RESOURCES].map((a) => [a.id, a]))
