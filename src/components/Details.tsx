@@ -88,7 +88,7 @@ function Steps() {
           const state = finished || (step >= 0 && i < step) ? "done" : String(i) === current ? "active" : undefined
           return (
             <ListboxItem key={String(i)} value={String(i)} label={sentence(s.title)} className="toc-item" data-state={state}>
-              <span className="num" aria-hidden="true">{state === "done" ? <Icon name="check" size={10} /> : i + 1}</span>
+              <span className="num" aria-hidden="true">{state === "done" ? <Icon name="check" /> : i + 1}</span>
               <span className="toc-title">{sentence(s.title)}</span>
             </ListboxItem>
           )
