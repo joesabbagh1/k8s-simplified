@@ -70,7 +70,7 @@ const PROPER: Record<string, string> = {
 }
 
 /** Words that are names written in lower case, so they never get a capital, even first. */
-const lowerName = (word: string) => /\d|[()_.]|:\S|^(etcd|istiod|ztunnel|mTLS|xDS|kubelet|kubeadm|kube-|flannel|eth|veth|cni|cali|runc|iptables|ndots|overlayfs|cgroups|clone|pivot|\/)/.test(word)
+const lowerName = (word: string) => /\d|[()_.]|:\S|^(etcd|istiod|ztunnel|mTLS|xDS|kubelet|kubeadm|kubectl|kube-|flannel|eth|veth|cni|cali|runc|iptables|ndots|overlayfs|cgroups|clone|pivot|\/)/.test(word)
 
 /**
  * The lessons write step and event titles in capitals. This turns them into sentence case
