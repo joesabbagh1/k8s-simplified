@@ -284,7 +284,7 @@ export const kedaScaleToZero: Lesson = {
       ["0 ↔ 1", "keda-operator · polling every 30 s"],
       ["1 ↔ N", "HPA · external.metrics.k8s.io"],
       ["DOWN", "HPA waits 300 s · KEDA cools down 300 s"],
-      ["NEXT", "ConfigMaps and Secrets"],
+      ["NEXT", "Starting a model server"],
     ],
   },
 }

@@ -132,6 +132,8 @@ export interface Lesson {
   overview: { body: string; facts: Fact[] }
   /** cluster-level actors this lesson uses, with "cp" for the whole control plane; the overview camera frames them */
   actors: ActorId[]
+  /** actors inside a node or Pod that only some lessons draw (those marked optional in world.ts) */
+  extras?: ActorId[]
   /** actors that open a level in this lesson only, besides the nodes and Pods that always do */
   opens?: Record<ActorId, Level>
   /** Pods on each node before step 1 */

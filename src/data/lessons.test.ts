@@ -19,7 +19,7 @@ test("every lesson is written", () => {
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
     "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster", "etcd-backup-restore",
-    "graceful-shutdown", "autoscaling", "keda-scale-to-zero", "configmaps-secrets",
+    "graceful-shutdown", "autoscaling", "keda-scale-to-zero", "model-server-startup", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies", "falco-alerts",
   ])
   expect(playable).toHaveLength(LESSONS.length)
@@ -52,14 +52,17 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
   test.each(lesson.steps.map((s, i) => [i + 1, s] as const))("step %i points at actors on its own level", (_, step) => {
     expect(step.events.length).toBeGreaterThan(0)
     expect(step.facts.length).toBeGreaterThan(0)
+    const drawn = (id: string) => !actorById(id)?.optional || !!lesson.extras?.includes(id)
     for (const id of step.focus) {
       expect(actorById(id)?.level, `focus ${id}`).toBe(step.view)
+      expect(drawn(id), `focus ${id} is optional and not in extras`).toBe(true)
       if (step.view === "cluster") expect(actors, `focus ${id}`).toContain(id)
     }
     for (const e of step.events) {
       expect(e.decoded.length, `${e.id} has nothing to decode`).toBeGreaterThan(0)
       for (const id of e.path ?? []) {
         expect(actorById(id)?.level, `${e.id} path ${id}`).toBe(step.view)
+        expect(drawn(id), `${e.id} path ${id} is optional and not in extras`).toBe(true)
         if (step.view === "cluster") expect(actors, `${e.id} path ${id}`).toContain(id)
       }
     }

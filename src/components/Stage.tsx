@@ -45,7 +45,7 @@ function useSceneState(lesson: Lesson): SceneState {
     // Play from the overview dives through each node or Pod on the way to the first step, on the level that holds it
     const entering = step < 0 && !finished && !!transit
     const level: Level = override ?? current?.view ?? (entering ? actorById(transit.to)?.level : undefined) ?? "cluster"
-    const all = actorsAt(level)
+    const all = actorsAt(level).filter((a) => !a.optional || !!lesson.extras?.includes(a.id))
     const used = expand(lesson.actors)
     const visible = level === "cluster" && used.length ? all.filter((a) => used.includes(a.id)) : all
     const following = !override && (!!current || entering)
