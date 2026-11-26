@@ -144,7 +144,7 @@ export const upgradingTheCluster: Lesson = {
             sec("BACKUPS", [["kubeadm-backup-manifests-<date>-<time>", "the four static Pod manifests", true], ["kubeadm-backup-etcd-<date>-<time>", "a copy of /var/lib/etcd"], ["cleanup", "by hand · kubeadm leaves them"]]),
             sec("ETCD", [["upgraded", "only if the new release uses a newer etcd · --etcd-upgrade"], ["while it restarts", "requests to the API server stall"]]),
           ],
-          note: "These backups help kubeadm roll back its own step. They are no substitute for an etcd snapshot of your own, taken before you start and copied off the machine.",
+          note: "These backups help kubeadm roll back its own step. They are no substitute for an etcd snapshot of your own, taken before you start and copied off the machine, as in the next lesson.",
         }),
         ev({
           id: "up8", at: 152000, src: KUBEADM, dst: KUBEADM, layer: "control", size: " - ", title: "RENEW CERTIFICATES", path: ["api", "api"],
@@ -350,7 +350,7 @@ export const upgradingTheCluster: Lesson = {
       ["ORDER", "kubeadm → API server → controllers → add-ons → kubelets"],
       ["CONTROL PLANE", "static Pod manifests, rewritten one by one"],
       ["NODES", "drain → upgrade → uncordon, one at a time"],
-      ["NEXT", "Graceful shutdown"],
+      ["NEXT", "Backing up and restoring etcd"],
     ],
   },
 }

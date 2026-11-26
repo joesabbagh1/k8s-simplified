@@ -23,6 +23,7 @@ import { nodeGoesDark } from "./node-goes-dark"
 import { nodeJoins } from "./node-joins"
 import { drainingANode } from "./draining-a-node"
 import { upgradingTheCluster } from "./upgrading-the-cluster"
+import { etcdBackupRestore } from "./etcd-backup-restore"
 import { gracefulShutdown } from "./graceful-shutdown"
 import { autoscaling } from "./autoscaling"
 import { configmapsSecrets } from "./configmaps-secrets"
@@ -57,6 +58,7 @@ export const LESSONS: Lesson[] = [
   nodeJoins,
   drainingANode,
   upgradingTheCluster,
+  etcdBackupRestore,
   gracefulShutdown,
   autoscaling,
   configmapsSecrets,
