@@ -84,6 +84,8 @@ export type ResourceKind =
   | "csr"
   | "pdb"
   | "scaledobject"
+  | "resourcequota"
+  | "limitrange"
 
 export interface Resource {
   kind: ResourceKind

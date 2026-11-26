@@ -20,7 +20,7 @@ test("every lesson is written", () => {
     "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
     "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster", "etcd-backup-restore",
     "graceful-shutdown", "autoscaling", "keda-scale-to-zero", "model-server-startup", "configmaps-secrets",
-    "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "pod-cloud-credentials", "kyverno-policies", "falco-alerts",
+    "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "pod-cloud-credentials", "kyverno-policies", "tenant-quotas", "falco-alerts",
   ])
   expect(playable).toHaveLength(LESSONS.length)
 })

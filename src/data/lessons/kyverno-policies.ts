@@ -21,6 +21,7 @@ export const kyvernoPolicies: Lesson = {
   },
   actors: ["you", "cp", "node1", "node2", "kyv-vpol", "kyv-mpol", "kyv-gpol", "kyv-report", "kyv-netpol"],
   opens: { api: "admission" },
+  extras: ["g.kyverno", "g.engine"],
   pods: { node1: ["other", "v1"], node2: ["other", "v1", "v1"] },
   lanes: {
     authentication: "API server", authorization: "API server", "mutating admission": "API server", "schema validation": "API server", "validating admission": "API server",
@@ -684,7 +685,7 @@ export const kyvernoPolicies: Lesson = {
       ["ORDER", "mutate → schema → validate → etcd"],
       ["ROLLOUT", "Audit → fix → Deny"],
       ["ON FAILURE", "Fail refuses · Ignore lets through"],
-      ["NEXT", "Runtime alerts with Falco"],
+      ["NEXT", "Quotas and defaults for a tenant"],
     ],
   },
 }
