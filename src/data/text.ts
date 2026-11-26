@@ -1,7 +1,7 @@
 const UPPER = new Set([
-  "ACK", "API", "ARP", "AWS", "BPF", "CA", "CDI", "CEL", "CIDR", "CNI", "CPU", "CRI", "CSR", "CUDA", "DRA", "DNAT", "DNS", "EDS", "FDB", "GET", "GPU", "HBONE", "HPA", "HTTP", "ID", "IP", "IPAM", "JWT",
+  "ACK", "API", "ARP", "AWS", "BPF", "CA", "CDI", "CEL", "CIDR", "CNI", "CPU", "CRI", "CSR", "CUDA", "DRA", "DNAT", "DNS", "EDS", "FDB", "GET", "GPU", "HBONE", "HPA", "HTTP", "ID", "IP", "IPAM", "JWT", "KV",
   "L4", "MAC", "MIG", "MTU", "NVIDIA", "NVML", "OCI", "PCI", "RSA", "SPIFFE", "NAT", "NXDOMAIN", "OK", "OOM", "PDB", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
-  "TTL", "UDP", "URL", "VIP", "VM", "VTEP", "VXLAN",
+  "TTL", "UDP", "URL", "VIP", "VM", "VRAM", "VTEP", "VXLAN",
 ])
 
 const PROPER: Record<string, string> = {
@@ -70,6 +70,7 @@ const PROPER: Record<string, string> = {
   UPDATEREQUEST: "UpdateRequest",
   VALIDATINGPOLICY: "ValidatingPolicy",
   VIRTUALSERVICE: "VirtualService",
+  VLLM: "vLLM",
   XDS: "xDS",
   XID: "Xid",
 }

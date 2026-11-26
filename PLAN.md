@@ -13,7 +13,7 @@ Every layer, from packet to pod. An interactive explainer for developers who use
 | 5 | Playback: markers along links, events land one by one, summary. Reading pauses sized to the text, then it moves on by itself; Pause after Event / Step / None (None by default: plays straight through); a › button in the caption skips a pause; speed-up (1×/2×/4×); zoom transitions into and out of nodes and Pods | Done |
 | 6 | Decoder: fields, changed values, packet frame diagrams (incl. VXLAN) | Done |
 | 7 | Sequence view | Done |
-| 8 | Lessons | All 34 written; technical accuracy pass done 2026-11-23, before "Service mesh with Istio", "Kyverno policies", "Runtime alerts with Falco", "A Pod asks for a GPU", "A node joins the cluster", "Draining a node", "Upgrading the cluster", "Backing up and restoring etcd" and "Scale to zero with KEDA" were added |
+| 8 | Lessons | All 35 written; technical accuracy pass done 2026-11-23, before "Service mesh with Istio", "Kyverno policies", "Runtime alerts with Falco", "A Pod asks for a GPU", "A node joins the cluster", "Draining a node", "Upgrading the cluster", "Backing up and restoring etcd", "Scale to zero with KEDA" and "Starting a model server" were added |
 | 9 | Stack | Done |
 | 10 | Polish: deep links, bundle split, a11y, tests | Done, except deploying |
 | 11 | Minimal layout: diagram first, one story column, events in a drawer, quieter type | Done |
@@ -50,7 +50,7 @@ Vite, React 19, TypeScript, UI SDK (`@ui-sdk/react` 0.1.0-beta.13, pinned), Zust
 
 ## Area 12 · Homepage and Lessons page (done)
 
-- `/` is the homepage; the logo links to it. Hero: headline, one-paragraph pitch, "Start the first lesson" (Deploy an app) and "Browse all 34 lessons". Beside it, the cluster view's own isometric art with colored packets looping along the links (API, STATE, CONTROL, NODE, NETWORK), and the layer legend under it. No motion with reduced-motion on.
+- `/` is the homepage; the logo links to it. Hero: headline, one-paragraph pitch, "Start the first lesson" (Deploy an app) and "Browse all 35 lessons". Beside it, the cluster view's own isometric art with colored packets looping along the links (API, STATE, CONTROL, NODE, NETWORK), and the layer legend under it. No motion with reduced-motion on.
 - Below: "How a lesson works" (watch, read, decode), questions the lessons answer, and the demo cluster's addresses. Each question (`Questions.tsx`) has a short answer and the decoded lesson event that shows it, with a link to its step; under them, each category links to the Lessons page filtered to it. The homepage doesn't list lessons: that is the Lessons page's job.
 - `/lessons`: see Area 11. Each category is led by its piece of the cluster (`LayerArt.tsx`) with its lessons as a two-column list beside it; the art is hidden during a search.
 

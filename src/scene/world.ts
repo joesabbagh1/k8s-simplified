@@ -28,6 +28,8 @@ export interface Actor {
   kind?: ResourceKind
   /** set for a node that joins the cluster during a lesson: it is drawn once the lesson's Pod layout lists it */
   joins?: boolean
+  /** set for an actor inside a node or Pod that only some lessons need: drawn only when a lesson lists it in extras */
+  optional?: boolean
 }
 
 const S = 4.6
@@ -449,7 +451,22 @@ const GPU: Def[] = [
   {
     id: "gp.llm", level: "gpu", g: [56, -10], foot: [20, 20], name: "llm", sub: "nvidia.com/gpu: 1",
     about: "A Pod that asked for one GPU. Its container sees /dev/nvidia0 and the driver's libraries, and nothing else of the node's hardware.",
-    label: [36, -4, "start"], box: [-60, -65, 170, 45], art: memo(pod(S * 0.85)),
+    label: below(46), box: [-80, -65, 80, 75], art: memo(pod(S * 0.85)),
+  },
+  {
+    id: "gp.registry", level: "gpu", g: [16, -92], foot: [18, 18], name: "Registry", sub: "docker.io/vllm/vllm-openai", optional: true,
+    about: "The container registry the image comes from. containerd downloads every layer the node doesn't have yet.",
+    label: below(42), box: [-90, -60, 90, 80], art: memo(rack(S * 0.75, "OCI")),
+  },
+  {
+    id: "gp.hf", level: "gpu", g: [102, -44], foot: [18, 18], name: "Hugging Face", sub: "huggingface.co", optional: true,
+    about: "Where the model's weights are published. vLLM downloads them on start unless they are already in its cache directory.",
+    label: below(42), box: [-80, -60, 80, 80], art: memo(rack(S * 0.75, "HF")),
+  },
+  {
+    id: "gp.cache", level: "gpu", g: [102, -10], foot: [16, 12], name: "model-cache", sub: "PVC · /root/.cache/huggingface", optional: true,
+    about: "A PersistentVolumeClaim mounted where vLLM keeps downloaded weights. Once filled, a restarted Pod reads the weights from here instead of the internet.",
+    label: below(30), box: [-100, -40, 100, 55], art: memo(chip(S, 8, 5, 1.6, "cache")),
   },
   {
     id: "gp.plugin", level: "gpu", g: [-30, 6], foot: [21, 16], name: "nvidia-device-plugin", sub: "a Pod · gRPC on its own socket",
@@ -630,6 +647,9 @@ export const CABLES: Record<Level, Cable[]> = {
     cable("gp.plugin", "gp.driver", [-30, 6], [-30, 38]),
     cable("gp.driver", "gp.gpu", [-30, 38], [16, 38]),
     cable("gp.llm", "gp.gpu", [56, -10], [56, 38], [16, 38]),
+    cable("gp.containerd", "gp.registry", [16, -44], [16, -92]),
+    cable("gp.llm", "gp.hf", [56, -10], [56, -44], [102, -44]),
+    cable("gp.llm", "gp.cache", [56, -10], [102, -10]),
   ],
   falco: [
     cable("f.web", "f.sys", [-88, -28], [-88, 40]),
