@@ -1,5 +1,5 @@
 import type { ActorId, Lesson, Level } from "../data/types"
-import { timeline } from "../playback"
+import { packetTime, timeline } from "../playback"
 import { actorById, ACTORS, levelPath, type Actor } from "./world"
 
 export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2, mesh: 1, ambient: 1, admission: 1, falco: 1, gpu: 1 }
@@ -62,6 +62,8 @@ export function entryPath(lesson: Lesson): ActorId[] {
 
 /** How long each phase takes, at 1× speed. */
 export const CARRY_MS = 1150
+/** How long the carry takes: a pulse on one node or Pod, or a trip at the packets' speed. */
+export const carryTime = (from: ActorId, to: ActorId) => (from === to ? CARRY_MS : packetTime(from, to))
 export const DIVE_MS = 900
 export const SURFACE_MS = 650
 /** one frame with the camera parked on the node, so the pull-back has somewhere to start from */

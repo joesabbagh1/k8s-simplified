@@ -9,9 +9,9 @@ import { LAYERS } from "../data/layers"
 import type { ActorId, ClusterEvent, Lesson, Level, NodeId, PodSlot, Resource } from "../data/types"
 import type { Point } from "../iso/iso"
 import { useReducedMotion } from "../hooks"
-import { CREATE_MS, createdBy, podsAt, resourcesAt, timeline } from "../playback"
+import { createdBy, packetTime, podsAt, resourcesAt, timeline } from "../playback"
 import { useExploreCamera } from "../scene/camera"
-import { CARRY_MS, DEPTH, opensIn } from "../scene/transition"
+import { carryTime, DEPTH, opensIn } from "../scene/transition"
 import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, NODES, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
 import { useApp, useLesson, type Flight, type StageView } from "../store"
 import { sentence } from "../data/text"
@@ -358,7 +358,7 @@ function ClusterScene() {
     transit && (transit.phase === "carry" || transit.phase === "dive") && transitEvent && ids.has(transit.from) && ids.has(transit.to)
       ? {
           event: { ...transitEvent, path: (transit.phase === "carry" ? [transit.from, transit.to] : [transit.to, transit.to]) as [ActorId, ActorId] },
-          flight: { id: transitEvent.id, key: transit.key, duration: (transit.phase === "carry" ? CARRY_MS : 1400) / speed },
+          flight: { id: transitEvent.id, key: transit.key, duration: (transit.phase === "carry" ? carryTime(transit.from, transit.to) : 1400) / speed },
         }
       : undefined
 
@@ -397,13 +397,12 @@ function ClusterScene() {
     lastEvent && landed === lastEvent.id && origin && onScreen(origin) && !reduced
       ? createdBy(lesson, lastEvent).filter((id) => id !== origin && resIds.has(id))
       : []
-  const createMs = CREATE_MS / speed
+  const bornDelay = (id: ActorId) => (creating.includes(id) ? packetTime(origin!, id) / speed : 0)
   const births = creating.map((id) => ({
-    flight: { key: `born-${lastEvent!.id}-${id}`, duration: createMs },
+    flight: { key: `born-${lastEvent!.id}-${id}`, duration: bornDelay(id) },
     event: { ...lastEvent!, title: resources[id].name, path: [origin, id] as [ActorId, ActorId] },
+    style: { "--born": `${bornDelay(id)}ms` } as CSSProperties,
   }))
-  const bornDelay = (id: ActorId) => (creating.includes(id) ? createMs : 0)
-  const bornStyle = { "--born": `${createMs}ms` } as CSSProperties
 
   // the reader can take the camera: scroll to zoom, drag to move; a new level takes it back
   const svgRef = useRef<SVGSVGElement | null>(null)
@@ -442,7 +441,7 @@ function ClusterScene() {
               <OwnLink key={`own-${a}-${b}`} a={actorById(a)!} b={actorById(b)!} on={scene.focus.has(a) && scene.focus.has(b)} delay={Math.max(bornDelay(a), bornDelay(b))} />
             ))}
             {births.map((b) => (
-              <g key={b.flight.key} className="birth" style={bornStyle}><Trail flight={b.flight} event={b.event} /></g>
+              <g key={b.flight.key} className="birth" style={b.style}><Trail flight={b.flight} event={b.event} /></g>
             ))}
             {flight && flying && <Trail key={`trail-${flight.key}`} flight={flight} event={flying} />}
             {carried && <Trail key={`trail-${carried.flight.key}`} flight={carried.flight} event={carried.event} />}
@@ -473,7 +472,7 @@ function ClusterScene() {
               )
             })}
             {births.map((b) => (
-              <g key={b.flight.key} className="birth" style={bornStyle}><Marker flight={b.flight} event={b.event} /></g>
+              <g key={b.flight.key} className="birth" style={b.style}><Marker flight={b.flight} event={b.event} /></g>
             ))}
             {flight && flying && <Marker key={flight.key} flight={flight} event={flying} />}
             {carried && <Marker key={carried.flight.key} flight={carried.flight} event={carried.event} />}

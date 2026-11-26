@@ -2,7 +2,7 @@ import { useShortcut } from "@ui-sdk/react/shortcuts"
 import { useEffect, useState } from "react"
 import type { ActorId } from "./data/types"
 import { eventReadTime, STEP_GAP, stepReadTime, timeline, travelTime } from "./playback"
-import { CARRY_MS, DIVE_MS, EMERGE_MS, entryPath, SURFACE_MS, surfaceAfter, transitionAfter } from "./scene/transition"
+import { carryTime, DIVE_MS, EMERGE_MS, entryPath, SURFACE_MS, surfaceAfter, transitionAfter } from "./scene/transition"
 import { applyMeta, metaFor } from "./meta"
 import { hasLegacyHash, pathOf, readLocation } from "./route"
 import { currentLesson, routeOf, useApp } from "./store"
@@ -41,7 +41,7 @@ export function usePlayback() {
         hop(portals[0])
         return
       }
-      if (transit.phase === "carry") return later(() => setTransit({ ...transit, phase: "dive" }), CARRY_MS)
+      if (transit.phase === "carry") return later(() => setTransit({ ...transit, phase: "dive" }), carryTime(transit.from, transit.to))
       if (transit.phase === "dive") {
         const next = portals[portals.indexOf(transit.to) + 1]
         return later(next ? () => hop(next) : advanceStep, DIVE_MS)
@@ -75,7 +75,7 @@ export function usePlayback() {
       setTransit({ ...zoom, phase: zoom.from === zoom.to ? "dive" : "carry" })
       return
     }
-    if (transit?.phase === "carry") return later(() => setTransit({ ...transit, phase: "dive" }), CARRY_MS)
+    if (transit?.phase === "carry") return later(() => setTransit({ ...transit, phase: "dive" }), carryTime(transit.from, transit.to))
     if (transit?.phase === "dive") return later(advanceStep, DIVE_MS)
 
     // Coming back out: shrink the inside away, then open the outer level with the camera on the node and pull back.

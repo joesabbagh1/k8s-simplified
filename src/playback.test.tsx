@@ -3,7 +3,8 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest"
 import { lessonById } from "./data/lessons"
 import type { Lesson } from "./data/types"
 import { usePlayback } from "./hooks"
-import { createdBy, eventReadTime, podsAt, resourcesAt, timeline } from "./playback"
+import { createdBy, eventReadTime, packetTime, podsAt, resourcesAt, timeline } from "./playback"
+import { routeLength } from "./scene/world"
 import { useApp } from "./store"
 
 const lesson = lessonById("deploy-an-app")!
@@ -328,4 +329,14 @@ test("an event counts as just landed until playback moves on, and never when jum
   expect(useApp.getState().landed).toBe("e2")
   act(() => useApp.getState().goToStep(0))
   expect(useApp.getState()).toMatchObject({ revealed: timeline(lesson).end[0], landed: null })
+})
+
+test("a packet moves at one speed, so a long route takes longer instead of moving faster", () => {
+  const short = routeLength("visitor", "resolver")
+  const long = routeLength("kcm", "web-pdb")
+  expect(long).toBeGreaterThan(short * 4)
+  expect(packetTime("kcm", "web-pdb")).toBeGreaterThan(packetTime("visitor", "resolver") * 2)
+  // short hops have a floor and the longest trips a ceiling
+  expect(packetTime("visitor", "resolver")).toBe(800)
+  expect(packetTime("kcm", "web-pdb")).toBeLessThanOrEqual(3000)
 })
