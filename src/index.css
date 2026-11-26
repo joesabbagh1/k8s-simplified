@@ -322,17 +322,22 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .actions { display: flex; gap: 8px; margin-top: 20px; flex-wrap: wrap; }
 .actions .btn { flex: 1; }
 
-.toc { position: relative; margin-top: auto; padding: 16px 16px 20px; } /* relative keeps the Listbox's hidden absolute textarea inside the scroll panel, out of the document scroll area */
-.toc-list { display: flex; flex-direction: column; gap: 2px; padding-top: 14px; border-top: 1px solid var(--line); }
-.toc-item { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border-radius: 8px; font-size: 13.5px; color: var(--dim); cursor: pointer; outline-offset: -2px; }
-.toc-item:hover { background: var(--raised); color: var(--text); }
-.toc-item[data-state="done"] { color: var(--dim); }
-.toc-item[data-state="active"] { background: var(--accent-soft); color: var(--text); font-weight: 600; box-shadow: inset 2px 0 0 var(--accent); }
+.toc { position: relative; margin-top: auto; padding: 16px 24px 24px; } /* relative keeps the Listbox's hidden absolute textarea inside the scroll panel, out of the document scroll area */
+.toc-list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.toc-item { position: relative; display: flex; align-items: center; gap: 8px; height: 40px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--dim); cursor: pointer; outline-offset: -2px; transition: color .15s; }
+.toc-item:hover, .toc-item[data-state="active"] { color: var(--text); }
+.toc-item[data-state="active"] { font-weight: 500; }
 .toc-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.num { width: 22px; height: 22px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 11px; font-weight: 600; color: var(--dim); border: 1px solid var(--line-strong); flex: none; }
-.toc-item[data-state="done"] .num { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 60%, transparent); }
-.toc-item[data-state="done"] .num .ico { stroke-width: 3; }
-.toc-item[data-state="active"] .num { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.num { width: 24px; display: inline-flex; align-items: center; font-family: var(--mono); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; color: var(--dim); flex: none; }
+.toc-item[data-state="done"] .num { color: var(--ok); }
+.num .ico { margin-left: -4px; } /* the tick's own left margin, so it lines up with the numbers */
+.toc-item[data-state="active"] .num { color: var(--accent-text); font-weight: 500; }
+/* the line under a lesson or a step lights up, left to right like a hop along a cable; it stays lit under the current step */
+.toc-item::after, .lesson-item::after { content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--accent-text); transform: scaleX(0); transform-origin: 0 50%; pointer-events: none; }
+.toc-item:hover::after, .toc-item[data-state="active"]::after, .lesson-item:has(> .lesson-row:hover)::after { transform: scaleX(1); }
+@media (prefers-reduced-motion: no-preference) {
+  .toc-item::after, .lesson-item::after { transition: transform .3s var(--ease-out); }
+}
 
 .transcript { padding: 0 24px 24px; font-size: 14px; }
 .transcript summary { width: fit-content; padding: 4px 0; font-size: 13px; color: var(--dim); cursor: pointer; }
@@ -567,6 +572,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .library-filters .seg-indicator[data-activation-direction="none"] { transition: none; }
 .seg-count { font-family: var(--mono); font-size: 12px; font-weight: 400; font-variant-numeric: tabular-nums; }
 .library-group { display: grid; grid-template-columns: 224px minmax(0, 1fr); gap: 0 48px; margin-top: 40px; }
+.library-group + .library-group { padding-top: 40px; border-top: 1px solid var(--line-strong); }
 .library-group-head { padding-top: 8px; }
 .library-group-title { font-size: 20px; font-weight: 500; letter-spacing: -.01em; line-height: 24px; }
 .library-group-count { margin-top: 4px; font-size: 13px; line-height: 20px; color: var(--dim); font-variant-numeric: tabular-nums; }
@@ -576,10 +582,11 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
 .layer-art .res { animation: none; }
 /* the list reads down the first column, then the second */
 .lesson-list { display: grid; grid-auto-flow: column; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--rows), auto); align-content: start; gap: 0 48px; }
-.lesson-item { min-width: 0; padding: 4px 0; border-bottom: 1px solid var(--line); }
-.lesson-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 16px; align-items: baseline; padding: 8px 12px; margin: 0 -12px; border-radius: 8px; transition: background-color .15s; }
-.lesson-row:hover { background: var(--raised); }
-.lesson-link { color: var(--text); text-decoration: none; font-size: 15px; font-weight: 500; line-height: 20px; }
+.lesson-item { position: relative; min-width: 0; padding: 4px 0; border-bottom: 1px solid var(--line); }
+.lesson-item:last-child, .lesson-item[data-column-end] { border-bottom: 0; }
+.lesson-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 16px; align-items: baseline; padding: 8px 12px; margin: 0 -12px; border-radius: 8px; }
+.lesson-row:hover .lesson-link { color: var(--accent-text); }
+.lesson-link { color: var(--text); text-decoration: none; font-size: 15px; font-weight: 500; line-height: 20px; transition: color .15s; }
 .lesson-link::after { content: ""; position: absolute; inset: 0; border-radius: inherit; }
 .lesson-link:focus-visible { outline: none; }
 .lesson-row:has(.lesson-link:focus-visible) { outline: 2px solid var(--accent-text); outline-offset: -2px; }
@@ -603,6 +610,7 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .cluster-facts { grid-template-columns: minmax(0, 1fr); gap: 12px; }
   .library-group { gap: 0 32px; }
   .lesson-list { grid-auto-flow: row; grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .lesson-item[data-column-end]:not(:last-child) { border-bottom: 1px solid var(--line); }
 }
 @media (max-width: 900px) {
   .shell { height: auto; }
@@ -629,7 +637,8 @@ kbd, .kbd { font-size: 11px; font-weight: 500; padding: 0 5px; border: 1px solid
   .wordmark, .brand + .topbar-sep { display: none; }
   .library-inner { padding: 24px 16px 40px; }
   .library-title { font-size: 28px; line-height: 36px; }
-  .library-group { grid-template-columns: minmax(0, 1fr); margin-top: 32px; }
+  .library-group { grid-template-columns: minmax(0, 1fr); margin-top: 24px; }
+  .library-group + .library-group { padding-top: 24px; }
   .library-group-head { display: grid; grid-template-columns: 96px minmax(0, 1fr); column-gap: 16px; align-content: center; padding: 0 0 8px; }
   .library-group-head:not(:has(.layer-art)) { grid-template-columns: minmax(0, 1fr); }
   .library-group-head .layer-art { grid-row: 1 / 3; grid-column: 1; width: 96px; margin: 0; }

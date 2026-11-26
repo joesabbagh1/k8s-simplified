@@ -111,6 +111,7 @@ export function Library() {
           CATEGORIES.map((category) => {
             const group = shown.filter((m) => m.lesson.category === category)
             if (!group.length) return null
+            const rows = Math.ceil(group.length / 2)
             return (
               <section key={category} className="library-group" aria-labelledby={`group-${category}`}>
                 <header className="library-group-head">
@@ -118,9 +119,9 @@ export function Library() {
                   <p className="library-group-count">{group.length === 1 ? "1 lesson" : `${group.length} lessons`}</p>
                   {!query && <LayerArt category={category} />}
                 </header>
-                <ul className="lesson-list" style={{ "--rows": Math.ceil(group.length / 2) } as CSSProperties}>
-                  {group.map(({ lesson, steps }) => (
-                    <li key={lesson.id} className="lesson-item">
+                <ul className="lesson-list" style={{ "--rows": rows } as CSSProperties}>
+                  {group.map(({ lesson, steps }, i) => (
+                    <li key={lesson.id} className="lesson-item" data-column-end={i === rows - 1 || undefined}>
                       <div className="lesson-row">
                         <Link className="lesson-link" to={lessonPath(lesson.id)}>{lesson.title}</Link>
                         <p className="lesson-sub">{lesson.subtitle}</p>
