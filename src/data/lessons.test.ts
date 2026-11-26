@@ -18,7 +18,7 @@ test("every lesson is written", () => {
     "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf", "service-mesh-istio",
     "starting-a-container", "image-pull", "probes-restarts",
     "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
-    "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins", "upgrading-the-cluster",
+    "the-scheduler", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster",
     "graceful-shutdown", "autoscaling", "configmaps-secrets",
     "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "kyverno-policies", "falco-alerts",
   ])

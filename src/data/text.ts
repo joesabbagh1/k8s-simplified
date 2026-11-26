@@ -1,6 +1,6 @@
 const UPPER = new Set([
   "ACK", "API", "ARP", "AWS", "BPF", "CA", "CDI", "CEL", "CIDR", "CNI", "CPU", "CRI", "CSR", "CUDA", "DRA", "DNAT", "DNS", "EDS", "FDB", "GET", "GPU", "HBONE", "HPA", "HTTP", "ID", "IP", "IPAM", "JWT",
-  "L4", "MAC", "MIG", "MTU", "NVIDIA", "NVML", "OCI", "PCI", "RSA", "SPIFFE", "NAT", "NXDOMAIN", "OK", "OOM", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
+  "L4", "MAC", "MIG", "MTU", "NVIDIA", "NVML", "OCI", "PCI", "RSA", "SPIFFE", "NAT", "NXDOMAIN", "OK", "OOM", "PDB", "PID", "PV", "PVC", "RBAC", "RV", "SIGTERM", "SNAT", "SNI", "SYN", "TCP", "TLS",
   "TTL", "UDP", "URL", "VIP", "VM", "VTEP", "VXLAN",
 ])
 
@@ -50,6 +50,7 @@ const PROPER: Record<string, string> = {
   OOMKILLED: "OOMKilled",
   PEERAUTHENTICATION: "PeerAuthentication",
   PERSISTENTVOLUMECLAIM: "PersistentVolumeClaim",
+  PODDISRUPTIONBUDGET: "PodDisruptionBudget",
   POD: "Pod",
   PODS: "Pods",
   POLICYREPORT: "PolicyReport",
