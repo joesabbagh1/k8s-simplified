@@ -1,4 +1,5 @@
-import type { ClusterEvent, Lesson, PodLayout, Resource, Step } from "./data/types"
+import type { ActorId, ClusterEvent, Lesson, PodLayout, Resource, Step } from "./data/types"
+import { routeLength } from "./scene/world"
 
 export interface Timeline {
   events: (ClusterEvent & { step: number; index: number })[]
@@ -29,10 +30,21 @@ export function timeline(lesson: Lesson): Timeline {
 /** How many events are on screen once a step is shown in full. */
 export const revealedThrough = (lesson: Lesson, step: number) => (step < 0 ? 0 : timeline(lesson).end[step] ?? 0)
 
+/** Screen units a packet covers each millisecond, at 1× speed: a long route takes longer, it doesn't move faster. */
+const PACKET_SPEED = 0.2
+/** A short hop still takes this long, so it reads as a trip. */
+const TRAVEL_MIN_MS = 800
+/** The longest routes are capped here, so they don't hold playback up. */
+const TRAVEL_MAX_MS = 3000
+
+/** How long a packet takes from one actor to another, at 1× speed. */
+export const packetTime = (from: ActorId, to: ActorId) =>
+  Math.round(Math.min(TRAVEL_MAX_MS, Math.max(TRAVEL_MIN_MS, routeLength(from, to) / PACKET_SPEED)))
+
 /** How long the marker for one event travels, at 1× speed. */
 export function travelTime(e: ClusterEvent) {
   if (!e.path) return 450
-  return e.path[0] === e.path[1] ? 750 : 1150
+  return e.path[0] === e.path[1] ? 750 : packetTime(e.path[0], e.path[1])
 }
 
 const words = (text: string) => text.trim().split(/\s+/).filter(Boolean).length
@@ -95,8 +107,6 @@ export function createdBy(lesson: Lesson, event: ClusterEvent & { step: number; 
   return Object.entries(event.res ?? {}).filter(([id, r]) => r !== null && !before[id]).map(([id]) => id)
 }
 
-/** How long a new card's marker takes from where its event landed to where the card appears, at 1× speed. */
-export const CREATE_MS = 900
 
 export interface LessonStats {
   events: number

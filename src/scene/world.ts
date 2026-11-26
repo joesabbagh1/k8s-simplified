@@ -924,6 +924,15 @@ export function groundRoute(level: Level, from: ActorId, to: ActorId): Point[] {
   return legs.reduce<Point[]>((all, leg) => [...all, ...(all.length ? leg.slice(1) : leg)], [])
 }
 
+/** How far a packet travels on screen between two actors, by the route it takes. */
+export function routeLength(from: ActorId, to: ActorId): number {
+  const A = actorById(from)
+  const B = actorById(to)
+  if (!A || !B || A.id === B.id) return 0
+  const pts = screenRoute(A.level, groundRoute(A.level, A.id, B.id), A, B)
+  return pts.slice(1).reduce((sum, p, i) => sum + Math.hypot(p[0] - pts[i][0], p[1] - pts[i][1]), 0)
+}
+
 /** An ownership edge between a card and what it owns, in ground units. */
 export const ownRoute = (a: Actor, b: Actor): Point[] => ell(a.g, b.g)
 
