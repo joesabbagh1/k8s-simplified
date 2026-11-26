@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest"
-import { lanesOf, timeline } from "../playback"
-import { actorById, expand, FLOORS, GROUPS, groundRoute } from "../scene/world"
-import { LESSONS } from "./lessons"
+import { createdBy, lanesOf, podsAt, timeline } from "../playback"
+import { actorById, expand, floorFor, FLOORS, GROUPS, groundRoute } from "../scene/world"
+import { surfaceAfter, transitionAfter } from "../scene/transition"
+import { LESSONS, lessonById } from "./lessons"
 
 const playable = LESSONS.filter((l) => l.steps.length)
 
@@ -14,12 +15,12 @@ test("every lesson is written", () => {
   expect(LESSONS.map((l) => l.id)).toEqual([
     "deploy-an-app", "request-finds-pod", "rolling-update",
     "pod-to-pod-same-node", "pod-to-pod-across-nodes", "pod-calls-service",
-    "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf",
+    "dns-in-cluster", "ingress-gateway", "network-policy", "cilium-ebpf", "service-mesh-istio",
     "starting-a-container", "image-pull", "probes-restarts",
-    "oom-killed", "mounting-volume", "list-and-watch",
-    "the-scheduler", "pending-pod", "reconcile-loops", "node-goes-dark",
-    "graceful-shutdown", "autoscaling", "configmaps-secrets",
-    "statefulset-storage", "jobs-cronjobs", "rbac-tokens",
+    "oom-killed", "mounting-volume", "gpu-device-plugin", "list-and-watch",
+    "the-scheduler", "pending-pod", "reconcile-loops", "node-goes-dark", "node-joins", "draining-a-node", "upgrading-the-cluster", "etcd-backup-restore",
+    "graceful-shutdown", "autoscaling", "keda-scale-to-zero", "model-server-startup", "configmaps-secrets",
+    "statefulset-storage", "jobs-cronjobs", "rbac-tokens", "pod-cloud-credentials", "kyverno-policies", "tenant-quotas", "falco-alerts",
   ])
   expect(playable).toHaveLength(LESSONS.length)
 })
@@ -51,14 +52,17 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
   test.each(lesson.steps.map((s, i) => [i + 1, s] as const))("step %i points at actors on its own level", (_, step) => {
     expect(step.events.length).toBeGreaterThan(0)
     expect(step.facts.length).toBeGreaterThan(0)
+    const drawn = (id: string) => !actorById(id)?.optional || !!lesson.extras?.includes(id)
     for (const id of step.focus) {
       expect(actorById(id)?.level, `focus ${id}`).toBe(step.view)
+      expect(drawn(id), `focus ${id} is optional and not in extras`).toBe(true)
       if (step.view === "cluster") expect(actors, `focus ${id}`).toContain(id)
     }
     for (const e of step.events) {
       expect(e.decoded.length, `${e.id} has nothing to decode`).toBeGreaterThan(0)
       for (const id of e.path ?? []) {
         expect(actorById(id)?.level, `${e.id} path ${id}`).toBe(step.view)
+        expect(drawn(id), `${e.id} path ${id} is optional and not in extras`).toBe(true)
         if (step.view === "cluster") expect(actors, `${e.id} path ${id}`).toContain(id)
       }
     }
@@ -66,7 +70,8 @@ describe.each(playable.map((l) => [l.id, l] as const))("%s", (_, lesson) => {
 
   test("pod layouts fit on a node", () => {
     for (const layout of [lesson.pods, ...lesson.steps.map((s) => s.pods), ...events.map((e) => e.pods)]) {
-      for (const slots of Object.values(layout ?? {})) expect(slots.length).toBeLessThanOrEqual(4)
+      // a node that has left the cluster has no layout
+      for (const slots of Object.values(layout ?? {})) expect(slots?.length ?? 0).toBeLessThanOrEqual(4)
     }
   })
 
@@ -97,4 +102,45 @@ test("every group stands inside its level's floor, with its members on its plate
       expect(x > floor.x0 && x < floor.x1 && y > floor.y0 && y < floor.y1, id).toBe(true)
     }
   }
+})
+
+describe("the Kyverno lesson", () => {
+  const lesson = lessonById("kyverno-policies")!
+
+  test("dives into the API server and comes back out of it", () => {
+    const changes = lesson.steps.flatMap((step, i) => {
+      const next = lesson.steps[i + 1]
+      return next && next.view !== step.view ? [{ i, into: next.view === "admission" }] : []
+    })
+    expect(changes.some((c) => c.into) && changes.some((c) => !c.into)).toBe(true)
+    for (const { i, into } of changes) {
+      expect((into ? transitionAfter : surfaceAfter)(lesson, i)?.to, `after step ${i + 1}`).toBe("api")
+    }
+  })
+
+  test("every card is created by an event that lands on the API server", () => {
+    const { events } = timeline(lesson)
+    const born = events.flatMap((e) => createdBy(lesson, e).map((id) => [id, e.path?.[1]]))
+    expect(Object.fromEntries(born)).toEqual({ "kyv-vpol": "api", "kyv-report": "api", "kyv-mpol": "api", "kyv-gpol": "api", "kyv-netpol": "api" })
+  })
+})
+
+describe("the node-joins lesson", () => {
+  const lesson = lessonById("node-joins")!
+
+  test("node-3 is there from the moment its instance launches until it is terminated", () => {
+    const launched = lesson.steps.findIndex((s) => s.events.some((e) => e.pods?.node3))
+    expect(podsAt(lesson, -1).node3).toBeUndefined()
+    expect(podsAt(lesson, launched - 1).node3).toBeUndefined()
+    expect(podsAt(lesson, launched).node3).toBeDefined()
+    expect(podsAt(lesson, lesson.steps.length - 1).node3).toBeUndefined()
+  })
+
+  test("the cluster floor grows to take node-3 in", () => {
+    const two = new Set(expand(["cp", "node1", "node2"]))
+    const three = new Set([...two, "node3"])
+    expect(floorFor("cluster", two)).toEqual(FLOORS.cluster)
+    const [, y] = actorById("node3")!.g
+    expect(floorFor("cluster", three).y0).toBeLessThan(y - 8)
+  })
 })

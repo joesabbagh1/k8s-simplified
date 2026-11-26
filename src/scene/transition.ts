@@ -1,8 +1,14 @@
 import type { ActorId, Lesson, Level } from "../data/types"
 import { timeline } from "../playback"
-import { actorById, ACTORS, levelPath } from "./world"
+import { actorById, ACTORS, levelPath, type Actor } from "./world"
 
-export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2 }
+export const DEPTH: Record<Level, number> = { cluster: 0, node1: 1, node2: 1, pod: 2, mesh: 1, ambient: 1, admission: 1, falco: 1, gpu: 1 }
+
+/** The level an actor opens in this lesson, if any. */
+export const opensIn = (lesson: Lesson, actor: Actor): Level | undefined => lesson.opens?.[actor.id] ?? actor.opens
+
+/** The actor on one level that opens another. */
+const portalTo = (lesson: Lesson, level: Level, inner: Level) => ACTORS.find((a) => a.level === level && opensIn(lesson, a) === inner)
 
 export interface Transit {
   /** where the marker sets off, on the current level */
@@ -23,7 +29,7 @@ export function surfaceAfter(lesson: Lesson, step: number): Omit<Transit, "phase
   if (!current || !next || DEPTH[next.view] >= DEPTH[current.view]) return null
   const path = levelPath(current.view)
   const child = path[path.indexOf(next.view) + 1]
-  const portal = ACTORS.find((a) => a.level === next.view && a.opens === child)
+  const portal = portalTo(lesson, next.view, child)
   if (!portal) return null
   const t = timeline(lesson)
   const first = t.events[t.end[step]]
@@ -35,7 +41,7 @@ export function transitionAfter(lesson: Lesson, step: number): Omit<Transit, "ph
   const current = lesson.steps[step]
   const next = lesson.steps[step + 1]
   if (!current || !next || DEPTH[next.view] <= DEPTH[current.view]) return null
-  const portal = ACTORS.find((a) => a.level === current.view && a.opens === next.view)
+  const portal = portalTo(lesson, current.view, next.view)
   if (!portal) return null
   const t = timeline(lesson)
   const first = t.events[t.end[step]]
@@ -50,7 +56,7 @@ export function entryPath(lesson: Lesson): ActorId[] {
   const first = lesson.steps[0]
   if (!first || !timeline(lesson).events.length) return []
   const path = levelPath(first.view)
-  const portals = path.slice(0, -1).map((level, i) => ACTORS.find((a) => a.level === level && a.opens === path[i + 1])?.id)
+  const portals = path.slice(0, -1).map((level, i) => portalTo(lesson, level, path[i + 1])?.id)
   return portals.every((id): id is ActorId => !!id) ? portals : []
 }
 

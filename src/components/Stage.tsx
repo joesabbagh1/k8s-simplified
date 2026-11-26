@@ -6,13 +6,13 @@ import {
 } from "@ui-sdk/react/segmented-control"
 import { lazy, Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react"
 import { LAYERS } from "../data/layers"
-import type { ActorId, ClusterEvent, Lesson, Level, PodSlot, Resource } from "../data/types"
+import type { ActorId, ClusterEvent, Lesson, Level, NodeId, PodSlot, Resource } from "../data/types"
 import type { Point } from "../iso/iso"
 import { useReducedMotion } from "../hooks"
 import { CREATE_MS, createdBy, podsAt, resourcesAt, timeline } from "../playback"
 import { useExploreCamera } from "../scene/camera"
-import { CARRY_MS, DEPTH } from "../scene/transition"
-import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
+import { CARRY_MS, DEPTH, opensIn } from "../scene/transition"
+import { actorById, actorsAt, CABLES, expand, floorCorners, floorFor, floorMatrix, frame, groundRoute, GROUPS, JOINTS, LEVEL_NAME, levelPath, NODES, ownRoute, RESOURCE_LINKS, screenRoute, toScreen, workloadNodes, WORLD, type Actor, type Box, type Cable, type Floor as FloorShape, type Group } from "../scene/world"
 import { useApp, useLesson, type Flight, type StageView } from "../store"
 import { sentence } from "../data/text"
 import { Icon } from "./Icon"
@@ -45,7 +45,7 @@ function useSceneState(lesson: Lesson): SceneState {
     // Play from the overview dives through each node or Pod on the way to the first step, on the level that holds it
     const entering = step < 0 && !finished && !!transit
     const level: Level = override ?? current?.view ?? (entering ? actorById(transit.to)?.level : undefined) ?? "cluster"
-    const all = actorsAt(level)
+    const all = actorsAt(level).filter((a) => !a.optional || !!lesson.extras?.includes(a.id))
     const used = expand(lesson.actors)
     const visible = level === "cluster" && used.length ? all.filter((a) => used.includes(a.id)) : all
     const following = !override && (!!current || entering)
@@ -205,22 +205,27 @@ function Marker({ flight, event }: { flight: Pick<Flight, "duration"> & { key: s
   )
 }
 
-function ActorNode({ actor, focused, dimmed, slots, onHover }: {
+function ActorNode({ actor, opens, focused, dimmed, slots, onHover }: {
   actor: Actor
+  /** the level this actor opens when clicked */
+  opens?: Level
   focused: boolean
   dimmed: boolean
   slots?: PodSlot[]
-  onHover: (a: Actor | null) => void
+  onHover: (a: Described | null) => void
 }) {
   const drill = useApp((s) => s.drill)
   const art = useMemo(() => actor.art(slots), [actor, slots])
   const [anchorX, anchorY, anchor] = actor.label
-  const interactive = !!actor.opens
-  const open = () => actor.opens && drill(actor.opens)
+  const interactive = !!opens
+  const open = () => opens && drill(opens)
+  const hint = " Click to look inside."
+  const described = opens && !actor.about.endsWith(hint) ? { ...actor, about: actor.about + hint } : actor
 
   return (
     <g
       className="actor"
+      data-joins={actor.joins || undefined}
       data-on={focused || undefined}
       data-dim={dimmed || undefined}
       data-interactive={interactive || undefined}
@@ -229,9 +234,9 @@ function ActorNode({ actor, focused, dimmed, slots, onHover }: {
       aria-label={interactive ? `Look inside ${actor.name}` : undefined}
       onClick={interactive ? open : undefined}
       onKeyDown={interactive ? (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), open()) : undefined}
-      onPointerEnter={() => onHover(actor)}
+      onPointerEnter={() => onHover(described)}
       onPointerLeave={() => onHover(null)}
-      onFocus={() => onHover(actor)}
+      onFocus={() => onHover(described)}
       onBlur={() => onHover(null)}
     >
       <g transform={`translate(${actor.pos[0]} ${actor.pos[1]})`} dangerouslySetInnerHTML={{ __html: art }} />
@@ -336,12 +341,17 @@ function ClusterScene() {
     [lesson, step, finished, revealed, scene.level],
   )
   const resIds = new Set(Object.keys(resources))
+  // a node that joins during the lesson is drawn once the Pod layout lists it
+  const here = (id: ActorId) => !actorById(id)?.joins || !!pods[id as NodeId]
+  const visible = useMemo(() => scene.visible.filter((a) => !a.joins || !!pods[a.id as NodeId]), [scene.visible, pods])
+  const frameIds = scene.frameIds.filter(here)
   const flightEvent = flight ? timeline(lesson).events.find((e) => e.id === flight.id) : undefined
-  const ids = new Set(scene.visible.map((a) => a.id))
-  const floor = useMemo(() => floorFor(scene.level, new Set(scene.visible.map((a) => a.id))), [scene.level, scene.visible])
+  const ids = new Set(visible.map((a) => a.id))
+  const floor = useMemo(() => floorFor(scene.level, new Set(visible.map((a) => a.id))), [scene.level, visible])
   const cables = CABLES[scene.level].filter((c) => ids.has(c.a) && ids.has(c.b))
-  // a marker may fly to a card that exists, or one this very event is about to create
-  const shown = (id: ActorId) => ids.has(id) || resIds.has(id) || (!!flightEvent?.res?.[id] && !!actorById(id)?.kind)
+  // a marker may fly to a card or node that exists, or one this very event is about to create
+  const shown = (id: ActorId) =>
+    ids.has(id) || resIds.has(id) || (!!flightEvent?.res?.[id] && !!actorById(id)?.kind) || (!!flightEvent?.pods?.[id as NodeId] && !!actorById(id)?.joins)
   const flying = flightEvent?.path?.every(shown) ? flightEvent : undefined
   const transitEvent = transit ? timeline(lesson).events.find((e) => e.id === transit.eventId) : undefined
   const carried =
@@ -359,8 +369,8 @@ function ClusterScene() {
     ? [target.pos[0] - DIVE_W / 2, target.pos[1] - 16 - diveH / 2, DIVE_W, diveH]
     : widen(
         scene.dim
-          ? frame(scene.frameIds, scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor))
-          : frame([...scene.frameIds, ...resIds], scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor), finished || revealed > 0),
+          ? frame(frameIds, scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor))
+          : frame([...frameIds, ...resIds], scene.level === "cluster" ? WORLD.width : 640, floorCorners(scene.level, floor), finished || revealed > 0),
         scene.level === "cluster" ? 1 : INSIDE_PULLBACK,
       )
 
@@ -436,13 +446,14 @@ function ClusterScene() {
             ))}
             {flight && flying && <Trail key={`trail-${flight.key}`} flight={flight} event={flying} />}
             {carried && <Trail key={`trail-${carried.flight.key}`} flight={carried.flight} event={carried.event} />}
-            {scene.visible.map((actor) => (
+            {visible.map((actor) => (
               <ActorNode
                 key={actor.id}
                 actor={actor}
+                opens={opensIn(lesson, actor)}
                 focused={scene.focus.has(actor.id)}
                 dimmed={scene.dim && !scene.focus.has(actor.id)}
-                slots={actor.id === "node1" || actor.id === "node2" ? pods[actor.id] : undefined}
+                slots={NODES.includes(actor.id as NodeId) ? pods[actor.id as NodeId] : undefined}
                 onHover={(a) => !cam.panning && setHover(a)}
               />
             ))}
@@ -566,9 +577,9 @@ function Breadcrumb() {
   if (path.length < 2 && !override) return null
 
   return (
-    <nav className="crumbs" aria-label="Zoom level">
+    <nav className="zoom-crumbs" aria-label="Zoom level">
       {path.map((level, i) => (
-        <span key={level} className="crumb">
+        <span key={level} className="zoom-crumb">
           {i > 0 && <span className="sep" aria-hidden="true">/</span>}
           {i === path.length - 1 ? (
             <b aria-current="location">{LEVEL_NAME[level]}</b>

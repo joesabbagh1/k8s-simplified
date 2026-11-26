@@ -1,9 +1,11 @@
 export type Layer = "api" | "state" | "control" | "node" | "net" | "drop"
 
-export type Category = "network" | "node" | "control" | "app"
+export type Category = "network" | "node" | "control" | "app" | "security"
 
-/** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod. */
-export type Level = "cluster" | "node1" | "node2" | "pod"
+/** Zoom levels of the diagram: the whole cluster, inside one node, inside one Pod,
+ *  two Pods in a service mesh, with sidecars ("mesh") or without ("ambient"), the stops a
+ *  write makes inside the API server ("admission"), a node as Falco watches it, and node-2 with its GPU ("gpu"). */
+export type Level = "cluster" | "node1" | "node2" | "pod" | "mesh" | "ambient" | "admission" | "falco" | "gpu"
 
 /** An actor id from src/scene/world.ts, such as "api", "node2" or "n2.kubelet". */
 export type ActorId = string
@@ -56,7 +58,10 @@ export interface ClusterEvent {
 /** What a Pod slot on a worker node shows. */
 export type PodSlot = "other" | "v1" | "v2" | "starting" | "terminating"
 
-export type PodLayout = Partial<Record<"node1" | "node2", PodSlot[]>>
+/** The worker nodes. node-3 only exists in lessons where it joins the cluster. */
+export type NodeId = "node1" | "node2" | "node3"
+
+export type PodLayout = Partial<Record<NodeId, PodSlot[]>>
 
 /** The Kubernetes objects drawn as cards on the cluster view. */
 export type ResourceKind =
@@ -65,6 +70,7 @@ export type ResourceKind =
   | "service"
   | "hpa"
   | "statefulset"
+  | "daemonset"
   | "job"
   | "cronjob"
   | "configmap"
@@ -72,6 +78,14 @@ export type ResourceKind =
   | "ingress"
   | "pvc"
   | "pv"
+  | "policy"
+  | "policyreport"
+  | "networkpolicy"
+  | "csr"
+  | "pdb"
+  | "scaledobject"
+  | "resourcequota"
+  | "limitrange"
   | "pod"
 
 export interface Resource {
@@ -80,6 +94,8 @@ export interface Resource {
   /** one-line status under the name, e.g. "replicas 3/3" */
   sub?: string
   state?: "creating" | "active" | "terminating"
+  /** for a DaemonSet that runs on some nodes only: the nodes it runs on */
+  nodes?: NodeId[]
 }
 
 /** A snapshot of resource cards: keys not mentioned keep their previous value; null removes one. */
@@ -119,6 +135,10 @@ export interface Lesson {
   overview: { body: string; facts: Fact[] }
   /** cluster-level actors this lesson uses, with "cp" for the whole control plane; the overview camera frames them */
   actors: ActorId[]
+  /** actors inside a node or Pod that only some lessons draw (those marked optional in world.ts) */
+  extras?: ActorId[]
+  /** actors that open a level in this lesson only, besides the nodes and Pods that always do */
+  opens?: Record<ActorId, Level>
   /** Pods on each node before step 1 */
   pods?: PodLayout
   /** resource cards on screen before step 1 */

@@ -84,15 +84,15 @@ test("the Lessons link opens a page that searches and filters every lesson", asy
   expect(window.location.pathname).toBe("/lessons")
   const page = screen.getByRole("main", { name: "Kubernetes lessons" })
   const lessonLinks = () => within(page).queryAllByRole("link").filter((a) => /^\/[^/]+$/.test(a.getAttribute("href")!))
-  expect(lessonLinks()).toHaveLength(26)
+  expect(lessonLinks()).toHaveLength(38)
 
   await user.click(within(page).getByRole("radio", { name: /^Control plane/ }))
-  expect(lessonLinks()).toHaveLength(6)
+  expect(lessonLinks()).toHaveLength(11)
 
   await user.click(within(page).getByRole("radio", { name: /^All/ }))
   await user.type(within(page).getByRole("searchbox", { name: "Search lessons and steps" }), "dns")
   expect(lessonLinks().map((a) => a.textContent)).toContain("DNS in the cluster")
-  expect(lessonLinks().length).toBeLessThan(26)
+  expect(lessonLinks().length).toBeLessThan(38)
 
   await user.click(within(page).getByRole("link", { name: "DNS in the cluster" }))
   expect(within(details()).getByRole("heading", { name: "DNS in the cluster" })).toBeTruthy()
@@ -192,11 +192,29 @@ test("the logo goes home from a lesson", async () => {
   expect(window.location.pathname).toBe("/")
 })
 
+test("the homepage scene draws the cluster's plates and no other level's", () => {
+  window.history.replaceState(null, "", "/")
+  const { container } = render(<App />)
+  const names = [...container.querySelectorAll(".hero-art .floor-name")].map((n) => n.textContent)
+  expect(names).toEqual(["cluster", "control plane"])
+})
+
+test("a question on the homepage opens the event that answers it, linked to its step", async () => {
+  const user = userEvent.setup()
+  window.history.replaceState(null, "", "/")
+  render(<App />)
+  const section = screen.getByRole("region", { name: "Questions the lessons answer" })
+  await user.click(within(section).getByRole("button", { name: "Where does exit code 137 come from?" }))
+  expect(within(section).getByText("137 (128 + SIGKILL 9)")).toBeTruthy()
+  await user.click(within(section).getByRole("link", { name: "Watch it in OOMKilled, step 4" }))
+  expect(window.location.pathname).toBe("/oom-killed/4")
+})
+
 test("a category on the homepage opens the lessons page filtered to it", async () => {
   const user = userEvent.setup()
   window.history.replaceState(null, "", "/")
   render(<App />)
-  await user.click(screen.getByRole("link", { name: /All network lessons/ }))
+  await user.click(screen.getByRole("link", { name: "Network 9 lessons" }))
   const page = await screen.findByRole("main", { name: "Kubernetes lessons" })
   expect(within(page).getByRole("radio", { name: /^Network/ }).getAttribute("aria-checked")).toBe("true")
   expect(within(page).queryByRole("heading", { name: /^Node/ })).toBeNull()

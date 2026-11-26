@@ -20,7 +20,7 @@ npm run build      # static site in dist/, one HTML file per page
 |---|---|
 | `src/data/lessons/*.ts` | One file per lesson: steps, the events in each step, timing spans, summary. Adding a lesson means writing one of these. |
 | `src/data/types.ts` | The lesson format. |
-| `src/scene/world.ts` | Every actor in the diagram, at three zoom levels (cluster, inside a node, inside a Pod), with positions, links and descriptions. |
+| `src/scene/world.ts` | Every actor in the diagram, at each zoom level (cluster, inside a node, inside a Pod, and two Pods in a service mesh with or without sidecars), with positions, links and descriptions. |
 | `src/scene/camera.ts` | The stage camera: the auto-framing the lesson drives, plus hand-steering — scroll to zoom at the cursor, drag or pinch to pan, +/− keys and buttons, Reset view. |
 | `src/iso/iso.ts` | Isometric drawing helpers that produce the SVG icons. |
 | `src/playback.ts`, `src/hooks.ts`, `src/store.ts` | Playback: the lesson timeline, the driver that launches and lands each event, and app state (Zustand). |
@@ -34,7 +34,7 @@ Interactive controls come from [UI SDK](https://ui-sdk.dev) (`@ui-sdk/react`, pi
 
 ## Writing a lesson
 
-Each step has a `view` (which zoom level), a `focus` (the actors the camera frames) and `events`. Each event can have a `path: [from, to]` of actor ids on that level; the same id twice makes the marker pulse on one actor instead of travelling. The control plane is a group (`GROUPS` in `world.ts`): a lesson's `actors` says `"cp"` to put all of it on screen, while `focus` and `path` name the component: `api`, `sched`, `kcm` (controller manager) or `etcd`. `npm test` checks that every id exists on the right level, that event times never go backwards, and that each lesson has a summary and timing.
+Each step has a `view` (which zoom level), a `focus` (the actors the camera frames) and `events`. Each event can have a `path: [from, to]` of actor ids on that level; the same id twice makes the marker pulse on one actor instead of travelling. The control plane is a group (`GROUPS` in `world.ts`): a lesson's `actors` says `"cp"` to put all of it on screen, while `focus` and `path` name the component: `api`, `sched`, `kcm` (controller manager) or `etcd`. A step that changes level zooms through the actor that opens the new one: a node or a Pod, or whatever the lesson names in `opens`. `npm test` checks that every id exists on the right level, that event times never go backwards, and that each lesson has a summary and timing.
 
 Links like `/request-finds-pod/5` open a lesson on a given step; `/rolling-update/summary` opens its summary; `/lessons` is the lesson list and `/` the homepage. `npm run build` writes each of these as its own HTML file, so the host needs no fallback: serve `/rolling-update` from `rolling-update.html`, and `404.html` for anything else (`wrangler.jsonc` already does).
 
